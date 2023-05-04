@@ -1,0 +1,24 @@
+{
+  "name": "squidit/php-coding-standards",
+  "description": "PHP coding standards rules for PHP-CS-Fixer",
+  "license": "MIT",
+  "type": "library",
+  "authors": [
+    {
+      "name": "Cecil Zorg",
+      "email": "developer@squidit.nl"
+    }
+  ],
+  "config": {
+    "sort-packages": true
+  },
+  "require": {
+    "php": "^8.1",
+    "friendsofphp/php-cs-fixer": "^3.15"
+  },
+  "autoload": {
+    "psr-4": {
+      "SquidIT\\PhpCodingStandards\\": "src/"
+    }
+  }
+}
