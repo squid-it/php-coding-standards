@@ -71,14 +71,14 @@ class Rules
                 'after_heredoc' => true,
                 'on_multiline'  => 'ensure_fully_multiline',
             ],
-            'method_chaining_indentation'             => true,
-            'modernize_types_casting'                 => true,
-            'multiline_comment_opening_closing'       => true,
-            'multiline_whitespace_before_semicolons'  => true,
-            'native_type_declaration_casing'          => true,
-            'no_alias_functions'                      => true,
-            'no_alternative_syntax'                   => true,
-            'no_extra_blank_lines'                    => [
+            'method_chaining_indentation'            => true,
+            'modernize_types_casting'                => true,
+            'multiline_comment_opening_closing'      => true,
+            'multiline_whitespace_before_semicolons' => true,
+            'native_type_declaration_casing'         => true,
+            'no_alias_functions'                     => true,
+            'no_alternative_syntax'                  => true,
+            'no_extra_blank_lines'                   => [
                 'tokens' => [
                     'break', 'case', 'continue', 'curly_brace_block', 'default', 'extra', 'parenthesis_brace_block',
                     'return', 'square_brace_block', 'throw',
