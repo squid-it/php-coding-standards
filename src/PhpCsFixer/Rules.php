@@ -44,11 +44,11 @@ class Rules
                     'trait_import' => 'none',
                 ],
             ],
-            'combine_consecutive_issets' => true,
-            'combine_consecutive_unsets' => true,
-            'combine_nested_dirname'     => true,
-            'compact_nullable_typehint'  => true,
-            'concat_space'               => [
+            'combine_consecutive_issets'        => true,
+            'combine_consecutive_unsets'        => true,
+            'combine_nested_dirname'            => true,
+            'compact_nullable_type_declaration' => true,
+            'concat_space'                      => [
                 'spacing' => 'one',
             ],
             'declare_strict_types'         => true,
@@ -75,7 +75,7 @@ class Rules
             'modernize_types_casting'                 => true,
             'multiline_comment_opening_closing'       => true,
             'multiline_whitespace_before_semicolons'  => true,
-            'native_function_type_declaration_casing' => true,
+            'native_type_declaration_casing'          => true,
             'no_alias_functions'                      => true,
             'no_alternative_syntax'                   => true,
             'no_extra_blank_lines'                    => [
