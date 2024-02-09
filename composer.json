@@ -13,8 +13,8 @@
     "sort-packages": true
   },
   "require": {
-    "php": "^8.1",
-    "friendsofphp/php-cs-fixer": "^v3.38.0"
+    "php": "^8.2",
+    "friendsofphp/php-cs-fixer": "^v3.40"
   },
   "autoload": {
     "psr-4": {

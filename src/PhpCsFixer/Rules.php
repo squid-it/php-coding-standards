@@ -53,7 +53,7 @@ class Rules
             ],
             'declare_strict_types'         => true,
             'dir_constant'                 => true,
-            'escape_implicit_backslashes'  => true,
+            'string_implicit_backslashes'  => true,
             'explicit_indirect_variable'   => true,
             'explicit_string_variable'     => true,
             'fully_qualified_strict_types' => true,
