@@ -28,7 +28,11 @@ class Rules
             ],
             'array_indentation'      => true,
             'binary_operator_spaces' => [
-                'default' => 'align_single_space_minimal',
+                'default'   => 'align_single_space_minimal',
+                'operators' => [
+                    '===' => 'single_space',
+                    '??'  => 'single_space',
+                ],
             ],
             'blank_line_before_statement' => [
                 'statements' => [
@@ -81,8 +85,7 @@ class Rules
             'no_extra_blank_lines'                   => [
                 'tokens' => [
                     'break', 'case', 'continue', 'curly_brace_block', 'default', 'extra', 'parenthesis_brace_block',
-                    'return', 'square_brace_block', 'throw',
-                    // TODO: Add 'use' when php-cs-fixer #3582 is fixed
+                    'return', 'square_brace_block', 'throw', 'use',
                 ],
             ],
             'no_null_property_initialization'     => true,
@@ -101,7 +104,6 @@ class Rules
                     'use_trait',
                     'constant_public', 'constant_protected', 'constant_private',
                     'property_public', 'property_protected', 'property_private',
-                    // Not shuffling methods. I'd love to do it, but I think it's too much for most people.
                 ],
             ],
             'ordered_imports' => [
@@ -139,6 +141,7 @@ class Rules
             'simple_to_complex_string_variable'   => true,
             'simplified_null_return'              => false,
             'single_class_element_per_statement'  => true,
+            'single_line_empty_body'              => true,
             'single_line_throw'                   => false,
             'single_quote'                        => false,
             'single_trait_insert_per_statement'   => true,
