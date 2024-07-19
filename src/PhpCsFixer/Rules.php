@@ -93,6 +93,7 @@ class Rules
             'no_superfluous_phpdoc_tags'          => true,
             'no_unset_cast'                       => true,
             'no_unset_on_property'                => false,
+            'no_unused_imports'                   => true,
             'no_useless_else'                     => true,
             'no_useless_return'                   => true,
             'no_whitespace_before_comma_in_array' => [
