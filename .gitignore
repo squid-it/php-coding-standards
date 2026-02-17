@@ -1,5 +1,13 @@
 composer.lock
 .idea/
+.development/
 .php_cs.cache
 .php-cs-fixer.cache
 vendor/
+.claude/
+.AGENT.md
+AGENT.md
+AGENTS.md
+CLAUDE.md
+/var
+coverage/

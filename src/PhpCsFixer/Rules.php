@@ -75,8 +75,13 @@ class Rules
                 'after_heredoc' => true,
                 'on_multiline'  => 'ensure_fully_multiline',
             ],
-            'method_chaining_indentation'            => true,
-            'modernize_types_casting'                => true,
+            'method_chaining_indentation' => true,
+            'modernize_types_casting'     => true,
+            'modifier_keywords'           => [
+                'elements' => [
+                    'const', 'method', 'property',
+                ],
+            ],
             'multiline_comment_opening_closing'      => true,
             'multiline_whitespace_before_semicolons' => true,
             'native_type_declaration_casing'         => true,
@@ -150,12 +155,7 @@ class Rules
                 'remove_in_empty_for_expressions' => true,
             ],
             'ternary_to_null_coalescing' => true,
-            'visibility_required'        => [
-                'elements' => [
-                    'const', 'method', 'property',
-                ],
-            ],
-            'yoda_style' => [
+            'yoda_style'                 => [
                 'equal'            => false,
                 'identical'        => false,
                 'less_and_greater' => false,
