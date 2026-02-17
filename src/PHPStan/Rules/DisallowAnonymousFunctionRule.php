@@ -10,6 +10,7 @@ use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\FunctionLike;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
@@ -23,7 +24,7 @@ final class DisallowAnonymousFunctionRule implements Rule
     }
 
     /**
-     * @return array<int, \PHPStan\Rules\RuleError>
+     * @return array<int, RuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {

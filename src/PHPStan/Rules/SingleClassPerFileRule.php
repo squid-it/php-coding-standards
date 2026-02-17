@@ -14,6 +14,7 @@ use PhpParser\Node\Stmt\Trait_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Node\FileNode;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
 use function sprintf;
@@ -29,7 +30,7 @@ final class SingleClassPerFileRule implements Rule
     }
 
     /**
-     * @return array<int, \PHPStan\Rules\RuleError>
+     * @return array<int, RuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {

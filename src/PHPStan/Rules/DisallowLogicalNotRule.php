@@ -8,6 +8,7 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\BooleanNot;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
@@ -21,7 +22,7 @@ final class DisallowLogicalNotRule implements Rule
     }
 
     /**
-     * @return array<int, \PHPStan\Rules\RuleError>
+     * @return array<int, RuleError>
      */
     public function processNode(Node $node, Scope $scope): array
     {
