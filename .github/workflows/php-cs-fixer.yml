@@ -1,8 +1,7 @@
-name: "PHP-CS-Fixer checks"
+name: "PHP Code Quality"
 
 on:
   pull_request:
-  push:
 
 jobs:
   php-cs-fixer:
@@ -13,15 +12,14 @@ jobs:
     strategy:
       matrix:
         php-version:
-          - "8.2"
-          - "8.3"
           - "8.4"
+          - "8.5"
         operating-system:
           - "ubuntu-latest"
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@v6"
 
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
@@ -43,10 +41,28 @@ jobs:
           restore-keys: "php-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-"
 
       - name: "Install dependencies"
-        run: "composer install --no-interaction --no-progress"
-
-      - name: "Lint PHP files"
-        run: "find src -name *.php | xargs -n 1 php -l"
+        run: composer install --prefer-dist --no-progress
 
       - name: "Check coding standards"
-        run: "PHP_CS_FIXER_IGNORE_ENV=1 vendor/bin/php-cs-fixer fix -v --dry-run"
+        if: ${{ matrix.php-version != '8.5' }}
+        run: composer run-script cs:dry-run
+
+      - name: "Check PHPStan"
+        run: composer run-script analyse
+
+      - name: "Run test suite"
+        run: composer run-script test:unit:coverage
+        env:
+          XDEBUG_MODE: coverage
+
+      - name: "Validate test coverage"
+        uses: "5monkeys/cobertura-action@v14"
+        if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
+        with:
+          path: coverage/coverage.xml
+          minimum_coverage: 80
+          skip_covered: true
+          fail_below_threshold: 80
+          only_changed_files: true
+          show_class_names: true
+          show_missing: true

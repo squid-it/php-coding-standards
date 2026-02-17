@@ -13,15 +13,47 @@
     "sort-packages": true
   },
   "require": {
-    "php": "^8.2",
-    "friendsofphp/php-cs-fixer": "^v3.59"
+    "php": "^8.4",
+    "friendsofphp/php-cs-fixer": "^v3.87",
+    "phpstan/phpstan": "^2.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^12.5"
   },
   "autoload": {
     "psr-4": {
-      "SquidIT\\PhpCodingStandards\\": "src/"
+      "SquidIT\\PhpCodingStandards\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SquidIT\\Tests\\PhpCodingStandards\\": "tests"
     }
   },
   "scripts": {
-    "fix": "php-cs-fixer fix"
+    "analyse": "phpstan analyse -l 9 src tests",
+    "cs:fix": "php-cs-fixer fix",
+    "cs:dry-run": "php-cs-fixer fix -v --dry-run",
+    "fix": [
+      "@cs:fix",
+      "@analyse",
+      "@test:unit:coverage"
+    ],
+    "test:integration": "phpunit --testsuite integration",
+    "test:unit": "phpunit --testsuite unit",
+    "test:unit:coverage": [
+      "@putenv XDEBUG_MODE=coverage",
+      "phpunit --testsuite unit --coverage-cobertura coverage/coverage.xml",
+      "@test:coverage:remove-source"
+    ],
+    "test:unit:coverage-text": [
+      "@putenv XDEBUG_MODE=coverage",
+      "phpunit --testsuite unit --coverage-text"
+    ],
+    "test:coverage:remove-source": [
+      "perl -0777 -i -pe \"s@<sources>.*</sources>@@sg\" ./coverage/coverage.xml",
+      "perl -i -pe 's/filename=\"/filename=\"src\\//gs' ./coverage/coverage.xml",
+      "perl -i -pe 's/ timestamp=\"\\d+\"//gs' ./coverage/coverage.xml"
+    ]
   }
 }

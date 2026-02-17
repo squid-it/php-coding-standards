@@ -3,3 +3,9 @@ composer.lock
 .php_cs.cache
 .php-cs-fixer.cache
 vendor/
+.claude/
+.AGENT.md
+AGENT.md
+AGENTS.md
+/var
+
