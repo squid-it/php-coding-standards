@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Fixtures\SingleClassPerFile\Invalid;
+namespace Fixture\SingleClassPerFile\Invalid;
 
 class ClassAndTraitClass {}
 
