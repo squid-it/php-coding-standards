@@ -9,15 +9,16 @@ class Rules
     /**
      * @param array<string, mixed> $overriddenRules
      *
-     * @return array<string, mixed>
+     * @return array<string, array<string, mixed>|bool>
      */
     public static function getRules(array $overriddenRules = []): array
     {
+        /** @var array<string, array<string, mixed>|bool> */
         return array_merge(self::getDefaultRules(), $overriddenRules);
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, array<string, mixed>|bool>
      */
     private static function getDefaultRules(): array
     {
