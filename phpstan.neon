@@ -1,3 +1,8 @@
+rules:
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\SingleClassPerFileRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowAnonymousFunctionRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowLogicalNotRule
+
 parameters:
 	level: 9
 	paths:
@@ -5,3 +10,5 @@ parameters:
 		- tests
 	treatPhpDocTypesAsCertain: false
 	tmpDir: var/cache/phpstan
+	excludePaths:
+		- tests/Unit/PHPStan/Rules/Fixtures
