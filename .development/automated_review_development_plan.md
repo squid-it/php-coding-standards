@@ -131,7 +131,10 @@ Other rules:
 ### 6) `ContainingClassResolver`
 
 - Resolve containing class for a node scope.
-- Provide `Factory` exception signal when class name ends with `Factory`.
+- Provide creator-class exception signal for class-name suffixes:
+  - `Factory`
+  - `Builder`
+  - `Provider`
 
 ## Rules list (v1)
 
@@ -172,12 +175,12 @@ Identifier:
 
 Backed string values must be camelCase unless a `to*()` method references that exact literal.
 
-### Rule 6: No service instantiation in non-factory classes
+### Rule 6: No service instantiation in non-creator classes
 
 Identifier:
 - `squidit.architecture.noServiceInstantiation`
 
-Disallow `new` for non-VO/DTO services in non-factory classes.
+Disallow `new` for non-VO/DTO services in non-creator classes.
 
 ## Memory and performance guardrails
 
@@ -320,13 +323,15 @@ Deliverables:
   - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/NoServiceInstantiation`
 
 Acceptance:
-- Factory exception, builtin exception, VO/DTO allowance, and invalid service instantiation are covered.
+- Creator-class suffix exceptions (`Factory`, `Builder`, `Provider`), builtin exception, VO/DTO allowance, and invalid service instantiation are covered.
 
 ## Session 10 - Documentation and rollout
 
 Deliverables:
 - Document all identifiers and examples in `README.md`.
 - Document tuning guidance and suppression strategy.
+- Document `NoServiceInstantiationRule` creator suffix configuration (defaults: `Factory`, `Builder`, `Provider`).
+- Document PHPStan `services` wiring for overriding creator suffixes.
 - Document `phpstan-autoreview.neon` usage as optional experimental checks.
 
 Acceptance:

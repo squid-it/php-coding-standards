@@ -8,6 +8,11 @@ Concrete PR-by-PR build checklist with file targets and fixture matrix.
 - PR 2: Completed (approved).
 - PR 3: Completed (approved).
 - PR 4: Completed (approved).
+- PR 5: Completed.
+- PR 6: Completed.
+- PR 7: Completed.
+- PR 8: Completed.
+- PR 9: Completed.
 
 ## Repository layout (target)
 
@@ -386,6 +391,11 @@ Depends on: PR 4, PR 5, PR 6, PR 7, PR 8, PR 9
 
 - Expand `README.md` with all rule identifiers and examples.
 - Document suppression strategy and tuning knobs.
+- Document `NoServiceInstantiationRule` creator suffix configuration with defaults:
+  - `Factory`
+  - `Builder`
+  - `Provider`
+- Document PHPStan `services` wiring for custom creator suffixes.
 - Document usage split:
   - stable: `phpstan.neon`
   - experimental: `phpstan-autoreview.neon`
@@ -401,6 +411,7 @@ Depends on: PR 4, PR 5, PR 6, PR 7, PR 8, PR 9
 ### Acceptance checklist
 
 - Developers can run both configs and understand fix/suppress choices.
+- Developers can override creator suffixes for `squidit.architecture.noServiceInstantiation` without excluding provider folders.
 
 # Test fixture matrix
 
