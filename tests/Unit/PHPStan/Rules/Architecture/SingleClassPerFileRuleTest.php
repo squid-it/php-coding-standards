@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules;
+namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture;
 
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use SquidIT\PhpCodingStandards\PHPStan\Rules\SingleClassPerFileRule;
+use SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule;
 use Throwable;
 
 /**
@@ -14,7 +14,7 @@ use Throwable;
  */
 final class SingleClassPerFileRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR = __DIR__ . '/Fixtures/SingleClassPerFile';
+    private const string FIXTURES_DIR = __DIR__ . '/../Fixtures/Architecture/SingleClassPerFile';
 
     protected function getRule(): Rule
     {

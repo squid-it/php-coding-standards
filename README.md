@@ -43,25 +43,27 @@ To use them, add the following to your project's `phpstan.neon`:
 
 ```neon
 rules:
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\SingleClassPerFileRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowAnonymousFunctionRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowLogicalNotRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
 ```
+
+Experimental autoreview rules are configured separately in `phpstan-autoreview.neon`.
 
 #### Available Rules
 
 | Rule | Identifier | Description |
 |------|------------|-------------|
-| `SingleClassPerFileRule` | `squidit.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
-| `DisallowAnonymousFunctionRule` | `squidit.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
-| `DisallowLogicalNotRule` | `squidit.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
+| `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
+| `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
+| `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
 
 #### Ignoring a Rule
 
 To ignore a specific rule for a file or line, use the PHPStan ignore syntax with the rule identifier:
 
 ```php
-// @phpstan-ignore squidit.singleClassPerFile
+// @phpstan-ignore squidit.architecture.singleClassPerFile
 ```
 
 Or in your `phpstan.neon`:
@@ -69,5 +71,5 @@ Or in your `phpstan.neon`:
 ```neon
 parameters:
     ignoreErrors:
-        - identifier: squidit.singleClassPerFile
+        - identifier: squidit.architecture.singleClassPerFile
 ```

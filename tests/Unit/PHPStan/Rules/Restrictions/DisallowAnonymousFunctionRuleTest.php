@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules;
+namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Restrictions;
 
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowAnonymousFunctionRule;
+use SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule;
 use Throwable;
 
 /**
@@ -14,7 +14,7 @@ use Throwable;
  */
 final class DisallowAnonymousFunctionRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR = __DIR__ . '/Fixtures/DisallowAnonymousFunction';
+    private const string FIXTURES_DIR = __DIR__ . '/../Fixtures/Restrictions/DisallowAnonymousFunction';
 
     protected function getRule(): Rule
     {

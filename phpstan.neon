@@ -1,7 +1,7 @@
 rules:
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\SingleClassPerFileRule
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowAnonymousFunctionRule
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowLogicalNotRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
 
 parameters:
 	level: 9

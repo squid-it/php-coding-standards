@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\PhpCodingStandards\PHPStan\Rules;
+namespace SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture;
 
 use PhpParser\Node;
 use PhpParser\Node\Stmt\Class_;
@@ -17,8 +17,6 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
-
-use function sprintf;
 
 /**
  * @implements Rule<FileNode>
@@ -60,7 +58,7 @@ final class SingleClassPerFileRule implements Rule
                     (string) $offending->name,
                 ),
             )
-                ->identifier('squidit.singleClassPerFile')
+                ->identifier('squidit.architecture.singleClassPerFile')
                 ->line($offending->getStartLine())
                 ->build();
         }
