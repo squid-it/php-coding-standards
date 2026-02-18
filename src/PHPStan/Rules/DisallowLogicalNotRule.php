@@ -10,6 +10,7 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\ShouldNotHappenException;
 
 /**
  * @implements Rule<BooleanNot>
@@ -22,6 +23,8 @@ final class DisallowLogicalNotRule implements Rule
     }
 
     /**
+     * @throws ShouldNotHappenException
+     *
      * @return array<int, RuleError>
      */
     public function processNode(Node $node, Scope $scope): array

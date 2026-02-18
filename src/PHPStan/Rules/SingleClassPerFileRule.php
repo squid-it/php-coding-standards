@@ -16,6 +16,7 @@ use PHPStan\Node\FileNode;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
+use PHPStan\ShouldNotHappenException;
 
 use function sprintf;
 
@@ -30,6 +31,8 @@ final class SingleClassPerFileRule implements Rule
     }
 
     /**
+     * @throws ShouldNotHappenException
+     *
      * @return array<int, RuleError>
      */
     public function processNode(Node $node, Scope $scope): array

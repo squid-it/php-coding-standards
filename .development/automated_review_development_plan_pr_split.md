@@ -1,106 +1,185 @@
+# SquidIT PHPStan Automated Review Ruleset (Experimental) - Repo-Ready PR Checklist
 
-# SquidIT PHPStan Naming Ruleset (Experimental) — Repo-Ready Checklist
-
-This is a concrete, PR-by-PR build checklist (no PHP code yet), with file lists and a test fixture matrix.
-
----
+Concrete PR-by-PR build checklist with file targets and fixture matrix.
 
 ## Repository layout (target)
 
-```.
-├─ src/
-│  └─ PHPStan/
-│     ├─ Rules/
-│     │  ├─ Naming/
-│     │  └─ Architecture/
-│     └─ Support/
-├─ tests/
-│  ├─ Unit/
-│  │  └─ PHPStan/
-│  │     ├─ Rules/
-│  │     │  ├─ Naming/
-│  │     │  └─ Architecture/
-│  │     └─ Support/
-│  └─ Fixtures/
-│     ├─ Naming/
-│     ├─ Logger/
-│     ├─ Enum/
-│     └─ Architecture/
-├─ phpstan-naming.neon
-├─ phpunit.xml
-├─ composer.json
-├─ README.md
-└─ DEVELOPMENT.md
+```text
+src/
+  PHPStan/
+    Rules/
+      Naming/
+      Architecture/
+      Restrictions/
+    Support/
+tests/
+  Unit/
+    PHPStan/
+      Rules/
+        Naming/
+        Architecture/
+        Restrictions/
+        Fixtures/
+          Naming/
+          Architecture/
+          Restrictions/
+      Support/
+phpstan.neon
+phpstan-autoreview.neon
+phpunit.xml.dist
+composer.json
+README.md
+.development/automated_review_development_plan.md
+.development/automated_review_development_plan_pr_split.md
 ```
 
-### Namespaces
-- Production: `SquidIT\PhpCodingStandards\PHPStan\Rules\...`
+## Namespace targets
+
+- Production rules: `SquidIT\PhpCodingStandards\PHPStan\Rules\...`
 - Support: `SquidIT\PhpCodingStandards\PHPStan\Support\...`
-- Tests (per your mapping rule):
+- Tests:
   - `SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\...`
   - `SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\...`
 
----
+## Fixture convention (locked)
 
-## PHPStan rule identifiers (v1)
-All MUST start with `squidit.naming*`:
+- Fixture root: `tests/Unit/PHPStan/Rules/Fixtures`.
+- Fixture categories mirror `src/PHPStan/Rules` categories.
+- Required layout:
+  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/<RuleName>/Invalid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/<RuleName>/Invalid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/<RuleName>/Invalid/<ScenarioName>.php`
+- Folder names and file names are strict PascalCase.
 
-- `squidit.namingTypeSuffixMismatch`
-- `squidit.namingInterfaceBareNameNotice`
-- `squidit.namingIterablePluralMismatch`
-- `squidit.namingMapForbidden`
-- `squidit.namingForeachValueVarMismatch`
-- `squidit.namingLoggerContextKeyCamelCase`
-- `squidit.namingEnumBackedValueCamelCase`
-- `squidit.namingNoServiceInstantiation`
+## Optional experimental wiring
 
----
+- `phpstan-autoreview.neon` is isolated and includes only new experimental autoreview rules.
+- Existing stable rules remain in `phpstan.neon`.
 
-## Optional “run on demand” wiring (non-PHP)
-> You said composer scripts aren’t the question; this is just a concrete suggestion.
+## Identifier taxonomy (locked)
 
-- `composer cs:naming:check` → runs PHPStan with `phpstan-naming.neon`
+- Naming: `squidit.naming.<ruleName>`
+- Architecture: `squidit.architecture.<ruleName>`
+- Restrictions: `squidit.restrictions.<ruleName>`
 
----
+## Identifier catalog
 
-# PR Plan (1 PR = 1 development session)
+Stable existing rules after taxonomy migration:
+- `squidit.architecture.singleClassPerFile`
+- `squidit.restrictions.disallowAnonymousFunction`
+- `squidit.restrictions.disallowLogicalNot`
 
-Each PR includes:
-- ✅ Deliverables (files to add/modify)
-- ✅ Acceptance checklist
-- ✅ Test fixtures to add
+New experimental autoreview rules:
+- `squidit.naming.typeSuffixMismatch`
+- `squidit.naming.interfaceBareNameNotice`
+- `squidit.naming.iterablePluralMismatch`
+- `squidit.naming.mapForbidden`
+- `squidit.naming.foreachValueVarMismatch`
+- `squidit.naming.loggerContextKeyCamelCase`
+- `squidit.naming.enumBackedValueCamelCase`
+- `squidit.architecture.noServiceInstantiation`
 
----
+## Boundary definitions (locked)
 
-## PR 1 — Scaffold + CI-ready baseline
+### NameNormalizer
+
+- Use short class names only.
+- Mandatory strip suffixes: `Interface`, `Abstract`, `Trait`.
+  - Only stripped form is allowed.
+- Optional strip suffixes: `Dto`, `Vo`, `Entity`.
+  - Keep both stripped and unstripped forms.
+- Never strip suffixes: `Factory`, `Collection`.
+  - Keep only unstripped form.
+
+Examples:
+- `ChannelInterface` -> `channel`
+- `UserDto` -> `userDto`, `user`
+- `OrderEntity` -> `orderEntity`, `order`
+- `UserFactory` -> `userFactory`
+- `NodeCollection` -> `nodeCollection`
+
+### TypeCandidateResolver internal/builtin boundary
+
+- Ignore `null` and `false` in unions.
+- Process named object types only.
+- Expand self, parent, and interface hierarchy.
+- Exclude any symbol where reflection reports internal (`ReflectionClass::isInternal()` true).
+- Internal includes PHP core, SPL, and extension-provided symbols.
+- Candidate list is generated from userland symbols only.
+
+### VoDtoClassifier constraints
+
+Immutability gate (must pass one):
+- class is `readonly`, or
+- all declared non-static instance properties are `readonly`.
+
+Public API gate (must pass):
+- allowed public methods:
+  - `__construct`
+  - `get*`, `is*`, `has*`
+  - `toArray`, `jsonSerialize`, `__toString`, `equals`, `equalsTo`
+- any other public method fails classification.
+- private/protected methods are ignored.
+- internal/builtin classes are auto-allowed for instantiation checks.
+
+# PR Plan (1 PR = 1 session)
+
+## PR 1 - Align existing project structure + baseline isolation
+
+Depends on: none
 
 ### Deliverables
-- Project wiring and minimal docs.
-- Rule test harness wired (empty tests ok).
+
+- Restructure existing rules into grouped folders (no behavior changes):
+  - `SingleClassPerFileRule` -> `Rules/Architecture`
+  - `DisallowAnonymousFunctionRule` -> `Rules/Restrictions`
+  - `DisallowLogicalNotRule` -> `Rules/Restrictions`
+- Move existing rule tests to grouped test folders.
+- Move fixtures to mirrored category paths:
+  - `Fixtures/Architecture/SingleClassPerFile/...`
+  - `Fixtures/Restrictions/DisallowAnonymousFunction/...`
+  - `Fixtures/Restrictions/DisallowLogicalNot/...`
+- Normalize fixture names to strict PascalCase.
+- Migrate existing rule identifiers to taxonomy.
+- Add `phpstan-autoreview.neon` for experimental rules only.
+- Update `phpstan.neon` and `README.md` references.
 
 ### Files
-- `composer.json` (autoload psr-4 for `SquidIT\PhpCodingStandards\`)
-- `phpunit.xml`
-- `phpstan-naming.neon` (loads extension services)
-- `README.md` (how to run the experimental rules)
-- `DEVELOPMENT.md` (this plan)
+
+- Move `src/PHPStan/Rules/SingleClassPerFileRule.php` -> `src/PHPStan/Rules/Architecture/SingleClassPerFileRule.php`
+- Move `src/PHPStan/Rules/DisallowAnonymousFunctionRule.php` -> `src/PHPStan/Rules/Restrictions/DisallowAnonymousFunctionRule.php`
+- Move `src/PHPStan/Rules/DisallowLogicalNotRule.php` -> `src/PHPStan/Rules/Restrictions/DisallowLogicalNotRule.php`
+- Move `tests/Unit/PHPStan/Rules/SingleClassPerFileRuleTest.php` -> `tests/Unit/PHPStan/Rules/Architecture/SingleClassPerFileRuleTest.php`
+- Move `tests/Unit/PHPStan/Rules/DisallowAnonymousFunctionRuleTest.php` -> `tests/Unit/PHPStan/Rules/Restrictions/DisallowAnonymousFunctionRuleTest.php`
+- Move `tests/Unit/PHPStan/Rules/DisallowLogicalNotRuleTest.php` -> `tests/Unit/PHPStan/Rules/Restrictions/DisallowLogicalNotRuleTest.php`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/SingleClassPerFile/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Architecture/SingleClassPerFile/*`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/DisallowAnonymousFunction/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowAnonymousFunction/*`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/DisallowLogicalNot/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowLogicalNot/*`
+- Add `phpstan-autoreview.neon`
+- Update `phpstan.neon`
+- Update `README.md`
 
 ### Acceptance checklist
-- `vendor/bin/phpunit` runs.
-- `vendor/bin/phpstan analyse -c phpstan-naming.neon` loads configuration and exits cleanly (even with no rules registered yet or with stub registration).
 
-### Fixtures
-- None required.
+- `vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite unit` passes.
+- `vendor/bin/phpstan analyse -c phpstan.neon` passes.
+- `vendor/bin/phpstan analyse -c phpstan-autoreview.neon` loads cleanly.
 
----
+## PR 2 - Support: NameNormalizer + Pluralizer + Singularizer
 
-## PR 2 — Support: naming normalization + plural/singular engine
+Depends on: PR 1
 
 ### Deliverables
-- Implement support classes (no rules yet).
-- Unit tests for support classes.
+
+- Implement support classes.
+- Add unit tests for support behaviors.
+- Implement NameNormalizer exactly per locked boundary definitions.
 
 ### Files
+
 - `src/PHPStan/Support/NameNormalizer.php`
 - `src/PHPStan/Support/Pluralizer.php`
 - `src/PHPStan/Support/Singularizer.php`
@@ -108,285 +187,234 @@ Each PR includes:
 - `tests/Unit/PHPStan/Support/PluralizerTest.php`
 - `tests/Unit/PHPStan/Support/SingularizerTest.php`
 
-### What to cover (support behaviors)
-- Use **short class names only**.
-- Strip suffixes: `Interface|Abstract|Trait`.
-- Allow stripped variants for `Dto|Vo|Entity` (case-insensitive).
-- **Never strip**: `Collection|Factory`.
-- CamelCase normalisation for initialisms.
-- Plural allowed forms: `*s`, `*List`, `*Collection`, `*ById`, `*ByKey`, `*Lookup`.
-- Singularization removes `List|Collection|Lookup|ById|ByKey` then de-pluralizes.
-
 ### Acceptance checklist
-- Support tests cover edge cases:
-  - `UserDto` → base allows `user` and `userDto`
-  - `SelectableChannelInterface` → base allows `selectableChannel` and `channel` (hierarchy handled later)
-  - Forbid stripping `Factory`/`Collection`
 
-### Fixtures
-- None (pure unit tests).
+- Unit tests cover mandatory/optional/never-strip suffix behavior.
+- Unit tests cover initialism normalization and plural/singular edge cases.
 
----
+## PR 3 - Support: TypeCandidateResolver + VariableNameMatcher
 
-## PR 3 — Support: type candidate resolver + variable matcher
+Depends on: PR 2
 
 ### Deliverables
-- Resolve “allowed base names” from PHPStan `Type`:
-  - Ignore `null` and `false` in unions.
-  - Only named object types.
-  - Expand hierarchy but exclude **internal/builtin** candidates entirely.
-- Variable matching:
-  - exact match OR endsWith(ucfirst(base)).
-  - interface bare-name triggers “notice” decision (rule will emit later).
+
+- Implement type candidate extraction and variable matching.
+- Add optional deny-list support object.
+- Implement internal/builtin boundary exactly per locked definition.
 
 ### Files
+
 - `src/PHPStan/Support/TypeCandidateResolver.php`
 - `src/PHPStan/Support/VariableNameMatcher.php`
-- `src/PHPStan/Support/DenyList.php` (optional simple value object)
-- `tests/Unit/PHPStan/Support/VariableNameMatcherTest.php`
+- `src/PHPStan/Support/DenyList.php` (optional)
 - `tests/Unit/PHPStan/Support/TypeCandidateResolverTest.php`
+- `tests/Unit/PHPStan/Support/VariableNameMatcherTest.php`
 
 ### Acceptance checklist
-- Unit tests validate:
-  - `Foo|null|false` → candidates only `foo`.
-  - Hierarchy expansion returns parent/interface names (non-internal only).
-  - Internal/builtin candidates are excluded from the suffix set.
 
-### Fixtures
-- Use small test doubles or PHPStan testing utilities; avoid project-wide fixtures here.
+- Tests cover `Foo|null|false`, hierarchy expansion, and internal/builtin exclusion.
 
----
+## PR 4 - Naming rule: TypeSuffixMismatch
 
-## PR 4 — Rule: Type suffix mismatch (+ interface bare-name notice)
+Depends on: PR 2, PR 3
 
 ### Deliverables
-- Rule checks:
-  - Assignments (`$x = expr`)
-  - Properties (`private Foo $bar`)
-  - Promoted properties
-- Expressions covered:
-  - `new`, `clone`
-  - calls where inferred return is object (including static constructors per return-type, not called-class)
-- Emits:
-  - hard error: `squidit.namingTypeSuffixMismatch`
-  - notice: `squidit.namingInterfaceBareNameNotice` when inferred is interface and var name is bare base
+
+- Implement assignment/property/promoted-property suffix checks.
+- Add interface bare-name notice path.
 
 ### Files
+
 - `src/PHPStan/Rules/Naming/TypeSuffixMismatchRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/TypeSuffixMismatchRuleTest.php`
-- `tests/Fixtures/Naming/type-suffix-mismatch.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Invalid/*.php`
 
-### Fixture content to include (scenarios)
-- ✅ `private Foo $foo;` passes
-- ❌ `private Foo $bar;` fails (expects `foo` suffix)
-- ✅ `private Foo $barFoo;` passes
-- ✅ `private ChannelInterface $channel;` passes but emits **notice**
-- ✅ `private ChannelInterface $inboxChannel;` passes
-- ✅ union return `Foo|Bar|null` allows suffix `Foo` or `Bar`
-- ✅ `clone $foo` assignment passes when suffix matches
+### Fixture scenarios
+
+- `private Foo $Foo;` invalid and `private Foo $foo;` valid.
+- `private Foo $barFoo;` valid.
+- Interface bare-name notice case.
+- Union and clone scenarios.
 
 ### Acceptance checklist
-- Rule is stateless (no node storage).
-- Messages include:
-  - expected suffix options
-  - inferred type(s) considered
 
----
+- Reports `squidit.naming.typeSuffixMismatch` and `squidit.naming.interfaceBareNameNotice` correctly.
 
-## PR 5 — Rule: Iterable plural naming + Map forbidden
+## PR 5 - Naming rule: IterablePluralNaming
+
+Depends on: PR 2, PR 3
 
 ### Deliverables
-- Detect iterable-of-objects using PHPStan inferred iterable value type and PHPDoc generics.
-- Enforce allowed variable/property names for collections:
-  - `nodes`, `nodeList`, `nodeCollection`, `nodeById`, `nodeByKey`, `nodeLookup` + prefixed variants.
-- Hard error if name contains `map` in any case:
-  - identifier `squidit.namingMapForbidden`
+
+- Enforce plural naming for object iterables.
+- Enforce map forbidden naming.
 
 ### Files
+
 - `src/PHPStan/Rules/Naming/IterablePluralNamingRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/IterablePluralNamingRuleTest.php`
-- `tests/Fixtures/Naming/iterable-plural.php`
-- (optional) `tests/Fixtures/Naming/map-forbidden.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming/Invalid/*.php`
 
 ### Fixture scenarios
-- `/** @var array<int, Node> */ $nodes = ...;` ✅
-- `$nodeList` ✅
-- `$activeNodeList` ✅
-- `$nodeById` ✅
-- `$nodeMap` ❌ `squidit.namingMapForbidden`
-- associative `array<string, Node>` still prefers plural forms; allow `nodeByKey` ✅
+
+- Valid: `nodes`, `nodeList`, `activeNodeList`, `nodeById`.
+- Invalid: `nodeMap`.
+- Assoc iterable case with valid naming.
 
 ### Acceptance checklist
-- No reliance on “string contains List” alone; must confirm iterable value type is object.
-- Map forbidden check applies regardless of type (per your “hard error” requirement).
 
----
+- Reports `squidit.naming.iterablePluralMismatch` and `squidit.naming.mapForbidden` correctly.
 
-## PR 6 — Rule: Foreach element variable naming
+## PR 6 - Naming rule: ForeachValueVariableNaming
+
+Depends on: PR 2, PR 3, PR 5
 
 ### Deliverables
-- Enforce foreach value-var naming:
-  - Allowed: singularized iterable var name
-  - Allowed: element type suffix
-  - Allowed: singular+type combined
-  - Prefixing allowed via “endsWith base” rule
-- Ignore key-var naming in v1.
-- Skip destructuring.
+
+- Enforce foreach value variable naming by singularized iterable and/or element type.
 
 ### Files
+
 - `src/PHPStan/Rules/Naming/ForeachValueVariableNamingRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/ForeachValueVariableNamingRuleTest.php`
-- `tests/Fixtures/Naming/foreach-value-var.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming/Invalid/*.php`
 
 ### Fixture scenarios
-- `$children as $child` ✅ (singular of `$children`)
-- `$children as $childNode` ✅ (singular + type)
-- `$children as $firstChildNode` ✅ (prefix + combined)
-- `$children as $item` ❌ mismatch
-- `$nodeList as $node` ✅ (List→singular)
-- `$nodeById as $node` ✅ (ById→singular)
+
+- Valid: `$children as $child`, `$children as $childNode`, `$children as $firstChildNode`.
+- Invalid: `$children as $item`.
 
 ### Acceptance checklist
-- If iterable var name can’t be singularized, fall back to type suffix enforcement.
-- Must use inferred element type candidates (object only).
 
----
+- Reports `squidit.naming.foreachValueVarMismatch` correctly.
 
-## PR 7 — Rule: Logger context keys camelCase (scoped)
+## PR 7 - Naming rule: LoggerContextKeyCamelCase
+
+Depends on: PR 2, PR 3
 
 ### Deliverables
-- Only enforce for method calls where receiver is `Psr\Log\LoggerInterface`.
-- Only inspect context argument (2nd arg).
-- Only enforce for **string-literal keys**.
-- Rule rejects snake_case (contains `_`).
+
+- Enforce camelCase for string-literal context keys on logger calls only.
 
 ### Files
+
 - `src/PHPStan/Rules/Naming/LoggerContextKeyCamelCaseRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/LoggerContextKeyCamelCaseRuleTest.php`
-- `tests/Fixtures/Logger/logger-context-keys.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase/Invalid/*.php`
 
 ### Fixture scenarios
-- `$logger->info('x', ['fooBar' => 1]);` ✅
-- `$logger->info('x', ['foo_bar' => 1]);` ❌
-- `$logger->info('x', [$key => 1]);` ✅ (skipped)
-- `$notLogger->info('x', ['foo_bar' => 1]);` ✅ (out of scope)
+
+- Valid: `['fooBar' => 1]`.
+- Invalid: `['foo_bar' => 1]`.
+- Skipped: dynamic key and non-logger receivers.
 
 ### Acceptance checklist
-- No “array literal anywhere” enforcement yet (explicitly scoped to logger calls).
 
----
+- Reports `squidit.naming.loggerContextKeyCamelCase` correctly.
 
-## PR 8 — Rule: Enum backed values camelCase + `to*()` exception
+## PR 8 - Naming rule: EnumBackedValueCamelCase
+
+Depends on: PR 1
 
 ### Deliverables
-- For backed enums with string backed values:
-  - camelCase string literal is OK
-  - snake_case is error unless enum contains a `to*()` method that references the exact literal string.
-- Keep scanning local to that enum node (no global indexing).
+
+- Enforce camelCase backed string values.
+- Allow exception when `to*()` method references same literal.
 
 ### Files
+
 - `src/PHPStan/Rules/Naming/EnumBackedValueCamelCaseRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/EnumBackedValueCamelCaseRuleTest.php`
-- `tests/Fixtures/Enum/enum-backed-values.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase/Invalid/*.php`
 
 ### Fixture scenarios
-- `case Foo = 'fooBar';` ✅
-- `case Foo = 'foo_bar';` ❌ without conversion
-- `case Foo = 'foo_bar';` ✅ with `toDb()` returning `'foo_bar'`
-- `case Foo = 'foo_bar';` ✅ if any `to*()` method references `'foo_bar'` anywhere in body
+
+- Valid: `'fooBar'`.
+- Invalid: `'foo_bar'` without conversion.
+- Valid exception: `'foo_bar'` referenced from `toDb()` or other `to*()` method.
 
 ### Acceptance checklist
-- Method name matcher: `to[A-Z].*` (simple)
-- Literal matching is exact string value match
 
----
+- Reports `squidit.naming.enumBackedValueCamelCase` correctly.
 
-## PR 9 — Rule: No instantiation of non-VO/DTO inside non-VO/DTO (Factory exception)
+## PR 9 - Architecture rule: NoServiceInstantiation
+
+Depends on: PR 2, PR 3
 
 ### Deliverables
-- When encountering `new ClassName(...)` inside a class method (including `__construct`):
-  - allowed if containing class short name ends with `Factory`
-  - allowed if instantiated class is internal/builtin
-  - allowed if instantiated class is classified as VO/DTO
-  - otherwise error: “Inject or use a factory”
-- VO/DTO structural classifier (cached):
-  - readonly class AND public API limited to getters/pure helpers (allowlist)
-  - class with readonly and only public properties counts as VO/DTO
-  - public methods like `equals/toArray/jsonSerialize/__toString` allowed
-  - private/protected methods allowed
+
+- Implement non-factory service instantiation restriction.
+- Add VO/DTO classifier and containing class resolver.
+- Implement classifier exactly per locked boundary definitions.
 
 ### Files
+
 - `src/PHPStan/Support/VoDtoClassifier.php`
 - `src/PHPStan/Support/ContainingClassResolver.php`
 - `src/PHPStan/Rules/Architecture/NoServiceInstantiationRule.php`
 - `tests/Unit/PHPStan/Rules/Architecture/NoServiceInstantiationRuleTest.php`
-- `tests/Fixtures/Architecture/no-service-instantiation.php`
-- `tests/Fixtures/Architecture/vo-dto-examples.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation/Invalid/*.php`
 
 ### Fixture scenarios
-- In non-factory class: `new HttpClient()` ❌
-- In `FooFactory`: `new HttpClient()` ✅
-- `new DateTimeImmutable()` ✅
-- `new UserDto(...)` readonly, promoted props ✅
-- `new SomethingReadonlyWithHandle()` ❌ (public behavior method not in allowlist)
+
+- Invalid in non-factory class: `new HttpClient()`.
+- Valid in `*Factory` class.
+- Valid internal/builtin class instantiation.
+- Valid VO/DTO class and invalid readonly behavior class.
 
 ### Acceptance checklist
-- No cross-file analysis needed.
-- Classifier uses reflection info via PHPStan scope, cached by FQCN.
 
----
+- Reports `squidit.architecture.noServiceInstantiation` correctly.
 
-## PR 10 — Docs + rollout + tuning playbook
+## PR 10 - Documentation, rollout, and tuning
+
+Depends on: PR 4, PR 5, PR 6, PR 7, PR 8, PR 9
 
 ### Deliverables
-- Document all rules, identifiers, examples, suppression patterns.
-- Provide baseline workflow guidance for existing repos.
-- Provide “tuning knobs”:
-  - deny-list updates
-  - VO/DTO method allowlist adjustments
-  - pluralization exceptions
+
+- Expand `README.md` with all rule identifiers and examples.
+- Document suppression strategy and tuning knobs.
+- Document usage split:
+  - stable: `phpstan.neon`
+  - experimental: `phpstan-autoreview.neon`
 
 ### Files
-- `README.md` expanded
-- `DEVELOPMENT.md` updated with real-world tuning notes
+
+- `README.md`
+- `.development/automated_review_development_plan.md`
+- `.development/automated_review_development_plan_pr_split.md`
 - `docs/identifiers.md` (optional)
 - `docs/suppression.md` (optional)
 
 ### Acceptance checklist
-- Someone can run:
-  - `phpstan -c phpstan-naming.neon`
-  - interpret any error
-  - choose: fix vs ignore-by-identifier vs `@phpstan-ignore-next-line`
 
----
+- Developers can run both configs and understand fix/suppress choices.
 
-# Test Fixture Matrix (what we must cover)
+# Test fixture matrix
 
-| Rule / Identifier | Fixture file(s)                                          | Must cover |
-|---|----------------------------------------------------------|---|
-| `squidit.namingTypeSuffixMismatch` | `tests/Fixtures/Naming/TypeSuffixMismatch.php`           | assign + property + promoted prop; new/clone/call return type; union ignoring null/false |
-| `squidit.namingInterfaceBareNameNotice` | same as above                                            | bare interface name emits notice, prefixed interface name passes |
-| `squidit.namingIterablePluralMismatch` | `tests/Fixtures/Naming/IterablePlural.php`               | list + assoc arrays; allowed suffixes; prefixes |
-| `squidit.namingMapForbidden` | `tests/Fixtures/Naming/mapForbidden.php` (or bundled)    | any var/property containing Map/map triggers |
-| `squidit.namingForeachValueVarMismatch` | `tests/Fixtures/Naming/foreachValueVar.php`              | singularized iterable name + element type suffix + combined; fallback behavior |
-| `squidit.namingLoggerContextKeyCamelCase` | `tests/Fixtures/Logger/loggerContextKeys.php`            | only LoggerInterface; only context arg; only string-literal keys |
-| `squidit.namingEnumBackedValueCamelCase` | `tests/Fixtures/Enum/enumBackedValues.php`               | camel ok; snake error; snake ok with `to*()` referencing literal |
-| `squidit.namingNoServiceInstantiation` | `tests/Fixtures/Architecture/noNerviceInstantiation.php` | non-factory fails; factory ok; internal ok; VO/DTO ok; readonly behavior fails |
+| Rule / Identifier | Fixture root | Must cover |
+|---|---|---|
+| `squidit.naming.typeSuffixMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch` | assign/property/promoted; new/clone/calls; union null/false handling |
+| `squidit.naming.interfaceBareNameNotice` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch` | bare interface base notice and prefixed valid names |
+| `squidit.naming.iterablePluralMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming` | list + assoc iterables; allowed suffixes; prefixes |
+| `squidit.naming.mapForbidden` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming` | any variable/property containing `Map`/`map` |
+| `squidit.naming.foreachValueVarMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming` | singularized iterable + type suffix + combined fallback |
+| `squidit.naming.loggerContextKeyCamelCase` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase` | logger-only scope; context arg only; string-literal keys only |
+| `squidit.naming.enumBackedValueCamelCase` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase` | camel valid; snake invalid; snake valid with `to*()` literal reference |
+| `squidit.architecture.noServiceInstantiation` | `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation` | non-factory invalid; factory valid; builtin valid; VO/DTO valid; readonly behavior invalid |
 
----
+# Definition of done
 
-# “Definition of Done” (overall)
-- All rules registered in `phpstan-naming.neon`.
-- Every identifier has at least 3 fixture scenarios:
-  1) valid
-  2) invalid
-  3) edge case (union/hierarchy/prefix/exemption)
-- No rule stores AST nodes or Types in long-lived structures (only small string/boolean caches).
-- Error messages include:
-  - variable/property name
-  - inferred type(s)
-  - allowed suffix candidates
-  - identifier
-  - (for instantiation rule) “Inject or use a factory” guidance.
-
----
+- Existing rules are grouped under `Architecture` and `Restrictions` without behavior change.
+- Existing stable identifiers are migrated to taxonomy.
+- New autoreview rules are grouped under `Naming` and `Architecture` as planned.
+- `phpstan-autoreview.neon` includes only the new experimental rules.
+- Every identifier has at least 3 fixture scenarios: valid, invalid, edge.
+- No rule stores AST nodes in long-lived caches.
+- Error messages include variable/property name, inferred type context, allowed candidates, and identifier.
