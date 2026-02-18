@@ -1,0 +1,7 @@
+parameters:
+	scanFiles:
+		- Fixtures/ForeachValueVariableNaming/Valid/ChildNode.php
+		- Fixtures/ForeachValueVariableNaming/Valid/ValidScenarios.php
+		- Fixtures/ForeachValueVariableNaming/Invalid/ChildNode.php
+		- Fixtures/ForeachValueVariableNaming/Invalid/InvalidValueName.php
+		- Fixtures/ForeachValueVariableNaming/Invalid/InvalidExpressionFallbackValueName.php

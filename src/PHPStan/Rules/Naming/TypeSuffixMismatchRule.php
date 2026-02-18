@@ -24,9 +24,9 @@ use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeUtils;
 use PHPStan\Type\UnionType;
-use PHPStan\Type\VerbosityLevel;
 use SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
+use SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
 
 /**
@@ -57,6 +57,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
         private TypeCandidateResolver $typeCandidateResolver = new TypeCandidateResolver(),
         private VariableNameMatcher $variableNameMatcher = new VariableNameMatcher(),
         private NameNormalizer $nameNormalizer = new NameNormalizer(),
+        private TypeMessageDescriber $typeMessageDescriber = new TypeMessageDescriber(),
     ) {}
 
     public function getNodeType(): string
@@ -245,7 +246,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
         return sprintf(
             'Name "$%s" does not match inferred type "%s". Allowed base names: %s. Use one of these names directly or a contextual prefix ending with: %s.',
             $name,
-            $this->describeTypeForMessage($type),
+            $this->typeMessageDescriber->describeType($type),
             $allowedBaseNameText,
             implode(', ', $suffixNameList),
         );
@@ -260,30 +261,6 @@ final readonly class TypeSuffixMismatchRule implements Rule
             $interfaceTypeName,
             ucfirst($baseName),
         );
-    }
-
-    private function describeTypeForMessage(Type $type): string
-    {
-        $shortClassNameList = [];
-        $flattenedTypeList  = TypeUtils::flattenTypes($type);
-
-        foreach ($flattenedTypeList as $flattenedType) {
-            foreach ($flattenedType->getObjectClassNames() as $className) {
-                $shortClassName = $this->extractShortClassName($className);
-
-                if (in_array($shortClassName, $shortClassNameList, true) === false) {
-                    $shortClassNameList[] = $shortClassName;
-                }
-            }
-        }
-
-        if (count($shortClassNameList) === 0) {
-            return $type->describe(VerbosityLevel::typeOnly());
-        }
-
-        sort($shortClassNameList);
-
-        return implode('|', $shortClassNameList);
     }
 
     private function extractShortClassName(string $className): string
