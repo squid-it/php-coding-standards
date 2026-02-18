@@ -63,7 +63,7 @@ final readonly class Singularizer
     {
         $lowerCaseWord = strtolower($word);
 
-        if (str_ends_with($lowerCaseWord, 'ies') === true && strlen($word) > 3) {
+        if (str_ends_with($lowerCaseWord, 'ies') === true && strlen($word) > 4) {
             return substr($word, 0, -3) . 'y';
         }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support;
 
+use ArrayObject;
 use PHPStan\Type\Constant\ConstantBooleanType;
 use PHPStan\Type\NullType;
 use PHPStan\Type\ObjectType;
@@ -12,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use SquidIT\PhpCodingStandards\PHPStan\Support\DenyList;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\CustomDomainDto;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\DomainChildInterface;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\UserlandDomainException;
 use Throwable;
 
@@ -59,7 +61,7 @@ final class TypeCandidateResolverTest extends TestCase
     public function testResolveExcludesInternalAndKeepsUserlandHierarchyCandidatesSucceeds(): void
     {
         $unionType = new UnionType([
-            new ObjectType(\ArrayObject::class),
+            new ObjectType(ArrayObject::class),
             new ObjectType(UserlandDomainException::class),
         ]);
 
@@ -80,6 +82,23 @@ final class TypeCandidateResolverTest extends TestCase
         $candidateNameList = $typeCandidateResolver->resolvePHPStanType(new ObjectType(CustomDomainDto::class));
 
         self::assertSame([], $candidateNameList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testResolveDirectInterfaceTypeExpandsParentInterfacesSucceeds(): void
+    {
+        $candidateNameList = $this->typeCandidateResolver->resolvePHPStanType(new ObjectType(DomainChildInterface::class));
+        sort($candidateNameList);
+
+        self::assertSame(
+            [
+                'domainChild',
+                'domainRoot',
+            ],
+            $candidateNameList,
+        );
     }
 
     /**

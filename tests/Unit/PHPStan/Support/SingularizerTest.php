@@ -42,6 +42,14 @@ final class SingularizerTest extends TestCase
     /**
      * @throws Throwable
      */
+    public function testShortIesWordSingularizationSucceeds(): void
+    {
+        self::assertSame('tie', $this->singularizer->singularize('ties'));
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testEsPluralSingularizationSucceeds(): void
     {
         self::assertSame('class', $this->singularizer->singularize('classes'));

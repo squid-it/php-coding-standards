@@ -43,10 +43,6 @@ final class TypeCandidateResolver
             $resolvedCandidateNameList = $this->resolveCandidateNameListForClassName($className);
 
             foreach ($resolvedCandidateNameList as $candidateName) {
-                if ($this->denyList->isCandidateNameDenied($candidateName) === true) {
-                    continue;
-                }
-
                 $this->addUniqueString($candidateNameList, $candidateName);
             }
         }
@@ -151,7 +147,7 @@ final class TypeCandidateResolver
      */
     private function reflectClass(string $className): ?ReflectionClass
     {
-        if (class_exists($className) === false) {
+        if (class_exists($className) === false && interface_exists($className) === false) {
             return null;
         }
 
