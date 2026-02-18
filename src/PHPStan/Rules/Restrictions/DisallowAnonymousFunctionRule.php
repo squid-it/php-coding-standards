@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\PhpCodingStandards\PHPStan\Rules;
+namespace SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
@@ -36,7 +36,7 @@ final class DisallowAnonymousFunctionRule implements Rule
                 RuleErrorBuilder::message(
                     'Anonymous functions (closures) are not allowed. Use an invokable class with an __invoke() method instead.',
                 )
-                    ->identifier('squidit.disallowAnonymousFunction')
+                    ->identifier('squidit.restrictions.disallowAnonymousFunction')
                     ->line($node->getStartLine())
                     ->build(),
             ];
@@ -47,7 +47,7 @@ final class DisallowAnonymousFunctionRule implements Rule
                 RuleErrorBuilder::message(
                     'Arrow functions are not allowed. Use an invokable class with an __invoke() method instead.',
                 )
-                    ->identifier('squidit.disallowAnonymousFunction')
+                    ->identifier('squidit.restrictions.disallowAnonymousFunction')
                     ->line($node->getStartLine())
                     ->build(),
             ];

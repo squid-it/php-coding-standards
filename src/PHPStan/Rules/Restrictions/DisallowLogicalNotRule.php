@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SquidIT\PhpCodingStandards\PHPStan\Rules;
+namespace SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr\BooleanNot;
@@ -33,7 +33,7 @@ final class DisallowLogicalNotRule implements Rule
             RuleErrorBuilder::message(
                 'Using logical NOT (!) is not allowed. Use an explicit comparison instead (=== true, === false, !== null).',
             )
-                ->identifier('squidit.disallowLogicalNot')
+                ->identifier('squidit.restrictions.disallowLogicalNot')
                 ->line($node->getStartLine())
                 ->build(),
         ];
