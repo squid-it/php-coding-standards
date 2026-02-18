@@ -14,7 +14,7 @@ use Throwable;
  */
 final class DisallowAnonymousFunctionRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR = __DIR__ . '/../Fixtures/Restrictions/DisallowAnonymousFunction';
+    private const string FIXTURES_DIR = __DIR__ . '/Fixtures/DisallowAnonymousFunction';
 
     protected function getRule(): Rule
     {

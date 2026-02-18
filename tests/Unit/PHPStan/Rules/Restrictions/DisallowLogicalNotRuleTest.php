@@ -14,7 +14,7 @@ use Throwable;
  */
 final class DisallowLogicalNotRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR  = __DIR__ . '/../Fixtures/Restrictions/DisallowLogicalNot';
+    private const string FIXTURES_DIR  = __DIR__ . '/Fixtures/DisallowLogicalNot';
     private const string ERROR_MESSAGE = 'Using logical NOT (!) is not allowed. Use an explicit comparison instead (=== true, === false, !== null).';
 
     protected function getRule(): Rule

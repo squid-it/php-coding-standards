@@ -57,6 +57,16 @@ Experimental autoreview rules are configured separately in `phpstan-autoreview.n
 - `DenyList` is an internal tuning object used by resolver/matcher flows to suppress specific class or candidate names when reducing false positives.
 - This support layer is internal for experimental autoreview rules and not part of the stable public API.
 
+#### RuleTestCase Fixtures (Maintainers)
+
+- For `PHPStan\Testing\RuleTestCase` fixtures in `tests/Unit/PHPStan/Rules/<Module>/Fixtures`, do not use autoloaded `SquidIT\Tests\...` namespaces.
+- Use isolated fixture namespaces (for example `TypeSuffixMismatchFixtures\...`) so fixture symbols are only loaded through fixture analysis.
+- If a fixture file references other fixture classes/interfaces, add a rule-specific `.neon` file with `parameters.scanFiles` for those dependency fixture files.
+- Register that `.neon` from the test class with `public static function getAdditionalConfigFiles(): array` to avoid `ReflectionProvider class not found` misconfiguration errors.
+- Avoid manual `require_once` of fixture files in rule tests unless there is no alternative.
+- Keep fixture-related `excludePaths` and `ignoreErrors` narrow and scoped to the exact fixture directory/identifier.
+- This prevents coverage instability where `composer test:unit:coverage` can crash with Windows exit code `-1073741819` after report generation.
+
 #### Available Rules
 
 | Rule | Identifier | Description |
