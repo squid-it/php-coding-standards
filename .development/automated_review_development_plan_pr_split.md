@@ -6,7 +6,8 @@ Concrete PR-by-PR build checklist with file targets and fixture matrix.
 
 - PR 1: Completed (approved).
 - PR 2: Completed (approved).
-- PR 3: Implemented (pending review).
+- PR 3: Completed (approved).
+- PR 4: Implemented (pending review).
 
 ## Repository layout (target)
 

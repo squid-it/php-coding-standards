@@ -247,7 +247,7 @@ Acceptance:
 ## Session 3 - Type resolution and variable matching
 
 Status:
-- Implemented (pending review).
+- Completed (approved).
 
 Deliverables:
 - Implement `TypeCandidateResolver` and `VariableNameMatcher` exactly as specified.
@@ -257,6 +257,9 @@ Acceptance:
 - Tests cover unions (`Foo|null|false`), hierarchy expansion, and internal/builtin boundaries.
 
 ## Session 4 - Rule 1 implementation
+
+Status:
+- Implemented (pending review).
 
 Deliverables:
 - Add `TypeSuffixMismatchRule` in `src/PHPStan/Rules/Naming`.

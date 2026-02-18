@@ -49,7 +49,7 @@ final class VariableNameMatcherTest extends TestCase
     public function testShouldReportInterfaceBareNameNoticeForBareInterfaceNameSucceeds(): void
     {
         self::assertTrue(
-            $this->variableNameMatcher->shouldReportInterfaceBareNameNotice('channel', 'channel', true),
+            $this->variableNameMatcher->shouldReportInterfaceBareNameNotice('channel', 'channel'),
         );
     }
 
@@ -59,17 +59,7 @@ final class VariableNameMatcherTest extends TestCase
     public function testShouldReportInterfaceBareNameNoticeForSuffixedNameFails(): void
     {
         self::assertFalse(
-            $this->variableNameMatcher->shouldReportInterfaceBareNameNotice('readChannel', 'channel', true),
-        );
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function testShouldReportInterfaceBareNameNoticeForClassTypeFails(): void
-    {
-        self::assertFalse(
-            $this->variableNameMatcher->shouldReportInterfaceBareNameNotice('channel', 'channel', false),
+            $this->variableNameMatcher->shouldReportInterfaceBareNameNotice('readChannel', 'channel'),
         );
     }
 }
