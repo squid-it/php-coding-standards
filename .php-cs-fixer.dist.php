@@ -8,7 +8,13 @@ use SquidIT\PhpCodingStandards\PhpCsFixer\Rules;
 
 $finder = Finder::create()
     ->in(__DIR__)
-    ->exclude(['var', 'vendor', 'tests/Unit/PHPStan/Rules/Fixtures']);
+    ->exclude([
+        'var',
+        'vendor',
+        'tests/Unit/PHPStan/Rules/Architecture/Fixtures',
+        'tests/Unit/PHPStan/Rules/Naming/Fixtures',
+        'tests/Unit/PHPStan/Rules/Restrictions/Fixtures',
+    ]);
 
 $phpFixer = new Config();
 

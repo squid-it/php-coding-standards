@@ -14,7 +14,7 @@ use Throwable;
  */
 final class SingleClassPerFileRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR = __DIR__ . '/../Fixtures/Architecture/SingleClassPerFile';
+    private const string FIXTURES_DIR = __DIR__ . '/Fixtures/SingleClassPerFile';
 
     protected function getRule(): Rule
     {
