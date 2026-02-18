@@ -127,4 +127,24 @@ final class TypeCandidateResolverTest extends TestCase
             $candidateNameList,
         );
     }
+
+    /**
+     * @throws Throwable
+     */
+    public function testResolveInterfaceBaseNameMapSkipsDenyListedInterfacesSucceeds(): void
+    {
+        $denyList = new DenyList(
+            classNameList: [
+                DomainChildInterface::class,
+            ],
+        );
+        $typeCandidateResolver = new TypeCandidateResolver(denyList: $denyList);
+
+        $interfaceBaseNameToTypeMap = $typeCandidateResolver->resolveInterfaceBaseNameToTypeMap(
+            new ObjectType(CustomDomainDto::class),
+        );
+
+        self::assertArrayNotHasKey('domainChild', $interfaceBaseNameToTypeMap);
+        self::assertSame('DomainRootInterface', $interfaceBaseNameToTypeMap['domainRoot'] ?? null);
+    }
 }
