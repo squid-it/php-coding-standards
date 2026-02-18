@@ -50,6 +50,13 @@ rules:
 
 Experimental autoreview rules are configured separately in `phpstan-autoreview.neon`.
 
+#### Experimental Support Utilities (Maintainers)
+
+- `TypeCandidateResolver` resolves naming candidates from inferred PHPStan types.
+- `VariableNameMatcher` validates variable naming against normalized base candidates.
+- `DenyList` is an internal tuning object used by resolver/matcher flows to suppress specific class or candidate names when reducing false positives.
+- This support layer is internal for experimental autoreview rules and not part of the stable public API.
+
 #### Available Rules
 
 | Rule | Identifier | Description |

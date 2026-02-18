@@ -235,7 +235,7 @@ Acceptance:
 ## Session 2 - Core support utilities
 
 Status:
-- Implemented (pending review).
+- Completed (approved).
 
 Deliverables:
 - Implement `NameNormalizer`, `Pluralizer`, `Singularizer` exactly as specified.
@@ -245,6 +245,9 @@ Acceptance:
 - Support utilities are fully unit tested, including suffix and pluralization edge cases.
 
 ## Session 3 - Type resolution and variable matching
+
+Status:
+- Implemented (pending review).
 
 Deliverables:
 - Implement `TypeCandidateResolver` and `VariableNameMatcher` exactly as specified.

@@ -1,0 +1,173 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SquidIT\PhpCodingStandards\PHPStan\Support;
+
+use PHPStan\Type\Type;
+use PHPStan\Type\TypeUtils;
+use ReflectionClass;
+
+final class TypeCandidateResolver
+{
+    /** @var array<string, array<int, string>> */
+    private array $allowedBaseNameListByFqcn = [];
+
+    public function __construct(
+        private readonly NameNormalizer $nameNormalizer = new NameNormalizer(),
+        private readonly DenyList $denyList = new DenyList(),
+    ) {}
+
+    /**
+     * Resolve variable-name candidates from a PHPStan inferred type.
+     *
+     * Behavior:
+     * - Processes named object types only.
+     * - Ignores non-object union members (for example: null/false).
+     * - Expands class hierarchy (self, parents, interfaces).
+     * - Excludes internal/builtin symbols based on ReflectionClass::isInternal().
+     * - Applies deny-list filtering for FQCNs and candidate names.
+     *
+     * @return array<int, string>
+     */
+    public function resolvePHPStanType(Type $type): array
+    {
+        $candidateNameList = [];
+        $classNameList     = $this->extractNamedObjectClassNameList($type);
+
+        foreach ($classNameList as $className) {
+            if ($this->denyList->isClassNameDenied($className) === true) {
+                continue;
+            }
+
+            $resolvedCandidateNameList = $this->resolveCandidateNameListForClassName($className);
+
+            foreach ($resolvedCandidateNameList as $candidateName) {
+                if ($this->denyList->isCandidateNameDenied($candidateName) === true) {
+                    continue;
+                }
+
+                $this->addUniqueString($candidateNameList, $candidateName);
+            }
+        }
+
+        return $candidateNameList;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveCandidateNameListForClassName(string $className): array
+    {
+        if (array_key_exists($className, $this->allowedBaseNameListByFqcn) === true) {
+            return $this->allowedBaseNameListByFqcn[$className];
+        }
+
+        $candidateNameList      = [];
+        $hierarchyClassNameList = $this->expandHierarchyClassNameList($className);
+
+        foreach ($hierarchyClassNameList as $hierarchyClassName) {
+            if ($this->denyList->isClassNameDenied($hierarchyClassName) === true) {
+                continue;
+            }
+
+            $normalizedNameList = $this->nameNormalizer->normalize($hierarchyClassName);
+
+            foreach ($normalizedNameList as $normalizedName) {
+                if ($this->denyList->isCandidateNameDenied($normalizedName) === true) {
+                    continue;
+                }
+
+                $this->addUniqueString($candidateNameList, $normalizedName);
+            }
+        }
+
+        $this->allowedBaseNameListByFqcn[$className] = $candidateNameList;
+
+        return $candidateNameList;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function expandHierarchyClassNameList(string $className): array
+    {
+        $reflectionClass = $this->reflectClass($className);
+
+        if ($reflectionClass === null) {
+            return [$className];
+        }
+
+        if ($reflectionClass->isInternal() === true) {
+            return [];
+        }
+
+        $hierarchyClassNameList = [];
+        $this->addUniqueString($hierarchyClassNameList, $reflectionClass->getName());
+
+        $parentClass = $reflectionClass->getParentClass();
+
+        while ($parentClass !== false) {
+            if ($parentClass->isInternal() === false) {
+                $this->addUniqueString($hierarchyClassNameList, $parentClass->getName());
+            }
+
+            $parentClass = $parentClass->getParentClass();
+        }
+
+        $interfaceReflectionList = $reflectionClass->getInterfaces();
+
+        foreach ($interfaceReflectionList as $interfaceReflection) {
+            if ($interfaceReflection->isInternal() === true) {
+                continue;
+            }
+
+            $this->addUniqueString($hierarchyClassNameList, $interfaceReflection->getName());
+        }
+
+        return $hierarchyClassNameList;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function extractNamedObjectClassNameList(Type $type): array
+    {
+        $classNameList = [];
+
+        $flattenedTypeList = TypeUtils::flattenTypes($type);
+
+        foreach ($flattenedTypeList as $flattenedType) {
+            foreach ($flattenedType->getObjectClassNames() as $className) {
+                $this->addUniqueString($classNameList, $className);
+            }
+        }
+
+        return $classNameList;
+    }
+
+    /**
+     * @return ReflectionClass<object>|null
+     */
+    private function reflectClass(string $className): ?ReflectionClass
+    {
+        if (class_exists($className) === false) {
+            return null;
+        }
+
+        /** @var class-string<object> $classLikeName */
+        $classLikeName = $className;
+
+        return new ReflectionClass($classLikeName);
+    }
+
+    /**
+     * @param array<int, string> $stringList
+     */
+    private function addUniqueString(array &$stringList, string $value): void
+    {
+        if (in_array($value, $stringList, true) === false) {
+            $stringList[] = $value;
+        }
+    }
+}
