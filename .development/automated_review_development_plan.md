@@ -206,6 +206,9 @@ Disallow `new` for non-VO/DTO services in non-factory classes.
 
 ## Session 1 - Align current codebase and isolate autoreview config
 
+Status:
+- Completed (approved).
+
 Deliverables:
 - Move existing rules into grouped folders:
   - `SingleClassPerFileRule` -> `Rules/Architecture`
@@ -230,6 +233,9 @@ Acceptance:
 - `vendor/bin/phpstan analyse -c phpstan-autoreview.neon` loads cleanly.
 
 ## Session 2 - Core support utilities
+
+Status:
+- Implemented (pending review).
 
 Deliverables:
 - Implement `NameNormalizer`, `Pluralizer`, `Singularizer` exactly as specified.

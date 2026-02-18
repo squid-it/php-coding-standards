@@ -2,6 +2,11 @@
 
 Concrete PR-by-PR build checklist with file targets and fixture matrix.
 
+## Progress
+
+- PR 1: Completed (approved).
+- PR 2: Implemented (pending review).
+
 ## Repository layout (target)
 
 ```text
