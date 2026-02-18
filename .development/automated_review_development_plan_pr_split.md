@@ -7,7 +7,7 @@ Concrete PR-by-PR build checklist with file targets and fixture matrix.
 - PR 1: Completed (approved).
 - PR 2: Completed (approved).
 - PR 3: Completed (approved).
-- PR 4: Implemented (pending review).
+- PR 4: Completed (approved).
 
 ## Repository layout (target)
 
@@ -24,12 +24,11 @@ tests/
     PHPStan/
       Rules/
         Naming/
+          Fixtures/
         Architecture/
+          Fixtures/
         Restrictions/
-        Fixtures/
-          Naming/
-          Architecture/
-          Restrictions/
+          Fixtures/
       Support/
 phpstan.neon
 phpstan-autoreview.neon
@@ -50,15 +49,15 @@ README.md
 
 ## Fixture convention (locked)
 
-- Fixture root: `tests/Unit/PHPStan/Rules/Fixtures`.
+- Fixture root: `tests/Unit/PHPStan/Rules/<Module>/Fixtures`.
 - Fixture categories mirror `src/PHPStan/Rules` categories.
 - Required layout:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/<RuleName>/Valid/<ScenarioName>.php`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/<RuleName>/Invalid/<ScenarioName>.php`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/<RuleName>/Valid/<ScenarioName>.php`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/<RuleName>/Invalid/<ScenarioName>.php`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/<RuleName>/Valid/<ScenarioName>.php`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/<RuleName>/Invalid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/<RuleName>/Invalid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/<RuleName>/Invalid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/<RuleName>/Valid/<ScenarioName>.php`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/<RuleName>/Invalid/<ScenarioName>.php`
 - Folder names and file names are strict PascalCase.
 
 ## Optional experimental wiring
@@ -146,9 +145,9 @@ Depends on: none
   - `DisallowLogicalNotRule` -> `Rules/Restrictions`
 - Move existing rule tests to grouped test folders.
 - Move fixtures to mirrored category paths:
-  - `Fixtures/Architecture/SingleClassPerFile/...`
-  - `Fixtures/Restrictions/DisallowAnonymousFunction/...`
-  - `Fixtures/Restrictions/DisallowLogicalNot/...`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile/...`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowAnonymousFunction/...`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowLogicalNot/...`
 - Normalize fixture names to strict PascalCase.
 - Migrate existing rule identifiers to taxonomy.
 - Add `phpstan-autoreview.neon` for experimental rules only.
@@ -162,9 +161,9 @@ Depends on: none
 - Move `tests/Unit/PHPStan/Rules/SingleClassPerFileRuleTest.php` -> `tests/Unit/PHPStan/Rules/Architecture/SingleClassPerFileRuleTest.php`
 - Move `tests/Unit/PHPStan/Rules/DisallowAnonymousFunctionRuleTest.php` -> `tests/Unit/PHPStan/Rules/Restrictions/DisallowAnonymousFunctionRuleTest.php`
 - Move `tests/Unit/PHPStan/Rules/DisallowLogicalNotRuleTest.php` -> `tests/Unit/PHPStan/Rules/Restrictions/DisallowLogicalNotRuleTest.php`
-- Move `tests/Unit/PHPStan/Rules/Fixtures/SingleClassPerFile/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Architecture/SingleClassPerFile/*`
-- Move `tests/Unit/PHPStan/Rules/Fixtures/DisallowAnonymousFunction/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowAnonymousFunction/*`
-- Move `tests/Unit/PHPStan/Rules/Fixtures/DisallowLogicalNot/*` -> `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowLogicalNot/*`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/Architecture/SingleClassPerFile/*` -> `tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile/*`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowAnonymousFunction/*` -> `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowAnonymousFunction/*`
+- Move `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/DisallowLogicalNot/*` -> `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowLogicalNot/*`
 - Add `phpstan-autoreview.neon`
 - Update `phpstan.neon`
 - Update `README.md`
@@ -234,8 +233,8 @@ Depends on: PR 2, PR 3
 
 - `src/PHPStan/Rules/Naming/TypeSuffixMismatchRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/TypeSuffixMismatchRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -261,8 +260,8 @@ Depends on: PR 2, PR 3
 
 - `src/PHPStan/Rules/Naming/IterablePluralNamingRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/IterablePluralNamingRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/IterablePluralNaming/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/IterablePluralNaming/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -286,8 +285,8 @@ Depends on: PR 2, PR 3, PR 5
 
 - `src/PHPStan/Rules/Naming/ForeachValueVariableNamingRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/ForeachValueVariableNamingRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/ForeachValueVariableNaming/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/ForeachValueVariableNaming/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -310,8 +309,8 @@ Depends on: PR 2, PR 3
 
 - `src/PHPStan/Rules/Naming/LoggerContextKeyCamelCaseRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/LoggerContextKeyCamelCaseRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/LoggerContextKeyCamelCase/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/LoggerContextKeyCamelCase/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -336,8 +335,8 @@ Depends on: PR 1
 
 - `src/PHPStan/Rules/Naming/EnumBackedValueCamelCaseRule.php`
 - `tests/Unit/PHPStan/Rules/Naming/EnumBackedValueCamelCaseRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/EnumBackedValueCamelCase/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Naming/Fixtures/EnumBackedValueCamelCase/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -365,8 +364,8 @@ Depends on: PR 2, PR 3
 - `src/PHPStan/Support/ContainingClassResolver.php`
 - `src/PHPStan/Rules/Architecture/NoServiceInstantiationRule.php`
 - `tests/Unit/PHPStan/Rules/Architecture/NoServiceInstantiationRuleTest.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation/Valid/*.php`
-- `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation/Invalid/*.php`
+- `tests/Unit/PHPStan/Rules/Architecture/Fixtures/NoServiceInstantiation/Valid/*.php`
+- `tests/Unit/PHPStan/Rules/Architecture/Fixtures/NoServiceInstantiation/Invalid/*.php`
 
 ### Fixture scenarios
 
@@ -407,14 +406,14 @@ Depends on: PR 4, PR 5, PR 6, PR 7, PR 8, PR 9
 
 | Rule / Identifier | Fixture root | Must cover |
 |---|---|---|
-| `squidit.naming.typeSuffixMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch` | assign/property/promoted; new/clone/calls; union null/false handling |
-| `squidit.naming.interfaceBareNameNotice` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch` | bare interface base notice and prefixed valid names |
-| `squidit.naming.iterablePluralMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming` | list + assoc iterables; allowed suffixes; prefixes |
-| `squidit.naming.mapForbidden` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming` | any variable/property containing `Map`/`map` |
-| `squidit.naming.foreachValueVarMismatch` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming` | singularized iterable + type suffix + combined fallback |
-| `squidit.naming.loggerContextKeyCamelCase` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase` | logger-only scope; context arg only; string-literal keys only |
-| `squidit.naming.enumBackedValueCamelCase` | `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase` | camel valid; snake invalid; snake valid with `to*()` literal reference |
-| `squidit.architecture.noServiceInstantiation` | `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation` | non-factory invalid; factory valid; builtin valid; VO/DTO valid; readonly behavior invalid |
+| `squidit.naming.typeSuffixMismatch` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch` | assign/property/promoted; new/clone/calls; union null/false handling |
+| `squidit.naming.interfaceBareNameNotice` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch` | bare interface base notice and prefixed valid names |
+| `squidit.naming.iterablePluralMismatch` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/IterablePluralNaming` | list + assoc iterables; allowed suffixes; prefixes |
+| `squidit.naming.mapForbidden` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/IterablePluralNaming` | any variable/property containing `Map`/`map` |
+| `squidit.naming.foreachValueVarMismatch` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/ForeachValueVariableNaming` | singularized iterable + type suffix + combined fallback |
+| `squidit.naming.loggerContextKeyCamelCase` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/LoggerContextKeyCamelCase` | logger-only scope; context arg only; string-literal keys only |
+| `squidit.naming.enumBackedValueCamelCase` | `tests/Unit/PHPStan/Rules/Naming/Fixtures/EnumBackedValueCamelCase` | camel valid; snake invalid; snake valid with `to*()` literal reference |
+| `squidit.architecture.noServiceInstantiation` | `tests/Unit/PHPStan/Rules/Architecture/Fixtures/NoServiceInstantiation` | non-factory invalid; factory valid; builtin valid; VO/DTO valid; readonly behavior invalid |
 
 # Definition of done
 

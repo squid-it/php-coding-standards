@@ -24,9 +24,9 @@ This plan is split into small sessions and keeps runtime overhead low by using s
   - `src/PHPStan/Rules/Architecture/`
   - `src/PHPStan/Rules/Restrictions/`
 - Fixtures must mirror the same category layout under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Restrictions/`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/`
 - Use strict PascalCase for fixture folder and file names.
 - `phpstan-autoreview.neon` includes only the new experimental autoreview rules.
 
@@ -40,12 +40,11 @@ src/PHPStan/Rules/
 src/PHPStan/Support/
 tests/Unit/PHPStan/Rules/
   Naming/
+    Fixtures/
   Architecture/
+    Fixtures/
   Restrictions/
-  Fixtures/
-    Naming/
-    Architecture/
-    Restrictions/
+    Fixtures/
 tests/Unit/PHPStan/Support/
 phpstan.neon
 phpstan-autoreview.neon
@@ -216,9 +215,9 @@ Deliverables:
   - `DisallowLogicalNotRule` -> `Rules/Restrictions`
 - Move corresponding test classes into matching grouped test folders.
 - Move existing fixtures to mirrored category paths:
-  - `Fixtures/Architecture/SingleClassPerFile/...`
-  - `Fixtures/Restrictions/DisallowAnonymousFunction/...`
-  - `Fixtures/Restrictions/DisallowLogicalNot/...`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile/...`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowAnonymousFunction/...`
+  - `tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowLogicalNot/...`
 - Normalize all fixture names to strict PascalCase.
 - Update existing rule identifiers to taxonomy:
   - `squidit.architecture.singleClassPerFile`
@@ -259,14 +258,14 @@ Acceptance:
 ## Session 4 - Rule 1 implementation
 
 Status:
-- Implemented (pending review).
+- Completed (approved).
 
 Deliverables:
 - Add `TypeSuffixMismatchRule` in `src/PHPStan/Rules/Naming`.
 - Add `TypeSuffixMismatchRuleTest` in `tests/Unit/PHPStan/Rules/Naming`.
 - Add fixtures in:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Valid`
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/TypeSuffixMismatch/Invalid`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Valid`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Invalid`
 
 Acceptance:
 - Fixtures validate property, promoted property, assignment, clone, and union scenarios.
@@ -276,7 +275,7 @@ Acceptance:
 Deliverables:
 - Add `IterablePluralNamingRule` in `src/PHPStan/Rules/Naming`.
 - Add matching test and fixtures under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/IterablePluralNaming`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/IterablePluralNaming`
 
 Acceptance:
 - Plural naming enforced for object iterables.
@@ -287,7 +286,7 @@ Acceptance:
 Deliverables:
 - Add `ForeachValueVariableNamingRule` in `src/PHPStan/Rules/Naming`.
 - Add matching test and fixtures under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/ForeachValueVariableNaming`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/ForeachValueVariableNaming`
 
 Acceptance:
 - Singularized iterable-name and type-based naming are both validated.
@@ -297,7 +296,7 @@ Acceptance:
 Deliverables:
 - Add `LoggerContextKeyCamelCaseRule` in `src/PHPStan/Rules/Naming`.
 - Add matching test and fixtures under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/LoggerContextKeyCamelCase`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/LoggerContextKeyCamelCase`
 
 Acceptance:
 - Only logger context arg string-literal keys are checked.
@@ -307,7 +306,7 @@ Acceptance:
 Deliverables:
 - Add `EnumBackedValueCamelCaseRule` in `src/PHPStan/Rules/Naming`.
 - Add matching test and fixtures under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Naming/EnumBackedValueCamelCase`
+  - `tests/Unit/PHPStan/Rules/Naming/Fixtures/EnumBackedValueCamelCase`
 
 Acceptance:
 - `to*()` literal-reference exception is covered.
@@ -318,7 +317,7 @@ Deliverables:
 - Add `NoServiceInstantiationRule` in `src/PHPStan/Rules/Architecture`.
 - Add `VoDtoClassifier` and `ContainingClassResolver` in `src/PHPStan/Support`.
 - Add matching test and fixtures under:
-  - `tests/Unit/PHPStan/Rules/Fixtures/Architecture/NoServiceInstantiation`
+  - `tests/Unit/PHPStan/Rules/Architecture/Fixtures/NoServiceInstantiation`
 
 Acceptance:
 - Factory exception, builtin exception, VO/DTO allowance, and invalid service instantiation are covered.

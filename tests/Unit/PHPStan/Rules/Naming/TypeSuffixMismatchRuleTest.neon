@@ -8,3 +8,12 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/FooData.php
 		- Fixtures/TypeSuffixMismatch/Valid/BarData.php
 		- Fixtures/TypeSuffixMismatch/Valid/ChannelInterface.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/NoObjectTypedProperties.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DnfTypedPropertyIgnored.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/A/ChannelInterface.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/B/ChannelInterface.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/GlobalFooData.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/NullableTypedPropertyMismatch.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/UnionTypedPropertyMismatch.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/DuplicateInterfaceBaseNameNotice.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/GlobalClassTypedPropertyMismatch.php
