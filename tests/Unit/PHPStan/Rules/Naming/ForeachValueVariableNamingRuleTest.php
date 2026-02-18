@@ -17,6 +17,7 @@ use PHPStan\Type\ArrayType;
 use PHPStan\Type\IntegerType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule;
@@ -94,6 +95,21 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
 
         $ruleError = $errorList[0];
         self::assertSame(self::EXPRESSION_ERROR, $ruleError->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testScopeTypeIsResolvedOnceForMismatchMessageFails(): void
+    {
+        /** @var MockObject&NodeCallbackInvoker&Scope $scope */
+        $scope = self::createMockForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
+        $scope->expects(self::once())
+            ->method('getType')
+            ->willReturn($this->createChildNodeArrayType());
+
+        $foreachNode = $this->createForeachNode(new Variable('children'), 'item', 14);
+        $this->rule->processNode($foreachNode, $scope);
     }
 
     private function createScopeStubWithType(Type $type): Scope&NodeCallbackInvoker

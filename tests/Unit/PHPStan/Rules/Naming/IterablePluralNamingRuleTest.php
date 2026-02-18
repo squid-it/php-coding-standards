@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming;
 
+use PhpParser\Node\Expr\Assign;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule;
@@ -48,6 +49,25 @@ final class IterablePluralNamingRuleTest extends RuleTestCase
     /**
      * @throws Throwable
      */
+    public function testNamesContainingMapSubstringWithoutMapSegmentSucceeds(): void
+    {
+        $this->analyse([
+            self::VALID_NODE_FILE,
+            self::FIXTURES_DIR . '/Valid/MapSubstringWithoutMapSegment.php',
+        ], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testGetNodeTypeReturnsAssignClassSucceeds(): void
+    {
+        self::assertSame(Assign::class, (new IterablePluralNamingRule())->getNodeType());
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testInvalidPluralNameFails(): void
     {
         $this->analyse([
@@ -71,8 +91,4 @@ final class IterablePluralNamingRuleTest extends RuleTestCase
             [self::MAP_MISMATCH_ERROR_MESSAGE, 11],
         ]);
     }
-
-    /**
-     * @throws Throwable
-     */
 }

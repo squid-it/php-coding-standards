@@ -15,16 +15,18 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\VariadicPlaceholder;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\ReflectionProviderStaticAccessor;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\LineRuleError;
+use PHPStan\Testing\PHPStanTestCase;
 use PHPStan\Type\ObjectType;
 use PHPUnit\Framework\MockObject\Stub;
-use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule;
 use Throwable;
 
-final class LoggerContextKeyCamelCaseRuleTest extends TestCase
+final class LoggerContextKeyCamelCaseRuleTest extends PHPStanTestCase
 {
     private const string FOO_BAR_ERROR     = 'Logger context key "foo_bar" in info() must be camelCase.';
     private const string USER_ID_LOG_ERROR = 'Logger context key "user_id" in log() must be camelCase.';
@@ -35,6 +37,8 @@ final class LoggerContextKeyCamelCaseRuleTest extends TestCase
     {
         parent::setUp();
 
+        // @phpstan-ignore-next-line phpstanApi.method
+        ReflectionProviderStaticAccessor::registerInstance(PHPStanTestCase::createReflectionProvider());
         $this->rule = new LoggerContextKeyCamelCaseRule();
     }
 
@@ -107,6 +111,35 @@ final class LoggerContextKeyCamelCaseRuleTest extends TestCase
         }
 
         self::assertSame(24, $ruleError->getLine());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testConcreteLoggerImplementationReceiverSnakeCaseKeyFails(): void
+    {
+        $contextArrayNode = new Array_([
+            new ArrayItem(
+                value: new LNumber(1),
+                key: new String_('foo_bar', ['startLine' => 26]),
+                attributes: ['startLine' => 26],
+            ),
+        ], ['startLine' => 26]);
+        $methodCallNode = $this->createMethodCallNode(
+            methodName: 'info',
+            argumentList: [
+                new String_('saved'),
+                $contextArrayNode,
+            ],
+            line: 26,
+        );
+        $errorList = $this->rule->processNode(
+            $methodCallNode,
+            $this->createScopeStubWithReceiverType(new ObjectType(NullLogger::class)),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::FOO_BAR_ERROR, $errorList[0]->getMessage());
     }
 
     /**

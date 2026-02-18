@@ -15,6 +15,7 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
+use PHPStan\Type\ObjectType;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -101,8 +102,9 @@ final readonly class LoggerContextKeyCamelCaseRule implements Rule
     private function isLoggerReceiver(Scope $scope, MethodCall $methodCallNode): bool
     {
         $loggerReceiverType = $scope->getType($methodCallNode->var);
+        $loggerType         = new ObjectType(LoggerInterface::class);
 
-        return in_array(LoggerInterface::class, $loggerReceiverType->getObjectClassNames(), true) === true;
+        return $loggerType->isSuperTypeOf($loggerReceiverType)->yes();
     }
 
     private function resolveContextArgumentPosition(Identifier $methodNameIdentifier): ?int

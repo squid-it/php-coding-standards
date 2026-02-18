@@ -67,8 +67,10 @@ final readonly class ForeachValueVariableNamingRule implements Rule
             return [];
         }
 
-        $valueVariableName   = $node->valueVar->name;
-        $allowedBaseNameList = $this->resolveAllowedBaseNameList($node, $scope);
+        $valueVariableName        = $node->valueVar->name;
+        $allowedBaseNameListTuple = $this->resolveAllowedBaseNameList($node, $scope);
+        $allowedBaseNameList      = $allowedBaseNameListTuple['allowedBaseNameList'];
+        $iterableType             = $allowedBaseNameListTuple['iterableType'];
 
         if (count($allowedBaseNameList) === 0) {
             return [];
@@ -82,7 +84,7 @@ final readonly class ForeachValueVariableNamingRule implements Rule
 
         return [
             RuleErrorBuilder::message(
-                $this->buildForeachMismatchMessage($valueVariableName, $node, $scope, $allowedBaseNameList),
+                $this->buildForeachMismatchMessage($valueVariableName, $node, $iterableType, $allowedBaseNameList),
             )
                 ->identifier('squidit.naming.foreachValueVarMismatch')
                 ->line($node->valueVar->getStartLine())
@@ -105,7 +107,7 @@ final readonly class ForeachValueVariableNamingRule implements Rule
     }
 
     /**
-     * @return array<int, string>
+     * @return array{allowedBaseNameList: array<int, string>, iterableType: Type}
      */
     private function resolveAllowedBaseNameList(Foreach_ $foreachNode, Scope $scope): array
     {
@@ -120,7 +122,10 @@ final readonly class ForeachValueVariableNamingRule implements Rule
         $iterableType = $scope->getType($foreachNode->expr);
 
         if ($iterableType->isIterable()->yes() === false) {
-            return $allowedBaseNameList;
+            return [
+                'allowedBaseNameList' => $allowedBaseNameList,
+                'iterableType'        => $iterableType,
+            ];
         }
 
         $iterableValueType = $iterableType->getIterableValueType();
@@ -130,7 +135,10 @@ final readonly class ForeachValueVariableNamingRule implements Rule
             $this->addUniqueString($allowedBaseNameList, $typeCandidate);
         }
 
-        return $allowedBaseNameList;
+        return [
+            'allowedBaseNameList' => $allowedBaseNameList,
+            'iterableType'        => $iterableType,
+        ];
     }
 
     private function resolveSingularizedIterableBaseName(Node\Expr $iterableExpressionNode): ?string
@@ -175,7 +183,7 @@ final readonly class ForeachValueVariableNamingRule implements Rule
     private function buildForeachMismatchMessage(
         string $valueVariableName,
         Foreach_ $foreachNode,
-        Scope $scope,
+        Type $iterableType,
         array $allowedBaseNameList,
     ): string {
         $allowedSuffixList = [];
@@ -188,7 +196,7 @@ final readonly class ForeachValueVariableNamingRule implements Rule
             'Foreach value name "$%s" does not match iterable %s (inferred value type: "%s"). Allowed base names: %s. Use one of these names directly or a contextual prefix ending with: %s.',
             $valueVariableName,
             $this->describeIterableExpressionForMessage($foreachNode->expr),
-            $this->describeIterableValueTypeForMessage($scope->getType($foreachNode->expr)),
+            $this->describeIterableValueTypeForMessage($iterableType),
             implode(', ', $allowedBaseNameList),
             implode(', ', $allowedSuffixList),
         );

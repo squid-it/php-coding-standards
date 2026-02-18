@@ -58,7 +58,7 @@ final readonly class IterablePluralNamingRule implements Rule
 
     public function getNodeType(): string
     {
-        return Node::class;
+        return Assign::class;
     }
 
     /**
@@ -121,7 +121,19 @@ final readonly class IterablePluralNamingRule implements Rule
 
     private function containsForbiddenMapSegment(string $name): bool
     {
-        return stripos($name, 'map') !== false;
+        $segmentList = preg_split('/(?=[A-Z])/', $name);
+
+        if (is_array($segmentList) === false) {
+            return false;
+        }
+
+        foreach ($segmentList as $segment) {
+            if (strtolower($segment) === 'map') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
