@@ -11,6 +11,13 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/ChannelInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/NoObjectTypedProperties.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DnfTypedPropertyIgnored.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotation/ContainerInterface.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotation/ContainerMasonInterface.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotationNarrowsAssignmentType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TypedPropertyDocblockNarrowsType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyDocblockNarrowsType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyParamDocblockNarrowsType.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/PromotedPropertyParamDocblockNoNarrowingMismatch.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/A/ChannelInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/B/ChannelInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/GlobalFooData.php
