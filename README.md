@@ -130,6 +130,12 @@ Checks typed properties, promoted constructor parameters, and local variable ass
 
 By default this rule enforces only `squidit.naming.typeSuffixMismatch`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
 
+Docblock narrowing support:
+- Assignment statements: inline `@var` on the assignment statement is used.
+- Typed properties: property-level `@var` is used.
+- Promoted properties: parameter-level `@var` is used.
+- Promoted properties: constructor docblock `@param` is used.
+
 **Valid:**
 ```php
 private FooService $fooService;
@@ -166,6 +172,9 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 ##### IterablePluralNamingRule
 
 Checks assignment targets where the inferred type is an iterable of typed objects. The variable or property name must use a plural or recognized collection-style form.
+
+Docblock narrowing support:
+- Assignment statements: inline `@var` on the assignment statement is used to resolve iterable value type candidates (named and unnamed `@var`).
 
 **Allowed collection suffixes:** `List`, `Collection`, `Lookup`, `ById`, `ByKey`
 
@@ -386,6 +395,10 @@ Both stable and experimental identifiers support the same suppression syntax.
 
 - For `PHPStan\Testing\RuleTestCase` fixtures in `tests/Unit/PHPStan/Rules/<Module>/Fixtures`, do not use autoloaded `SquidIT\Tests\...` namespaces.
 - Use isolated fixture namespaces (for example `TypeSuffixMismatchFixtures\...`) so fixture symbols are only loaded through fixture analysis.
+- Do not import dependency symbols from `tests/.../Runtime` into fixture files (including `@var` PHPDoc types); keep these dependencies in fixture-local namespaces.
+- Avoid method-level `@param` PHPDoc on constructors with promoted properties in `RuleTestCase` fixtures; on Windows this can still trigger a post-coverage crash (`-1073741819`).
+- Inline iterable `@var` narrowing fixtures in `RuleTestCase` can also be unstable on Windows coverage runs (`-1073741819`).
+- If this pattern must be covered, skip only that specific test while `XDEBUG_MODE=coverage`.
 - If a fixture file references other fixture classes/interfaces, add a rule-specific `.neon` file with `parameters.scanFiles` for those dependency fixture files.
 - Register that `.neon` from the test class with `public static function getAdditionalConfigFiles(): array` to avoid `ReflectionProvider class not found` misconfiguration errors.
 - Avoid manual `require_once` of fixture files in rule tests unless there is no alternative.

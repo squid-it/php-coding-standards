@@ -9,12 +9,15 @@ use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
+use PhpParser\Node\Stmt\Expression;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
+use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
+use SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber;
@@ -26,6 +29,8 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * This rule checks assignment targets where the inferred expression type is iterable and each element
  * type resolves to object-based naming candidates.
  *
+ * Inline assignment `@var` narrowing is respected for iterable value types.
+ *
  * Valid examples:
  * - `$nodes = [$node];`
  * - `$nodeList = [$node];`
@@ -36,7 +41,7 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * - `$itemList = [$node];` (does not match inferred element type)
  * - `$nodeMap = ['id' => $node];` (`Map` segment is forbidden)
  *
- * @implements Rule<Node>
+ * @implements Rule<Expression>
  */
 final readonly class IterablePluralNamingRule implements Rule
 {
@@ -54,11 +59,12 @@ final readonly class IterablePluralNamingRule implements Rule
         private VariableNameMatcher $variableNameMatcher = new VariableNameMatcher(),
         private Pluralizer $pluralizer = new Pluralizer(),
         private TypeMessageDescriber $typeMessageDescriber = new TypeMessageDescriber(),
+        private PhpDocTypeResolver $phpDocTypeResolver = new PhpDocTypeResolver(),
     ) {}
 
     public function getNodeType(): string
     {
-        return Assign::class;
+        return Expression::class;
     }
 
     /**
@@ -68,34 +74,55 @@ final readonly class IterablePluralNamingRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (($node instanceof Assign) === false) {
+        if (($node instanceof Expression) === false) {
             return [];
         }
 
-        $assignmentTargetName = $this->extractAssignmentTargetName($node);
+        if (($node->expr instanceof Assign) === false) {
+            return [];
+        }
+
+        $assignmentNode       = $node->expr;
+        $assignmentTargetName = $this->extractAssignmentTargetName($assignmentNode);
 
         if ($assignmentTargetName === null) {
             return [];
         }
 
-        $assignedType = $scope->getType($node->expr);
+        $assignedType = $scope->getType($assignmentNode->expr);
 
-        return $this->buildRuleErrorList($assignmentTargetName, $assignedType, $node->getStartLine());
-    }
+        if ($assignedType->isIterable()->yes() === false) {
+            return [];
+        }
 
-    /**
-     * @throws ShouldNotHappenException
-     *
-     * @return array<int, RuleError>
-     */
-    private function buildRuleErrorList(string $name, Type $type, int $line): array
-    {
-        $candidateBaseNameList = $this->resolveIterableCandidateBaseNameList($type);
+        $candidateBaseNameList = $this->resolveCandidateBaseNameListForAssignment(
+            assignmentNode: $assignmentNode,
+            assignmentTargetName: $assignmentTargetName,
+            assignedType: $assignedType,
+            statementDocCommentText: $node->getDocComment()?->getText(),
+        );
 
         if (count($candidateBaseNameList) === 0) {
             return [];
         }
 
+        return $this->buildRuleErrorList(
+            name: $assignmentTargetName,
+            type: $assignedType,
+            line: $assignmentNode->getStartLine(),
+            candidateBaseNameList: $candidateBaseNameList,
+        );
+    }
+
+    /**
+     * @throws ShouldNotHappenException
+     *
+     * @param array<int, string> $candidateBaseNameList
+     *
+     * @return array<int, RuleError>
+     */
+    private function buildRuleErrorList(string $name, Type $type, int $line, array $candidateBaseNameList): array
+    {
         sort($candidateBaseNameList);
 
         $errorList = [];
@@ -117,6 +144,59 @@ final readonly class IterablePluralNamingRule implements Rule
         }
 
         return $errorList;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveCandidateBaseNameListForAssignment(
+        Assign $assignmentNode,
+        string $assignmentTargetName,
+        Type $assignedType,
+        ?string $statementDocCommentText,
+    ): array {
+        $docCommentCandidateBaseNameList = $this->resolveCandidateBaseNameListFromDocCommentText(
+            docCommentText: $statementDocCommentText,
+            assignmentTargetName: $assignmentTargetName,
+        );
+
+        if (count($docCommentCandidateBaseNameList) > 0) {
+            return $docCommentCandidateBaseNameList;
+        }
+
+        return $this->resolveIterableCandidateBaseNameList($assignedType);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveCandidateBaseNameListFromDocCommentText(
+        ?string $docCommentText,
+        string $assignmentTargetName,
+    ): array {
+        $iterableValueClassNameList = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
+            docCommentText: $docCommentText,
+            variableName: $assignmentTargetName,
+            allowUnnamedVarTag: true,
+        );
+
+        if (count($iterableValueClassNameList) === 0) {
+            return [];
+        }
+
+        $candidateBaseNameList = [];
+
+        foreach ($iterableValueClassNameList as $iterableValueClassName) {
+            $resolvedCandidateBaseNameList = $this->typeCandidateResolver->resolvePHPStanType(
+                new ObjectType($iterableValueClassName),
+            );
+
+            foreach ($resolvedCandidateBaseNameList as $resolvedCandidateBaseName) {
+                $this->addUniqueString($candidateBaseNameList, $resolvedCandidateBaseName);
+            }
+        }
+
+        return $candidateBaseNameList;
     }
 
     private function containsForbiddenMapSegment(string $name): bool
@@ -225,5 +305,15 @@ final readonly class IterablePluralNamingRule implements Rule
         }
 
         return $assignNode->var->name->toString();
+    }
+
+    /**
+     * @param array<int, string> $stringList
+     */
+    private function addUniqueString(array &$stringList, string $value): void
+    {
+        if (in_array($value, $stringList, true) === false) {
+            $stringList[] = $value;
+        }
     }
 }
