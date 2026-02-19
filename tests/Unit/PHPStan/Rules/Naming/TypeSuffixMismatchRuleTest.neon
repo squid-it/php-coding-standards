@@ -3,6 +3,7 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Invalid/FooData.php
 		- Fixtures/TypeSuffixMismatch/Invalid/BarData.php
 		- Fixtures/TypeSuffixMismatch/Invalid/ChannelInterface.php
+		- Fixtures/TypeSuffixMismatch/Invalid/InterfaceBareName.php
 		- Fixtures/TypeSuffixMismatch/Invalid/DenyListRegression/DenyListedInterface.php
 		- Fixtures/TypeSuffixMismatch/Invalid/DenyListRegression/DenyListedConcreteClass.php
 		- Fixtures/TypeSuffixMismatch/Valid/FooData.php
@@ -15,5 +16,5 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/GlobalFooData.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/NullableTypedPropertyMismatch.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/UnionTypedPropertyMismatch.php
-		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/DuplicateInterfaceBaseNameNotice.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/DuplicateInterfaceBaseName.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/GlobalClassTypedPropertyMismatch.php

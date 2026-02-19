@@ -22,9 +22,7 @@ use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
-use PHPStan\Type\TypeUtils;
 use PHPStan\Type\UnionType;
-use SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
@@ -45,9 +43,9 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * - `private FooData $initialFooData;`
  * - `$localFooData = new FooData();`
  *
- * Interface bare-name notice:
- * - `private ChannelInterface $channel;` reports `squidit.naming.interfaceBareNameNotice`
- *   to encourage contextual names like `$readChannel`.
+ * Optional interface bare-name check (disabled by default):
+ * - `private ChannelInterface $channel;` reports `squidit.naming.interfaceBareName`
+ *   when enabled, to encourage contextual names like `$readChannel`.
  *
  * @implements Rule<Node>
  */
@@ -56,8 +54,8 @@ final readonly class TypeSuffixMismatchRule implements Rule
     public function __construct(
         private TypeCandidateResolver $typeCandidateResolver = new TypeCandidateResolver(),
         private VariableNameMatcher $variableNameMatcher = new VariableNameMatcher(),
-        private NameNormalizer $nameNormalizer = new NameNormalizer(),
         private TypeMessageDescriber $typeMessageDescriber = new TypeMessageDescriber(),
+        private bool $enableInterfaceBareNameCheck = false,
     ) {}
 
     public function getNodeType(): string
@@ -192,26 +190,22 @@ final readonly class TypeSuffixMismatchRule implements Rule
                 ->build();
         }
 
-        $interfaceBaseNameToTypeMap = $this->resolveDirectInterfaceBaseNameToTypeMap($type);
+        if ($this->enableInterfaceBareNameCheck === false) {
+            return $errorList;
+        }
 
-        foreach ($interfaceBaseNameToTypeMap as $baseName => $interfaceTypeName) {
-            if (
-                $this->variableNameMatcher->shouldReportInterfaceBareNameNotice(
-                    $name,
-                    $baseName,
-                ) === false
-            ) {
-                continue;
-            }
+        $interfaceBaseNameToTypeMap = $this->typeCandidateResolver->resolveInterfaceBaseNameToTypeMap($type);
 
+        if (array_key_exists($name, $interfaceBaseNameToTypeMap) === true) {
             $errorList[] = RuleErrorBuilder::message(
-                $this->buildInterfaceBareNameNoticeMessage($name, $baseName, $interfaceTypeName),
+                $this->buildInterfaceBareNameMessage(
+                    $name,
+                    $interfaceBaseNameToTypeMap[$name],
+                ),
             )
-                ->identifier('squidit.naming.interfaceBareNameNotice')
+                ->identifier('squidit.naming.interfaceBareName')
                 ->line($line)
                 ->build();
-
-            break;
         }
 
         return $errorList;
@@ -252,26 +246,15 @@ final readonly class TypeSuffixMismatchRule implements Rule
         );
     }
 
-    private function buildInterfaceBareNameNoticeMessage(string $name, string $baseName, string $interfaceTypeName): string
+    private function buildInterfaceBareNameMessage(string $name, string $interfaceTypeName): string
     {
         return sprintf(
             'Interface-typed name "$%s" uses the bare interface base name "%s" (inferred interface type: %s). Prefer a contextual prefix like "$read%s".',
             $name,
-            $baseName,
+            $name,
             $interfaceTypeName,
-            ucfirst($baseName),
+            ucfirst($name),
         );
-    }
-
-    private function extractShortClassName(string $className): string
-    {
-        $lastNamespaceSeparatorPosition = strrpos($className, '\\');
-
-        if ($lastNamespaceSeparatorPosition === false) {
-            return $className;
-        }
-
-        return substr($className, $lastNamespaceSeparatorPosition + 1);
     }
 
     /**
@@ -336,41 +319,5 @@ final readonly class TypeSuffixMismatchRule implements Rule
         }
 
         return $objectClassNameList;
-    }
-
-    /**
-     * @return array<string, string> key: normalized base name, value: short interface type name
-     */
-    private function resolveDirectInterfaceBaseNameToTypeMap(Type $type): array
-    {
-        $interfaceBaseNameToTypeMap = [];
-        $flattenedTypeList          = TypeUtils::flattenTypes($type);
-
-        foreach ($flattenedTypeList as $flattenedType) {
-            foreach ($flattenedType->getObjectClassNames() as $className) {
-                $shortClassName = $this->extractShortClassName($className);
-
-                if ($this->isInterfaceTypeName($shortClassName) === false) {
-                    continue;
-                }
-
-                $normalizedBaseNameList = $this->nameNormalizer->normalize($className);
-
-                foreach ($normalizedBaseNameList as $normalizedBaseName) {
-                    if (array_key_exists($normalizedBaseName, $interfaceBaseNameToTypeMap) === true) {
-                        continue;
-                    }
-
-                    $interfaceBaseNameToTypeMap[$normalizedBaseName] = $shortClassName;
-                }
-            }
-        }
-
-        return $interfaceBaseNameToTypeMap;
-    }
-
-    private function isInterfaceTypeName(string $shortClassName): bool
-    {
-        return str_ends_with($shortClassName, 'Interface');
     }
 }

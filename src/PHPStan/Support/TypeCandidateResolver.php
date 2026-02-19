@@ -13,9 +13,6 @@ final class TypeCandidateResolver
     /** @var array<string, array<int, string>> */
     private array $allowedBaseNameListByFqcn = [];
 
-    /** @var array<string, array<int, string>> */
-    private array $interfaceClassNameListByFqcn = [];
-
     public function __construct(
         private readonly NameNormalizer $nameNormalizer = new NameNormalizer(),
         private readonly DenyList $denyList = new DenyList(),
@@ -54,7 +51,10 @@ final class TypeCandidateResolver
     }
 
     /**
-     * Resolve interface-derived base names from a PHPStan type for interface bare-name notices.
+     * Resolve interface-derived base names from a PHPStan type for interface bare-name checks.
+     *
+     * This resolver only considers directly-typed interfaces from the provided type.
+     * Implemented/parent interface expansion from concrete or abstract classes is intentionally ignored.
      *
      * @return array<string, string> key: normalized base name, value: short interface type name
      */
@@ -68,23 +68,30 @@ final class TypeCandidateResolver
                 continue;
             }
 
-            $interfaceClassNameList = $this->resolveInterfaceClassNameListForClassName($className);
+            $reflectionClass = $this->reflectClass($className);
 
-            foreach ($interfaceClassNameList as $interfaceClassName) {
-                $normalizedBaseNameList = $this->nameNormalizer->normalize($interfaceClassName);
-                $shortInterfaceName     = $this->extractShortClassName($interfaceClassName);
+            if ($reflectionClass === null || $reflectionClass->isInternal() === true) {
+                continue;
+            }
 
-                foreach ($normalizedBaseNameList as $normalizedBaseName) {
-                    if ($this->denyList->isCandidateNameDenied($normalizedBaseName) === true) {
-                        continue;
-                    }
+            if ($reflectionClass->isInterface() === false) {
+                continue;
+            }
 
-                    if (array_key_exists($normalizedBaseName, $interfaceBaseNameToTypeMap) === true) {
-                        continue;
-                    }
+            $interfaceClassName     = $reflectionClass->getName();
+            $normalizedBaseNameList = $this->nameNormalizer->normalize($interfaceClassName);
+            $shortInterfaceName     = $this->extractShortClassName($interfaceClassName);
 
-                    $interfaceBaseNameToTypeMap[$normalizedBaseName] = $shortInterfaceName;
+            foreach ($normalizedBaseNameList as $normalizedBaseName) {
+                if ($this->denyList->isCandidateNameDenied($normalizedBaseName) === true) {
+                    continue;
                 }
+
+                if (array_key_exists($normalizedBaseName, $interfaceBaseNameToTypeMap) === true) {
+                    continue;
+                }
+
+                $interfaceBaseNameToTypeMap[$normalizedBaseName] = $shortInterfaceName;
             }
         }
 
@@ -181,54 +188,6 @@ final class TypeCandidateResolver
         }
 
         return $classNameList;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function resolveInterfaceClassNameListForClassName(string $className): array
-    {
-        if (array_key_exists($className, $this->interfaceClassNameListByFqcn) === true) {
-            return $this->interfaceClassNameListByFqcn[$className];
-        }
-
-        $reflectionClass = $this->reflectClass($className);
-
-        if ($reflectionClass === null) {
-            $this->interfaceClassNameListByFqcn[$className] = [];
-
-            return [];
-        }
-
-        if ($reflectionClass->isInternal() === true) {
-            $this->interfaceClassNameListByFqcn[$className] = [];
-
-            return [];
-        }
-
-        $interfaceClassNameList = [];
-
-        if ($reflectionClass->isInterface() === true) {
-            if ($this->denyList->isClassNameDenied($reflectionClass->getName()) === false) {
-                $this->addUniqueString($interfaceClassNameList, $reflectionClass->getName());
-            }
-        }
-
-        foreach ($reflectionClass->getInterfaces() as $interfaceReflection) {
-            if ($interfaceReflection->isInternal() === true) {
-                continue;
-            }
-
-            if ($this->denyList->isClassNameDenied($interfaceReflection->getName()) === true) {
-                continue;
-            }
-
-            $this->addUniqueString($interfaceClassNameList, $interfaceReflection->getName());
-        }
-
-        $this->interfaceClassNameListByFqcn[$className] = $interfaceClassNameList;
-
-        return $interfaceClassNameList;
     }
 
     private function extractShortClassName(string $className): string
