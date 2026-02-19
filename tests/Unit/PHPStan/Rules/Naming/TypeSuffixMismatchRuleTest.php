@@ -44,6 +44,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string INVALID_BAR_DATA_FILE                                      = self::FIXTURES_DIR . '/Invalid/BarData.php';
     private const string INVALID_CHANNEL_INTERFACE_FILE                             = self::FIXTURES_DIR . '/Invalid/ChannelInterface.php';
     private const string INVALID_INTERFACE_BARE_NAME_FILE                           = self::FIXTURES_DIR . '/Invalid/InterfaceBareName.php';
+    private const string VALID_ABSTRACT_SERVICE_MESSAGE_FILE                        = self::FIXTURES_DIR . '/Valid/AbstractServiceMessage.php';
     private const string VALID_CHANNEL_INTERFACE_FILE                               = self::FIXTURES_DIR . '/Valid/ChannelInterface.php';
     private const string VALID_FOO_DATA_FILE                                        = self::FIXTURES_DIR . '/Valid/FooData.php';
     private const string VALID_BAR_DATA_FILE                                        = self::FIXTURES_DIR . '/Valid/BarData.php';
@@ -121,6 +122,17 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
             self::VALID_FOO_DATA_FILE,
             self::VALID_BAR_DATA_FILE,
             self::FIXTURES_DIR . '/Valid/ValidScenarios.php',
+        ], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testAbstractPrefixNamingSucceeds(): void
+    {
+        $this->analyse([
+            self::VALID_ABSTRACT_SERVICE_MESSAGE_FILE,
+            self::FIXTURES_DIR . '/Valid/EdgeCases/AbstractPrefixNamingIsValid.php',
         ], []);
     }
 

@@ -6,6 +6,7 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Invalid/InterfaceBareName.php
 		- Fixtures/TypeSuffixMismatch/Invalid/DenyListRegression/DenyListedInterface.php
 		- Fixtures/TypeSuffixMismatch/Invalid/DenyListRegression/DenyListedConcreteClass.php
+		- Fixtures/TypeSuffixMismatch/Valid/AbstractServiceMessage.php
 		- Fixtures/TypeSuffixMismatch/Valid/FooData.php
 		- Fixtures/TypeSuffixMismatch/Valid/BarData.php
 		- Fixtures/TypeSuffixMismatch/Valid/ChannelInterface.php

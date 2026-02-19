@@ -7,6 +7,11 @@ namespace SquidIT\PhpCodingStandards\PHPStan\Support;
 final readonly class NameNormalizer
 {
     /** @var array<int, string> */
+    private const array MANDATORY_STRIP_PREFIX_LIST = [
+        'Abstract',
+    ];
+
+    /** @var array<int, string> */
     private const array MANDATORY_STRIP_SUFFIX_LIST = [
         'Interface',
         'Abstract',
@@ -32,11 +37,14 @@ final readonly class NameNormalizer
      * Processing rules:
      * - Uses only the short class name (namespace is ignored).
      * - Normalizes the base to camelCase.
+     * - Mandatory prefix `Abstract` (as a camelCase word boundary) is stripped first; only the stripped form is returned.
      * - Mandatory suffixes `Interface`, `Abstract`, `Trait` are stripped and only the stripped form is returned.
      * - Optional suffixes `Dto`, `Vo`, `Entity` keep both unstripped and stripped forms.
      * - Never-strip suffixes `Factory`, `Collection` keep only the unstripped form.
      *
      * Examples:
+     * - `AbstractServiceMessage` => `['serviceMessage']`
+     * - `AbstractFooInterface` => `['foo']`
      * - `ChannelInterface` => `['channel']`
      * - `UserDto` => `['userDto', 'user']`
      * - `OrderEntity` => `['orderEntity', 'order']`
@@ -47,7 +55,18 @@ final readonly class NameNormalizer
      */
     public function normalize(string $className): array
     {
-        $shortClassName          = $this->extractShortClassName($className);
+        $shortClassName = $this->extractShortClassName($className);
+
+        $matchingPrefix = $this->findMatchingPrefix($shortClassName, self::MANDATORY_STRIP_PREFIX_LIST);
+
+        if ($matchingPrefix !== null) {
+            $prefixStrippedName = $this->stripPrefix($shortClassName, $matchingPrefix);
+
+            if ($prefixStrippedName !== '') {
+                $shortClassName = $prefixStrippedName;
+            }
+        }
+
         $camelCaseShortClassName = $this->toCamelCase($shortClassName);
 
         if ($this->findMatchingSuffix($shortClassName, self::NEVER_STRIP_SUFFIX_LIST) !== null) {
@@ -100,6 +119,31 @@ final readonly class NameNormalizer
     private function stripSuffix(string $value, string $suffix): string
     {
         return substr($value, 0, strlen($value) - strlen($suffix));
+    }
+
+    private function stripPrefix(string $value, string $prefix): string
+    {
+        return substr($value, strlen($prefix));
+    }
+
+    /**
+     * @param array<int, string> $prefixList
+     */
+    private function findMatchingPrefix(string $value, array $prefixList): ?string
+    {
+        foreach ($prefixList as $prefix) {
+            if (str_starts_with($value, $prefix) === false) {
+                continue;
+            }
+
+            $remaining = substr($value, strlen($prefix));
+
+            if ($remaining === '' || ctype_upper($remaining[0]) === true) {
+                return $prefix;
+            }
+        }
+
+        return null;
     }
 
     /**

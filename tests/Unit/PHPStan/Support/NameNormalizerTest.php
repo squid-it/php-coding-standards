@@ -44,6 +44,39 @@ final class NameNormalizerTest extends TestCase
     /**
      * @throws Throwable
      */
+    public function testMandatoryAbstractPrefixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['serviceMessage'],
+            $this->nameNormalizer->normalize('App\Service\AbstractServiceMessage'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testMandatoryAbstractPrefixWithInterfaceSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['foo'],
+            $this->nameNormalizer->normalize('AbstractFooInterface'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testAbstractWordEmbeddedInNameIsNotStrippedAsPrefix(): void
+    {
+        self::assertSame(
+            ['abstractly'],
+            $this->nameNormalizer->normalize('Abstractly'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testMandatoryTraitSuffixNormalizationSucceeds(): void
     {
         self::assertSame(
