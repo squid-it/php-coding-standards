@@ -76,6 +76,10 @@ final readonly class NoServiceInstantiationRule implements Rule
             return [];
         }
 
+        if ($this->isInClassOutsideMethodScope($scope) === true) {
+            return [];
+        }
+
         $containingClassName = $this->containingClassResolver->resolveContainingClassName($scope);
 
         if ($containingClassName === null) {
@@ -116,6 +120,15 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         return $errorList;
+    }
+
+    private function isInClassOutsideMethodScope(Scope $scope): bool
+    {
+        if ($scope->isInClass() === false) {
+            return false;
+        }
+
+        return $scope->getFunctionName() === null;
     }
 
     /**

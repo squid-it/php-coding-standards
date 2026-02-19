@@ -7,7 +7,7 @@ Default coding standard rules for PHP-CS-Fixer.
 Below you can find an example file named `.php-cs-fixer.dist.php` which should be placed inside your project's root directory.
 
 ```php
-<?php 
+<?php
 
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
@@ -23,7 +23,7 @@ $overrides = [
 return (new Config())
     ->setFinder($finder)
     ->setCacheFile('.php-cs-fixer.cache')
-    ->setRiskyAllowed(true)    
+    ->setRiskyAllowed(true)
     ->setRules(Rules::getRules($overrides));
 ```
 
@@ -37,9 +37,16 @@ vendor/bin/php-cs-fixer fix
 
 ### PHPStan Rules
 
-This library also provides custom PHPStan rules that can be included in your project.
+This library provides two sets of custom PHPStan rules:
 
-To use them, add the following to your project's `phpstan.neon`:
+- **Stable rules** — enforced conventions with a low false-positive rate, ready for CI.
+- **Experimental autoreview rules** — naming and architecture checks that support automated code review. Opt-in only.
+
+---
+
+#### Stable Rules
+
+Add the following to your project's `phpstan.neon`:
 
 ```neon
 rules:
@@ -48,7 +55,297 @@ rules:
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
 ```
 
-Experimental autoreview rules are configured separately in `phpstan-autoreview.neon`.
+#### Stable Rules Reference
+
+| Rule | Identifier | Description |
+|------|------------|-------------|
+| `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
+| `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
+| `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
+
+---
+
+#### Experimental Autoreview Rules
+
+These rules are optional and must be explicitly opted into. They enforce naming conventions and architectural boundaries that support automated code review.
+
+Copy-paste template for a dedicated `phpstan-autoreview.neon`:
+
+```neon
+parameters:
+    level: 9
+    paths:
+        - src
+        - tests
+    treatPhpDocTypesAsCertain: false
+    tmpDir: var/cache/phpstan-autoreview
+
+services:
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+
+rules:
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+```
+
+#### Experimental Rules Reference
+
+| Rule | Identifier(s) | Description |
+|------|---------------|-------------|
+| `TypeSuffixMismatchRule` | `squidit.naming.typeSuffixMismatch` | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type. |
+| `TypeSuffixMismatchRule` | `squidit.naming.interfaceBareNameNotice` | Reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
+| `IterablePluralNamingRule` | `squidit.naming.iterablePluralMismatch` | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects. |
+| `IterablePluralNamingRule` | `squidit.naming.mapForbidden` | Reports when an iterable assignment target contains the word segment `Map`. |
+| `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
+| `LoggerContextKeyCamelCaseRule` | `squidit.naming.loggerContextKeyCamelCase` | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls. |
+| `EnumBackedValueCamelCaseRule` | `squidit.naming.enumBackedValueCamelCase` | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method. |
+| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`). |
+
+---
+
+##### TypeSuffixMismatchRule
+
+Checks typed properties, promoted constructor parameters, and local variable assignments. The variable or property name must reflect the inferred type — either as an exact base name match or with a contextual prefix.
+
+**Valid:**
+```php
+private FooService $fooService;
+private FooService $activeFooService;
+```
+
+**Invalid:**
+```php
+private FooService $item;          // squidit.naming.typeSuffixMismatch
+private FooService $fooService;    // squidit.naming.interfaceBareNameNotice
+                                   // (when type derives from FooServiceInterface)
+```
+
+The `interfaceBareNameNotice` identifier fires when the name matches an interface-derived base name exactly, without any contextual prefix. A prefix like `active` or `current` silences it.
+
+---
+
+##### IterablePluralNamingRule
+
+Checks assignment targets where the inferred type is an iterable of typed objects. The variable or property name must use a plural or recognized collection-style form.
+
+**Allowed collection suffixes:** `List`, `Collection`, `Lookup`, `ById`, `ByKey`
+
+**Valid:**
+```php
+$nodes = [$node];
+$nodeList = [$node];
+$activeNodeList = [$node];
+$nodeById = ['id' => $node];
+```
+
+**Invalid:**
+```php
+$items = [$node];      // squidit.naming.iterablePluralMismatch
+$nodeMap = [$node];    // squidit.naming.mapForbidden
+```
+
+The `mapForbidden` identifier fires whenever the name contains `Map` as a camelCase word segment (for example `nodeMap`, `nodeMapById`). Use `Lookup`, `ById`, or `ByKey` instead.
+
+---
+
+##### ForeachValueVariableNamingRule
+
+Checks the value variable in a `foreach` statement. Naming candidates are resolved from two sources: the singularized iterable variable name and the inferred iterable element type. The value variable must match one of those candidates directly, or use it as a suffix with a contextual prefix.
+
+**Valid** (given `$children` typed as `array<int, ChildNode>`):
+```php
+foreach ($children as $child) {}
+foreach ($children as $childNode) {}
+foreach ($children as $firstChildNode) {}
+```
+
+**Invalid:**
+```php
+foreach ($children as $item) {}    // squidit.naming.foreachValueVarMismatch
+```
+
+---
+
+##### LoggerContextKeyCamelCaseRule
+
+Checks string-literal keys in the context array argument of PSR logger calls. Applies only when the receiver type is compatible with `Psr\Log\LoggerInterface`. Dynamic keys and non-logger receivers are ignored.
+
+Context argument positions:
+- `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug` — second argument (index `1`)
+- `log` — third argument (index `2`)
+
+**Valid:**
+```php
+$logger->info('User saved', ['userId' => $id]);
+$logger->log('info', 'User saved', ['requestId' => $id]);
+```
+
+**Invalid:**
+```php
+$logger->info('User saved', ['user_id' => $id]);    // squidit.naming.loggerContextKeyCamelCase
+```
+
+---
+
+##### EnumBackedValueCamelCaseRule
+
+Checks string-backed enum case values. Each backed value must be camelCase. A non-camelCase value is permitted only when the same literal string is returned from a `to*()` method on the same enum (for example `toDb()`, `toLabel()`). The `to*()` exception requires a word boundary — `toDb()` qualifies, `total()` does not.
+
+**Valid:**
+```php
+enum Status: string
+{
+    case Active = 'active';
+    case FooBar = 'fooBar';
+}
+```
+
+**Valid with `to*()` exception:**
+```php
+enum Status: string
+{
+    case DbLegacy = 'db_legacy';
+
+    public function toDb(): string
+    {
+        return match ($this) {
+            self::DbLegacy => 'db_legacy',
+        };
+    }
+}
+```
+
+**Invalid:**
+```php
+enum Status: string
+{
+    case DbLegacy = 'db_legacy';    // squidit.naming.enumBackedValueCamelCase
+}
+```
+
+---
+
+##### NoServiceInstantiationRule
+
+Disallows `new` expressions for service classes in non-creator classes. A class is exempt when:
+
+- The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
+- The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
+- The instantiated class passes the VO/DTO classifier gates.
+
+**Valid:**
+```php
+// Inside a *Factory, *Builder, or *Provider class
+class HttpClientFactory
+{
+    public function create(): HttpClient
+    {
+        return new HttpClient();    // allowed
+    }
+}
+
+// VO/DTO and internal class instantiation anywhere
+$dto   = new OrderDto($id, $amount);
+$clock = new DateTimeImmutable();
+```
+
+**Invalid:**
+```php
+class ReportService
+{
+    public function generate(): void
+    {
+        $client = new HttpClient();    // squidit.architecture.noServiceInstantiation
+    }
+}
+```
+
+**VO/DTO classification:**
+
+A class is classified as a VO/DTO when it passes both gates:
+
+1. **Immutability gate** (one must be true):
+   - The class is declared `readonly`, or
+   - All declared and inherited non-static instance properties are `readonly`.
+
+2. **Public API gate** (all must be true):
+   - Public methods are limited to: `__construct`, `get*`, `is*`, `has*`, `toArray`, `jsonSerialize`, `__toString`, `equals`, `equalsTo`.
+   - Any other declared public method disqualifies the class.
+   - Prefixes `get`, `is`, `has` require a word boundary — `getOrder()` qualifies, `getter()` does not.
+
+**Configuring creator suffixes:**
+
+By default the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`. If you want custom suffixes, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
+
+```neon
+services:
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+        tags:
+            - phpstan.rules.rule
+        arguments:
+            $allowedCreatorClassSuffixList:
+                - Factory
+                - Builder
+                - Provider
+                - Assembler
+```
+
+Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Provider`).
+
+---
+
+#### Suppressing Rules
+
+To suppress a specific rule on a single line:
+
+```php
+// @phpstan-ignore squidit.architecture.noServiceInstantiation
+$client = new HttpClient();
+```
+
+To suppress globally in `phpstan.neon`:
+
+```neon
+parameters:
+    ignoreErrors:
+        - identifier: squidit.architecture.noServiceInstantiation
+```
+
+To suppress for a specific path:
+
+```neon
+parameters:
+    ignoreErrors:
+        -
+            identifier: squidit.naming.typeSuffixMismatch
+            path: src/Legacy/*
+```
+
+Both stable and experimental identifiers support the same suppression syntax.
+
+---
 
 #### Experimental Support Utilities (Maintainers)
 
@@ -66,27 +363,3 @@ Experimental autoreview rules are configured separately in `phpstan-autoreview.n
 - Avoid manual `require_once` of fixture files in rule tests unless there is no alternative.
 - Keep fixture-related `excludePaths` and `ignoreErrors` narrow and scoped to the exact fixture directory/identifier.
 - This prevents coverage instability where `composer test:unit:coverage` can crash with Windows exit code `-1073741819` after report generation.
-
-#### Available Rules
-
-| Rule | Identifier | Description |
-|------|------------|-------------|
-| `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
-| `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
-| `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
-
-#### Ignoring a Rule
-
-To ignore a specific rule for a file or line, use the PHPStan ignore syntax with the rule identifier:
-
-```php
-// @phpstan-ignore squidit.architecture.singleClassPerFile
-```
-
-Or in your `phpstan.neon`:
-
-```neon
-parameters:
-    ignoreErrors:
-        - identifier: squidit.architecture.singleClassPerFile
-```

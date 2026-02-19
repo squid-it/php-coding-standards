@@ -161,6 +161,44 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     /**
      * @throws Throwable
      */
+    public function testPromotedConstructorParameterDefaultInstantiationIsIgnoredSucceeds(): void
+    {
+        $errorList = $this->rule->processNode(
+            $this->createNamedNewNode(37),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+                null,
+                true,
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testConstructorBodyInstantiationStillFails(): void
+    {
+        $line      = 39;
+        $errorList = $this->rule->processNode(
+            $this->createNamedNewNode($line),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+                '__construct',
+                true,
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::DIRECT_SERVICE_ERROR, $errorList[0]->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testVoDtoInstantiationSucceeds(): void
     {
         $errorList = $this->rule->processNode(
@@ -337,12 +375,19 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         return $this->reflectionProvider->getClass($className);
     }
 
-    private function createScopeStub(?ClassReflection $classReflection, Type $newType): Scope&NodeCallbackInvoker
+    private function createScopeStub(
+        ?ClassReflection $classReflection,
+        Type $newType,
+        ?string $functionName = null,
+        bool $isInClass = false,
+    ): Scope&NodeCallbackInvoker
     {
         /** @var NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
         $scope->method('getClassReflection')->willReturn($classReflection);
         $scope->method('getType')->willReturn($newType);
+        $scope->method('getFunctionName')->willReturn($functionName);
+        $scope->method('isInClass')->willReturn($isInClass);
 
         return $scope;
     }

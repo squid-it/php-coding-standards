@@ -18,5 +18,30 @@ parameters:
 			identifier: void.pure
 			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
 
-# Experimental autoreview rules are added here in PR4+.
-rules: []
+services:
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+
+rules:
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
