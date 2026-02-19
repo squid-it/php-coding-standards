@@ -4,11 +4,33 @@ declare(strict_types=1);
 
 namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming;
 
+use PhpParser\Modifiers;
+use PhpParser\Node\ComplexType;
+use PhpParser\Node\Identifier;
+use PhpParser\Node\Name;
+use PhpParser\Node\Stmt\Property;
+use PhpParser\Node\Stmt\PropertyProperty;
+use PhpParser\Node\UnionType as ParserUnionType;
+use PHPStan\Analyser\NodeCallbackInvoker;
+use PHPStan\Analyser\Scope;
+use PHPStan\Rules\IdentifierRuleError;
+use PHPStan\Rules\LineRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use PHPUnit\Framework\MockObject\Stub;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule;
 use SquidIT\PhpCodingStandards\PHPStan\Support\DenyList;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\AbstractChannel as RuntimeAbstractChannel;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\ChannelInterface as RuntimeChannelInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\DenyListedConcreteClass as RuntimeDenyListedConcreteClass;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\DenyListedInterface as RuntimeDenyListedInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\DuplicateBaseName\A\ChannelInterface as RuntimeAChannelInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\DuplicateBaseName\B\ChannelInterface as RuntimeBChannelInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\FooInterface as RuntimeFooInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\MyService as RuntimeMyService;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\ReadChannel as RuntimeReadChannel;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming\Runtime\TransportInterface as RuntimeTransportInterface;
 use Throwable;
 use TypeSuffixMismatchFixtures\Invalid\DenyListRegression\DenyListedInterface;
 
@@ -17,43 +39,49 @@ use TypeSuffixMismatchFixtures\Invalid\DenyListRegression\DenyListedInterface;
  */
 final class TypeSuffixMismatchRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR                   = __DIR__ . '/Fixtures/TypeSuffixMismatch';
-    private const string INVALID_FOO_DATA_FILE          = self::FIXTURES_DIR . '/Invalid/FooData.php';
-    private const string INVALID_BAR_DATA_FILE          = self::FIXTURES_DIR . '/Invalid/BarData.php';
-    private const string INVALID_CHANNEL_INTERFACE_FILE = self::FIXTURES_DIR . '/Invalid/ChannelInterface.php';
-    private const string VALID_CHANNEL_INTERFACE_FILE   = self::FIXTURES_DIR . '/Valid/ChannelInterface.php';
-    private const string VALID_FOO_DATA_FILE            = self::FIXTURES_DIR . '/Valid/FooData.php';
-    private const string VALID_BAR_DATA_FILE            = self::FIXTURES_DIR . '/Valid/BarData.php';
-    private const string VALID_DYNAMIC_ASSIGNMENT_FILE  = self::FIXTURES_DIR . '/Valid/EdgeCases/AssignmentWithDynamicVariableName.php';
-    private const string VALID_SCALAR_ASSIGNMENT_FILE   = self::FIXTURES_DIR . '/Valid/EdgeCases/ScalarAssignmentNoObjectType.php';
-    private const string VALID_NO_OBJECT_TYPES_FILE     = self::FIXTURES_DIR . '/Valid/EdgeCases/NoObjectTypedProperties.php';
-    private const string VALID_DNF_TYPE_FILE            = self::FIXTURES_DIR . '/Valid/EdgeCases/DnfTypedPropertyIgnored.php';
-    private const string VALID_DUPLICATE_A_FILE         = self::FIXTURES_DIR . '/Valid/EdgeCases/DuplicateBaseName/A/ChannelInterface.php';
-    private const string VALID_DUPLICATE_B_FILE         = self::FIXTURES_DIR . '/Valid/EdgeCases/DuplicateBaseName/B/ChannelInterface.php';
-    private const string VALID_GLOBAL_FOO_DATA_FILE     = self::FIXTURES_DIR . '/Valid/EdgeCases/GlobalFooData.php';
-    private const string INVALID_NULLABLE_FILE          = self::FIXTURES_DIR . '/Invalid/EdgeCases/NullableTypedPropertyMismatch.php';
-    private const string INVALID_UNION_PROPERTY_FILE    = self::FIXTURES_DIR . '/Invalid/EdgeCases/UnionTypedPropertyMismatch.php';
-    private const string INVALID_DUPLICATE_NOTICE_FILE  = self::FIXTURES_DIR . '/Invalid/EdgeCases/DuplicateInterfaceBaseNameNotice.php';
-    private const string INVALID_GLOBAL_TYPE_FILE       = self::FIXTURES_DIR . '/Invalid/EdgeCases/GlobalClassTypedPropertyMismatch.php';
-    private const string DENYLIST_INTERFACE_FILE        = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedInterface.php';
-    private const string DENYLIST_CONCRETE_FILE         = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedConcreteClass.php';
-    private const string DENYLIST_FIXTURE_FILE          = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListDoubleErrorCandidate.php';
-    private const string FOO_DATA_MISMATCH_MESSAGE      = 'Name "$service" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
-    private const string ASSIGNMENT_MISMATCH_MESSAGE    = 'Name "$item" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
-    private const string UNION_MISMATCH_MESSAGE         = 'Name "$item" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
-    private const string UNION_PROPERTY_MISMATCH        = 'Name "$service" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
-    private const string DNF_UNION_MISMATCH             = 'Name "$service" does not match inferred type "BarData|ChannelInterface|FooData". Allowed base names: barData, channel, fooData. Use one of these names directly or a contextual prefix ending with: BarData, Channel, FooData.';
-    private const string INTERFACE_NOTICE_MESSAGE       = 'Interface-typed name "$channel" uses the bare interface base name "channel" (inferred interface type: ChannelInterface). Prefer a contextual prefix like "$readChannel".';
-    private const string DENYLIST_MISMATCH_MESSAGE      = 'Name "$denyListed" does not match inferred type "DenyListedConcreteClass". Allowed base names: denyListedConcreteClass. Use one of these names directly or a contextual prefix ending with: DenyListedConcreteClass.';
-    private const string GLOBAL_FOO_DATA_MISMATCH       = 'Name "$service" does not match inferred type "GlobalFooData". Allowed base names: globalFooData. Use one of these names directly or a contextual prefix ending with: GlobalFooData.';
+    private const string FIXTURES_DIR                               = __DIR__ . '/Fixtures/TypeSuffixMismatch';
+    private const string INVALID_FOO_DATA_FILE                      = self::FIXTURES_DIR . '/Invalid/FooData.php';
+    private const string INVALID_BAR_DATA_FILE                      = self::FIXTURES_DIR . '/Invalid/BarData.php';
+    private const string INVALID_CHANNEL_INTERFACE_FILE             = self::FIXTURES_DIR . '/Invalid/ChannelInterface.php';
+    private const string INVALID_INTERFACE_BARE_NAME_FILE           = self::FIXTURES_DIR . '/Invalid/InterfaceBareName.php';
+    private const string VALID_CHANNEL_INTERFACE_FILE               = self::FIXTURES_DIR . '/Valid/ChannelInterface.php';
+    private const string VALID_FOO_DATA_FILE                        = self::FIXTURES_DIR . '/Valid/FooData.php';
+    private const string VALID_BAR_DATA_FILE                        = self::FIXTURES_DIR . '/Valid/BarData.php';
+    private const string VALID_DYNAMIC_ASSIGNMENT_FILE              = self::FIXTURES_DIR . '/Valid/EdgeCases/AssignmentWithDynamicVariableName.php';
+    private const string VALID_SCALAR_ASSIGNMENT_FILE               = self::FIXTURES_DIR . '/Valid/EdgeCases/ScalarAssignmentNoObjectType.php';
+    private const string VALID_NO_OBJECT_TYPES_FILE                 = self::FIXTURES_DIR . '/Valid/EdgeCases/NoObjectTypedProperties.php';
+    private const string VALID_DNF_TYPE_FILE                        = self::FIXTURES_DIR . '/Valid/EdgeCases/DnfTypedPropertyIgnored.php';
+    private const string VALID_DUPLICATE_A_FILE                     = self::FIXTURES_DIR . '/Valid/EdgeCases/DuplicateBaseName/A/ChannelInterface.php';
+    private const string VALID_DUPLICATE_B_FILE                     = self::FIXTURES_DIR . '/Valid/EdgeCases/DuplicateBaseName/B/ChannelInterface.php';
+    private const string VALID_GLOBAL_FOO_DATA_FILE                 = self::FIXTURES_DIR . '/Valid/EdgeCases/GlobalFooData.php';
+    private const string INVALID_NULLABLE_FILE                      = self::FIXTURES_DIR . '/Invalid/EdgeCases/NullableTypedPropertyMismatch.php';
+    private const string INVALID_UNION_PROPERTY_FILE                = self::FIXTURES_DIR . '/Invalid/EdgeCases/UnionTypedPropertyMismatch.php';
+    private const string INVALID_DUPLICATE_INTERFACE_BASE_NAME_FILE = self::FIXTURES_DIR . '/Invalid/EdgeCases/DuplicateInterfaceBaseName.php';
+    private const string INVALID_GLOBAL_TYPE_FILE                   = self::FIXTURES_DIR . '/Invalid/EdgeCases/GlobalClassTypedPropertyMismatch.php';
+    private const string DENYLIST_INTERFACE_FILE                    = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedInterface.php';
+    private const string DENYLIST_CONCRETE_FILE                     = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedConcreteClass.php';
+    private const string DENYLIST_FIXTURE_FILE                      = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListDoubleErrorCandidate.php';
+    private const string FOO_DATA_MISMATCH_MESSAGE                  = 'Name "$service" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
+    private const string ASSIGNMENT_MISMATCH_MESSAGE                = 'Name "$item" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
+    private const string UNION_MISMATCH_MESSAGE                     = 'Name "$item" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
+    private const string UNION_PROPERTY_MISMATCH                    = 'Name "$service" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
+    private const string DNF_UNION_MISMATCH                         = 'Name "$service" does not match inferred type "BarData|ChannelInterface|FooData". Allowed base names: barData, channel, fooData. Use one of these names directly or a contextual prefix ending with: BarData, Channel, FooData.';
+    private const string INTERFACE_BARE_NAME_MESSAGE                = 'Interface-typed name "$channel" uses the bare interface base name "channel" (inferred interface type: ChannelInterface). Prefer a contextual prefix like "$readChannel".';
+    private const string INTERFACE_BARE_NAME_IDENTIFIER             = 'squidit.naming.interfaceBareName';
+    private const string TYPE_SUFFIX_MISMATCH_IDENTIFIER            = 'squidit.naming.typeSuffixMismatch';
+    private const string DENYLIST_MISMATCH_MESSAGE                  = 'Name "$denyListed" does not match inferred type "DenyListedConcreteClass". Allowed base names: denyListedConcreteClass. Use one of these names directly or a contextual prefix ending with: DenyListedConcreteClass.';
+    private const string GLOBAL_FOO_DATA_MISMATCH                   = 'Name "$service" does not match inferred type "GlobalFooData". Allowed base names: globalFooData. Use one of these names directly or a contextual prefix ending with: GlobalFooData.';
 
     private DenyList $denyList;
+    /** @var array<string, string> */
+    private array $resolvedTypeNameMap = [];
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->denyList = new DenyList();
+        $this->denyList            = new DenyList();
+        $this->resolvedTypeNameMap = [];
     }
 
     protected function getRule(): Rule
@@ -182,14 +210,46 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     /**
      * @throws Throwable
      */
-    public function testInterfaceBareNameNoticeFails(): void
+    public function testInterfaceBareNameSucceedsWhenCheckDisabledByDefault(): void
     {
         $this->analyse([
             self::INVALID_CHANNEL_INTERFACE_FILE,
-            self::FIXTURES_DIR . '/Invalid/InterfaceBareNameNotice.php',
-        ], [
-            [self::INTERFACE_NOTICE_MESSAGE, 9],
+            self::INVALID_INTERFACE_BARE_NAME_FILE,
+        ], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testInterfaceBareNameFailsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ChannelInterface' => RuntimeChannelInterface::class,
         ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('ChannelInterface'),
+                'channel',
+                9,
+            ),
+            $scope,
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::INTERFACE_BARE_NAME_MESSAGE, $errorList[0]->getMessage());
+
+        if (($errorList[0] instanceof IdentifierRuleError) === false) {
+            self::fail('Expected IdentifierRuleError implementation.');
+        }
+
+        self::assertSame(self::INTERFACE_BARE_NAME_IDENTIFIER, $errorList[0]->getIdentifier());
+
+        if (($errorList[0] instanceof LineRuleError) === false) {
+            self::fail('Expected LineRuleError implementation.');
+        }
+
+        self::assertSame(9, $errorList[0]->getLine());
     }
 
     /**
@@ -210,6 +270,39 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         ], [
             [self::DENYLIST_MISMATCH_MESSAGE, 9],
         ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testDenyListedInterfaceOnConcreteTypeWithInterfaceBareNameCheckEnabledReportsOnlySuffixMismatchFails(): void
+    {
+        $denyList = new DenyList(
+            classNameList: [
+                RuntimeDenyListedInterface::class,
+            ],
+        );
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'DenyListedConcreteClass' => RuntimeDenyListedConcreteClass::class,
+        ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled($denyList);
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('DenyListedConcreteClass'),
+                'denyListed',
+                9,
+            ),
+            $scope,
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::DENYLIST_MISMATCH_MESSAGE, $errorList[0]->getMessage());
+
+        if (($errorList[0] instanceof IdentifierRuleError) === false) {
+            self::fail('Expected IdentifierRuleError implementation.');
+        }
+
+        self::assertSame(self::TYPE_SUFFIX_MISMATCH_IDENTIFIER, $errorList[0]->getIdentifier());
     }
 
     /**
@@ -257,15 +350,45 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     /**
      * @throws Throwable
      */
-    public function testDuplicateInterfaceBaseNameNoticeFails(): void
+    public function testDuplicateInterfaceBaseNameSucceedsWhenCheckDisabledByDefault(): void
     {
         $this->analyse([
             self::VALID_DUPLICATE_A_FILE,
             self::VALID_DUPLICATE_B_FILE,
-            self::INVALID_DUPLICATE_NOTICE_FILE,
-        ], [
-            [self::INTERFACE_NOTICE_MESSAGE, 12],
+            self::INVALID_DUPLICATE_INTERFACE_BASE_NAME_FILE,
+        ], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testDuplicateInterfaceBaseNameFailsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'AChannelInterface' => RuntimeAChannelInterface::class,
+            'BChannelInterface' => RuntimeBChannelInterface::class,
         ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new ParserUnionType([
+                    new Name('AChannelInterface'),
+                    new Name('BChannelInterface'),
+                ]),
+                'channel',
+                12,
+            ),
+            $scope,
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::INTERFACE_BARE_NAME_MESSAGE, $errorList[0]->getMessage());
+
+        if (($errorList[0] instanceof IdentifierRuleError) === false) {
+            self::fail('Expected IdentifierRuleError implementation.');
+        }
+
+        self::assertSame(self::INTERFACE_BARE_NAME_IDENTIFIER, $errorList[0]->getIdentifier());
     }
 
     /**
@@ -279,5 +402,179 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         ], [
             [self::GLOBAL_FOO_DATA_MISMATCH, 9],
         ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testConcreteClassEndingWithInterfaceNameSucceedsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'FooInterface' => RuntimeFooInterface::class,
+        ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('FooInterface'),
+                'foo',
+                9,
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testScenarioBConcreteClassImplementingInterfaceWithBareNameSucceedsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ReadChannel' => RuntimeReadChannel::class,
+        ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('ReadChannel'),
+                'channel',
+                30,
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testScenarioEUnionContainingConcreteAndUnrelatedInterfaceWithBareNameSucceedsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ReadChannel'        => RuntimeReadChannel::class,
+            'TransportInterface' => RuntimeTransportInterface::class,
+        ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new ParserUnionType([
+                    new Name('ReadChannel'),
+                    new Name('TransportInterface'),
+                ]),
+                'channel',
+                32,
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testScenarioFAbstractClassImplementingInterfaceWithBareNameSucceedsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'AbstractChannel' => RuntimeAbstractChannel::class,
+        ]);
+        $rule      = $this->createRuleWithInterfaceBareNameCheckEnabled();
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('AbstractChannel'),
+                'channel',
+                34,
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testScenarioGConcreteClassWithMultipleInterfacesAndMatchingBareNamesSucceedsWhenCheckEnabled(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'MyService' => RuntimeMyService::class,
+        ]);
+        $rule = $this->createRuleWithInterfaceBareNameCheckEnabled();
+
+        $channelErrorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('MyService'),
+                'channel',
+                36,
+            ),
+            $scope,
+        );
+        $loggableErrorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('MyService'),
+                'loggable',
+                37,
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $channelErrorList);
+        self::assertSame([], $loggableErrorList);
+    }
+
+    /**
+     * @param array<string, string> $resolvedTypeNameMap
+     */
+    private function createScopeStubForResolvedTypeName(array $resolvedTypeNameMap): Scope&NodeCallbackInvoker
+    {
+        $this->resolvedTypeNameMap = $resolvedTypeNameMap;
+
+        /** @var NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
+        $scope->method('resolveName')
+            ->willReturnCallback($this->resolveTypeNameForScope(...));
+
+        return $scope;
+    }
+
+    private function resolveTypeNameForScope(Name $name): string
+    {
+        $shortTypeName = $name->toString();
+
+        return $this->resolvedTypeNameMap[$shortTypeName] ?? $shortTypeName;
+    }
+
+    private function createRuleWithInterfaceBareNameCheckEnabled(?DenyList $denyList = null): TypeSuffixMismatchRule
+    {
+        $resolvedDenyList = $denyList;
+
+        if ($resolvedDenyList === null) {
+            $resolvedDenyList = new DenyList();
+        }
+
+        return new TypeSuffixMismatchRule(
+            typeCandidateResolver: new TypeCandidateResolver(denyList: $resolvedDenyList),
+            enableInterfaceBareNameCheck: true,
+        );
+    }
+
+    private function createPropertyNodeWithTypeNode(
+        ComplexType|Identifier|Name $typeNode,
+        string $propertyName,
+        int $line,
+    ): Property {
+        return new Property(
+            flags: Modifiers::PRIVATE,
+            props: [
+                new PropertyProperty(
+                    name: $propertyName,
+                    default: null,
+                    attributes: ['startLine' => $line],
+                ),
+            ],
+            attributes: ['startLine' => $line],
+            type: $typeNode,
+        );
     }
 }

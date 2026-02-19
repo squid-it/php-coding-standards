@@ -114,7 +114,7 @@ rules:
 | Rule | Identifier(s) | Description |
 |------|---------------|-------------|
 | `TypeSuffixMismatchRule` | `squidit.naming.typeSuffixMismatch` | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type. |
-| `TypeSuffixMismatchRule` | `squidit.naming.interfaceBareNameNotice` | Reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
+| `TypeSuffixMismatchRule` | `squidit.naming.interfaceBareName` | Optional check (disabled by default) that reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
 | `IterablePluralNamingRule` | `squidit.naming.iterablePluralMismatch` | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects. |
 | `IterablePluralNamingRule` | `squidit.naming.mapForbidden` | Reports when an iterable assignment target contains the word segment `Map`. |
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
@@ -128,6 +128,8 @@ rules:
 
 Checks typed properties, promoted constructor parameters, and local variable assignments. The variable or property name must reflect the inferred type — either as an exact base name match or with a contextual prefix.
 
+By default this rule enforces only `squidit.naming.typeSuffixMismatch`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
+
 **Valid:**
 ```php
 private FooService $fooService;
@@ -137,11 +139,27 @@ private FooService $activeFooService;
 **Invalid:**
 ```php
 private FooService $item;          // squidit.naming.typeSuffixMismatch
-private FooService $fooService;    // squidit.naming.interfaceBareNameNotice
-                                   // (when type derives from FooServiceInterface)
+private FooServiceInterface $fooService;    // squidit.naming.interfaceBareName
+                                            // (only when interface bare-name check is enabled)
 ```
 
-The `interfaceBareNameNotice` identifier fires when the name matches an interface-derived base name exactly, without any contextual prefix. A prefix like `active` or `current` silences it.
+The `interfaceBareName` identifier fires when the name matches an interface-derived base name exactly, without any contextual prefix. A prefix like `active` or `current` silences it.
+
+**Enable the optional interface bare-name check:**
+
+If you want this stricter behavior, remove `TypeSuffixMismatchRule` from `rules:` and register it via `services`:
+
+```neon
+services:
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+        tags:
+            - phpstan.rules.rule
+        arguments:
+            $enableInterfaceBareNameCheck: true
+```
+
+Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice.
 
 ---
 
@@ -340,6 +358,16 @@ parameters:
     ignoreErrors:
         -
             identifier: squidit.naming.typeSuffixMismatch
+            path: src/Legacy/*
+```
+
+When the optional interface bare-name check is enabled, you can suppress it the same way:
+
+```neon
+parameters:
+    ignoreErrors:
+        -
+            identifier: squidit.naming.interfaceBareName
             path: src/Legacy/*
 ```
 

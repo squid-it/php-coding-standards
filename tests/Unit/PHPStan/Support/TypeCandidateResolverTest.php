@@ -14,6 +14,7 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\DenyList;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\CustomDomainDto;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\DomainChildInterface;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\DomainRootInterface;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\UserlandDomainException;
 use Throwable;
 
@@ -141,7 +142,10 @@ final class TypeCandidateResolverTest extends TestCase
         $typeCandidateResolver = new TypeCandidateResolver(denyList: $denyList);
 
         $interfaceBaseNameToTypeMap = $typeCandidateResolver->resolveInterfaceBaseNameToTypeMap(
-            new ObjectType(CustomDomainDto::class),
+            new UnionType([
+                new ObjectType(DomainChildInterface::class),
+                new ObjectType(DomainRootInterface::class),
+            ]),
         );
 
         self::assertArrayNotHasKey('domainChild', $interfaceBaseNameToTypeMap);

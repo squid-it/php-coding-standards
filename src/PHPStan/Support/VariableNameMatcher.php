@@ -33,19 +33,4 @@ final readonly class VariableNameMatcher
 
         return str_ends_with($variableName, $capitalizedBaseName);
     }
-
-    /**
-     * Determine if an interface bare-name notice should be reported.
-     *
-     * This method compares the current variable/property name against an interface-derived
-     * base name and reports when it is used as a bare name without context prefix.
-     *
-     * Examples:
-     * - `channel` + base `channel` => report notice
-     * - `readChannel` + base `channel` => no notice
-     */
-    public function shouldReportInterfaceBareNameNotice(string $variableName, string $baseName): bool
-    {
-        return $variableName === $baseName;
-    }
 }

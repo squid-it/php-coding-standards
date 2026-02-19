@@ -7,7 +7,7 @@ namespace TypeSuffixMismatchFixtures\Invalid\EdgeCases;
 use TypeSuffixMismatchFixtures\Valid\EdgeCases\DuplicateBaseName\A\ChannelInterface as AChannelInterface;
 use TypeSuffixMismatchFixtures\Valid\EdgeCases\DuplicateBaseName\B\ChannelInterface as BChannelInterface;
 
-final class DuplicateInterfaceBaseNameNotice
+final class DuplicateInterfaceBaseName
 {
     private AChannelInterface|BChannelInterface $channel;
 }
