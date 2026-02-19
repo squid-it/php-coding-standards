@@ -1,0 +1,4 @@
+parameters:
+	scanFiles:
+		- Fixtures/IterablePluralNaming/Valid/Node.php
+		- Fixtures/IterablePluralNaming/Invalid/Node.php

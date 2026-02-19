@@ -1,7 +1,7 @@
 rules:
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\SingleClassPerFileRule
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowAnonymousFunctionRule
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\DisallowLogicalNotRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
 
 parameters:
 	level: 9
@@ -11,4 +11,20 @@ parameters:
 	treatPhpDocTypesAsCertain: false
 	tmpDir: var/cache/phpstan
 	excludePaths:
-		- tests/Unit/PHPStan/Rules/Fixtures
+		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile
+	ignoreErrors:
+		-
+			identifier: squidit.restrictions.disallowAnonymousFunction
+			path: tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowAnonymousFunction/Invalid/*
+		-
+			identifier: squidit.restrictions.disallowLogicalNot
+			path: tests/Unit/PHPStan/Rules/Restrictions/Fixtures/DisallowLogicalNot/Invalid/*
+		-
+			identifier: property.unused
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+		-
+			identifier: property.onlyWritten
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+		-
+			identifier: void.pure
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*

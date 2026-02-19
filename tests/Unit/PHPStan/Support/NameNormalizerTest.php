@@ -1,0 +1,109 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support;
+
+use PHPUnit\Framework\TestCase;
+use SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer;
+use Throwable;
+
+final class NameNormalizerTest extends TestCase
+{
+    private NameNormalizer $nameNormalizer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->nameNormalizer = new NameNormalizer();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testMandatoryInterfaceSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['channel'],
+            $this->nameNormalizer->normalize('App\Domain\ChannelInterface'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testMandatoryAbstractSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['order'],
+            $this->nameNormalizer->normalize('OrderAbstract'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testMandatoryTraitSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['loggerAware'],
+            $this->nameNormalizer->normalize('App\LoggerAwareTrait'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testOptionalDtoSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['userDto', 'user'],
+            $this->nameNormalizer->normalize('UserDto'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testOptionalEntitySuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['orderEntity', 'order'],
+            $this->nameNormalizer->normalize('OrderEntity'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testNeverStripFactorySuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['userFactory'],
+            $this->nameNormalizer->normalize('UserFactory'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testNeverStripCollectionSuffixNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['nodeCollection'],
+            $this->nameNormalizer->normalize('NodeCollection'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testInitialismNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['urlParserDto', 'urlParser'],
+            $this->nameNormalizer->normalize('Acme\URLParserDto'),
+        );
+    }
+}

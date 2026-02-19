@@ -1,0 +1,47 @@
+parameters:
+	level: 9
+	paths:
+		- src
+		- tests
+	treatPhpDocTypesAsCertain: false
+	tmpDir: var/cache/phpstan-autoreview
+	excludePaths:
+		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile
+	ignoreErrors:
+		-
+			identifier: property.unused
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+		-
+			identifier: property.onlyWritten
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+		-
+			identifier: void.pure
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+
+services:
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+
+rules:
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
