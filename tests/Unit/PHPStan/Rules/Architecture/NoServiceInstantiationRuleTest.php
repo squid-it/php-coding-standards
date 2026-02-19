@@ -380,8 +380,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         Type $newType,
         ?string $functionName = null,
         bool $isInClass = false,
-    ): Scope&NodeCallbackInvoker
-    {
+    ): Scope&NodeCallbackInvoker {
         /** @var NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
         $scope->method('getClassReflection')->willReturn($classReflection);
