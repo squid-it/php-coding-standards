@@ -15,16 +15,16 @@ use Throwable;
  */
 final class IterablePluralNamingRuleTest extends RuleTestCase
 {
-    private const string FIXTURES_DIR                  = __DIR__ . '/Fixtures/IterablePluralNaming';
-    private const string VALID_NODE_FILE               = self::FIXTURES_DIR . '/Valid/Node.php';
-    private const string VALID_INLINE_VAR_FILE         = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotationNarrowsIterableAssignmentType.php';
-    private const string VALID_INLINE_UNNAMED_VAR_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineUnnamedVarAnnotationNarrowsIterableAssignmentType.php';
-    private const string INLINE_VAR_CONTAINER_INTERFACE_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotation/ContainerInterface.php';
+    private const string FIXTURES_DIR                              = __DIR__ . '/Fixtures/IterablePluralNaming';
+    private const string VALID_NODE_FILE                           = self::FIXTURES_DIR . '/Valid/Node.php';
+    private const string VALID_INLINE_VAR_FILE                     = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotationNarrowsIterableAssignmentType.php';
+    private const string VALID_INLINE_UNNAMED_VAR_FILE             = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineUnnamedVarAnnotationNarrowsIterableAssignmentType.php';
+    private const string INLINE_VAR_CONTAINER_INTERFACE_FILE       = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotation/ContainerInterface.php';
     private const string INLINE_VAR_CONTAINER_MASON_INTERFACE_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotation/ContainerMasonInterface.php';
-    private const string INVALID_NODE_FILE             = self::FIXTURES_DIR . '/Invalid/Node.php';
-    private const string PLURAL_MISMATCH_ERROR_MESSAGE = 'Iterable name "$itemList" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
-    private const string MAP_FORBIDDEN_ERROR_MESSAGE   = 'Iterable name "$nodeMap" contains forbidden segment "Map". Use "List", "Collection", "Lookup", "ById", or "ByKey" naming instead.';
-    private const string MAP_MISMATCH_ERROR_MESSAGE    = 'Iterable name "$nodeMap" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
+    private const string INVALID_NODE_FILE                         = self::FIXTURES_DIR . '/Invalid/Node.php';
+    private const string PLURAL_MISMATCH_ERROR_MESSAGE             = 'Iterable name "$itemList" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
+    private const string MAP_FORBIDDEN_ERROR_MESSAGE               = 'Iterable name "$nodeMap" contains forbidden segment "Map". Use "List", "Collection", "Lookup", "ById", or "ByKey" naming instead.';
+    private const string MAP_MISMATCH_ERROR_MESSAGE                = 'Iterable name "$nodeMap" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
 
     private bool $isCoverageModeEnabled;
 

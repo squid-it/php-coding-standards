@@ -95,12 +95,27 @@ final readonly class IterablePluralNamingRule implements Rule
             return [];
         }
 
-        $candidateBaseNameList = $this->resolveCandidateBaseNameListForAssignment(
-            assignmentNode: $assignmentNode,
-            assignmentTargetName: $assignmentTargetName,
-            assignedType: $assignedType,
-            statementDocCommentText: $node->getDocComment()?->getText(),
+        $iterableValueClassNameList = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
+            docCommentText: $node->getDocComment()?->getText(),
+            variableName: $assignmentTargetName,
+            allowUnnamedVarTag: true,
         );
+
+        if (count($iterableValueClassNameList) > 0) {
+            $docCommentCandidateBaseNameList = $this->resolveCandidateBaseNameListFromClassNameList($iterableValueClassNameList);
+
+            if (count($docCommentCandidateBaseNameList) > 0) {
+                return $this->buildRuleErrorList(
+                    name: $assignmentTargetName,
+                    type: $assignedType,
+                    line: $assignmentNode->getStartLine(),
+                    candidateBaseNameList: $docCommentCandidateBaseNameList,
+                    elementTypeDescription: implode('|', $iterableValueClassNameList),
+                );
+            }
+        }
+
+        $candidateBaseNameList = $this->resolveIterableCandidateBaseNameList($assignedType);
 
         if (count($candidateBaseNameList) === 0) {
             return [];
@@ -115,14 +130,19 @@ final readonly class IterablePluralNamingRule implements Rule
     }
 
     /**
-     * @throws ShouldNotHappenException
-     *
      * @param array<int, string> $candidateBaseNameList
+     *
+     * @throws ShouldNotHappenException
      *
      * @return array<int, RuleError>
      */
-    private function buildRuleErrorList(string $name, Type $type, int $line, array $candidateBaseNameList): array
-    {
+    private function buildRuleErrorList(
+        string $name,
+        Type $type,
+        int $line,
+        array $candidateBaseNameList,
+        ?string $elementTypeDescription = null,
+    ): array {
         sort($candidateBaseNameList);
 
         $errorList = [];
@@ -136,7 +156,7 @@ final readonly class IterablePluralNamingRule implements Rule
 
         if ($this->isValidForAnyIterableCandidateBaseName($name, $candidateBaseNameList) === false) {
             $errorList[] = RuleErrorBuilder::message(
-                $this->buildIterablePluralMismatchMessage($name, $type, $candidateBaseNameList),
+                $this->buildIterablePluralMismatchMessage($name, $type, $candidateBaseNameList, $elementTypeDescription),
             )
                 ->identifier('squidit.naming.iterablePluralMismatch')
                 ->line($line)
@@ -147,48 +167,17 @@ final readonly class IterablePluralNamingRule implements Rule
     }
 
     /**
+     * @param array<int, string> $classNameList
+     *
      * @return array<int, string>
      */
-    private function resolveCandidateBaseNameListForAssignment(
-        Assign $assignmentNode,
-        string $assignmentTargetName,
-        Type $assignedType,
-        ?string $statementDocCommentText,
-    ): array {
-        $docCommentCandidateBaseNameList = $this->resolveCandidateBaseNameListFromDocCommentText(
-            docCommentText: $statementDocCommentText,
-            assignmentTargetName: $assignmentTargetName,
-        );
-
-        if (count($docCommentCandidateBaseNameList) > 0) {
-            return $docCommentCandidateBaseNameList;
-        }
-
-        return $this->resolveIterableCandidateBaseNameList($assignedType);
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    private function resolveCandidateBaseNameListFromDocCommentText(
-        ?string $docCommentText,
-        string $assignmentTargetName,
-    ): array {
-        $iterableValueClassNameList = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
-            docCommentText: $docCommentText,
-            variableName: $assignmentTargetName,
-            allowUnnamedVarTag: true,
-        );
-
-        if (count($iterableValueClassNameList) === 0) {
-            return [];
-        }
-
+    private function resolveCandidateBaseNameListFromClassNameList(array $classNameList): array
+    {
         $candidateBaseNameList = [];
 
-        foreach ($iterableValueClassNameList as $iterableValueClassName) {
+        foreach ($classNameList as $className) {
             $resolvedCandidateBaseNameList = $this->typeCandidateResolver->resolvePHPStanType(
-                new ObjectType($iterableValueClassName),
+                new ObjectType($className),
             );
 
             foreach ($resolvedCandidateBaseNameList as $resolvedCandidateBaseName) {
@@ -260,12 +249,18 @@ final readonly class IterablePluralNamingRule implements Rule
     /**
      * @param array<int, string> $candidateBaseNameList
      */
-    private function buildIterablePluralMismatchMessage(string $name, Type $type, array $candidateBaseNameList): string
-    {
+    private function buildIterablePluralMismatchMessage(
+        string $name,
+        Type $type,
+        array $candidateBaseNameList,
+        ?string $elementTypeDescription = null,
+    ): string {
+        $typeDescription = $elementTypeDescription ?? $this->typeMessageDescriber->describeIterableValueType($type);
+
         return sprintf(
             'Iterable name "$%s" does not match inferred iterable element type "%s". Allowed base names: %s. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.',
             $name,
-            $this->typeMessageDescriber->describeIterableValueType($type),
+            $typeDescription,
             implode(', ', $candidateBaseNameList),
         );
     }

@@ -90,8 +90,8 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         $xdebugMode = getenv('XDEBUG_MODE');
 
         $this->isCoverageModeEnabled = $xdebugMode !== false && str_contains((string) $xdebugMode, 'coverage');
-        $this->denyList            = new DenyList();
-        $this->resolvedTypeNameMap = [];
+        $this->denyList              = new DenyList();
+        $this->resolvedTypeNameMap   = [];
     }
 
     protected function getRule(): Rule

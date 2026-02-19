@@ -108,7 +108,7 @@ final readonly class PhpDocTypeResolver
             return null;
         }
 
-        $tagBodyPattern = sprintf('/^@%s\s+(.+)$/u', preg_quote($tagName, '/'));
+        $tagBodyPattern  = sprintf('/^@%s\s+(.+)$/u', preg_quote($tagName, '/'));
         $variablePattern = sprintf(
             '/(?:&\s*)?(?:\.\.\.)?\$%s\b/u',
             preg_quote($variableName, '/'),
@@ -117,7 +117,7 @@ final readonly class PhpDocTypeResolver
         foreach ($lineList as $lineText) {
             $normalizedLine = $this->normalizeDocCommentLine($lineText);
 
-            $tagMatchList = [];
+            $tagMatchList  = [];
             $tagMatchCount = preg_match($tagBodyPattern, $normalizedLine, $tagMatchList);
 
             if ($tagMatchCount !== 1) {
@@ -126,7 +126,7 @@ final readonly class PhpDocTypeResolver
 
             $tagBody = $tagMatchList[1];
 
-            $variableMatchList = [];
+            $variableMatchList  = [];
             $variableMatchCount = preg_match($variablePattern, $tagBody, $variableMatchList, PREG_OFFSET_CAPTURE);
 
             if ($variableMatchCount !== 1) {
@@ -262,8 +262,8 @@ final readonly class PhpDocTypeResolver
      */
     private function extractIterableValueObjectClassNameListFromPhpDocTypeText(string $typeText): array
     {
-        $typePartList         = $this->splitByTopLevelDelimiterList($typeText, ['|', '&']);
-        $objectClassNameList  = [];
+        $typePartList        = $this->splitByTopLevelDelimiterList($typeText, ['|', '&']);
+        $objectClassNameList = [];
 
         foreach ($typePartList as $typePart) {
             $resolvedClassNameList = $this->extractIterableValueObjectClassNameListFromTypePart($typePart);
@@ -299,7 +299,7 @@ final readonly class PhpDocTypeResolver
         }
 
         $genericTypeMatch = [];
-        $matchCount       = preg_match('/^([A-Za-z_\\\][A-Za-z0-9_\\\-]*)\s*<(.+)>$/u', $normalizedTypePart, $genericTypeMatch);
+        $matchCount       = preg_match('/^([A-Za-z_\\\][A-Za-z0-9_\\\]*)\s*<(.+)>$/u', $normalizedTypePart, $genericTypeMatch);
 
         if ($matchCount === 1) {
             $genericArgumentList = $this->splitByTopLevelDelimiterList($genericTypeMatch[2], [',']);
@@ -335,13 +335,13 @@ final readonly class PhpDocTypeResolver
      */
     private function splitByTopLevelDelimiterList(string $value, array $delimiterList): array
     {
-        $partList          = [];
-        $currentPart       = '';
-        $angleDepth        = 0;
-        $parenthesisDepth  = 0;
-        $bracketDepth      = 0;
-        $braceDepth        = 0;
-        $valueLength       = strlen($value);
+        $partList         = [];
+        $currentPart      = '';
+        $angleDepth       = 0;
+        $parenthesisDepth = 0;
+        $bracketDepth     = 0;
+        $braceDepth       = 0;
+        $valueLength      = strlen($value);
 
         for ($characterIndex = 0; $characterIndex < $valueLength; $characterIndex++) {
             $character = $value[$characterIndex];
