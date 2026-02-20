@@ -40,11 +40,11 @@ final class PhpDocTypeResolverTest extends TestCase
     public function testResolveNamedTagObjectTypeWithComplexUnionResolvesObjectTypesSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @param ?\App\Dto\UserDto[]|int||array<string,int>|\App\Entity\OrderEntity $value
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveNamedTagObjectType(
+            /**
+             * @param ?\App\Dto\UserDto[]|int||array<string,int>|\App\Entity\OrderEntity $value
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveNamedTagObjectType(
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: 'value',
@@ -64,11 +64,11 @@ DOC;
     public function testResolveNamedTagObjectTypeWithMissingTypeReturnsNullSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @param $value
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveNamedTagObjectType(
+            /**
+             * @param $value
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveNamedTagObjectType(
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: 'value',
@@ -83,12 +83,12 @@ DOC;
     public function testResolveNamedTagObjectTypeWithNoMatchingTagOrVariableReturnsNullSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @return \App\Dto\UserDto
- * @param \App\Dto\UserDto $other
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveNamedTagObjectType(
+            /**
+             * @return \App\Dto\UserDto
+             * @param \App\Dto\UserDto $other
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveNamedTagObjectType(
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: 'value',
@@ -103,11 +103,11 @@ DOC;
     public function testResolveVarTagObjectTypeWithUnnamedVarDisallowedReturnsNullSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @var \App\Dto\UserDto
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveVarTagObjectType(
+            /**
+             * @var \App\Dto\UserDto
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: 'userDto',
             allowUnnamedVarTag: false,
@@ -122,11 +122,11 @@ DOC;
     public function testResolveVarTagObjectTypeWithUnnamedVarAllowedResolvesObjectTypeSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @var \App\Dto\UserDto
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveVarTagObjectType(
+            /**
+             * @var \App\Dto\UserDto
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: 'userDto',
             allowUnnamedVarTag: true,
@@ -144,12 +144,12 @@ DOC;
     public function testResolveVarTagObjectTypeWithInvalidUnnamedVarTagReturnsNullSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @var \App\Dto\UserDto $userDto
- * @var
- */
-DOC;
-        $resolvedType   = $this->phpDocTypeResolver->resolveVarTagObjectType(
+            /**
+             * @var \App\Dto\UserDto $userDto
+             * @var
+             */
+            DOC;
+        $resolvedType = $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: 'value',
             allowUnnamedVarTag: true,
@@ -164,11 +164,11 @@ DOC;
     public function testResolveVarTagIterableValueClassNameListWithComplexTypeResolvesUniqueClassesSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @var array<string, \App\Model\User>|Collection<int, \App\Model\User>|list<\App\Model\Role>|?\App\Model\Tag[]|int[]|()|Broken<,>|(\App\Model\Role[]&\App\Model\Role)|array{meta:list<\App\Model\Meta>} $items
- */
-DOC;
-        $classNameList  = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
+            /**
+             * @var array<string, \App\Model\User>|Collection<int, \App\Model\User>|list<\App\Model\Role>|?\App\Model\Tag[]|int[]|()|Broken<,>|(\App\Model\Role[]&\App\Model\Role)|array{meta:list<\App\Model\Meta>} $items
+             */
+            DOC;
+        $classNameList = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
             docCommentText: $docCommentText,
             variableName: 'items',
             allowUnnamedVarTag: false,
@@ -191,11 +191,11 @@ DOC;
     public function testResolveVarTagIterableValueClassNameListWithUnnamedVarTagResolvesClassSucceeds(): void
     {
         $docCommentText = <<<'DOC'
-/**
- * @var list<\App\Projection\EntryDto>
- */
-DOC;
-        $classNameList  = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
+            /**
+             * @var list<\App\Projection\EntryDto>
+             */
+            DOC;
+        $classNameList = $this->phpDocTypeResolver->resolveVarTagIterableValueClassNameList(
             docCommentText: $docCommentText,
             variableName: 'items',
             allowUnnamedVarTag: true,

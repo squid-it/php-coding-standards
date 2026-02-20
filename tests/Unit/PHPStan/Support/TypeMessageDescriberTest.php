@@ -37,4 +37,3 @@ final class TypeMessageDescriberTest extends TestCase
         self::assertSame('string', $this->typeMessageDescriber->describeIterableValueType(new StringType()));
     }
 }
-

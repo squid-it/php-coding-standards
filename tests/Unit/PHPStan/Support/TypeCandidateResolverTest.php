@@ -240,7 +240,7 @@ final class TypeCandidateResolverTest extends TestCase
     {
         $this->registerNativeFallbackReflectionProvider();
         $interfaceBaseNameToTypeMap = $this->typeCandidateResolver->resolveInterfaceBaseNameToTypeMap(
-            new ObjectType('SquidIT\\Tests\\PhpCodingStandards\\Unit\\PHPStan\\Support\\Fixtures\\TypeCandidateResolver\\UnknownInterface'),
+            new ObjectType('SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\UnknownInterface'),
         );
 
         self::assertSame([], $interfaceBaseNameToTypeMap);

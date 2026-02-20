@@ -19,7 +19,7 @@ final class VoDtoClassifierTest extends PHPStanTestCase
     {
         parent::setUp();
 
-        $this->voDtoClassifier  = new VoDtoClassifier();
+        $this->voDtoClassifier    = new VoDtoClassifier();
         $this->reflectionProvider = self::createReflectionProvider();
     }
 
@@ -28,11 +28,10 @@ final class VoDtoClassifierTest extends PHPStanTestCase
      */
     public function testIsVoDtoClassCachesClassificationByClassNameSucceeds(): void
     {
-        $classReflection         = $this->reflectionProvider->getClass(CustomDomainDto::class);
-        $firstClassification     = $this->voDtoClassifier->isVoDtoClass($classReflection);
-        $secondClassification    = $this->voDtoClassifier->isVoDtoClass($classReflection);
+        $classReflection      = $this->reflectionProvider->getClass(CustomDomainDto::class);
+        $firstClassification  = $this->voDtoClassifier->isVoDtoClass($classReflection);
+        $secondClassification = $this->voDtoClassifier->isVoDtoClass($classReflection);
 
         self::assertSame($firstClassification, $secondClassification);
     }
 }
-
