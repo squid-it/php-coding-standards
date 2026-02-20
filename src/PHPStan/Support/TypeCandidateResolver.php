@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SquidIT\PhpCodingStandards\PHPStan\Support;
 
+use PHPStan\Reflection\ClassReflection;
+use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\TypeUtils;
 use ReflectionClass;
@@ -68,19 +70,35 @@ final class TypeCandidateResolver
                 continue;
             }
 
-            $reflectionClass = $this->reflectClass($className);
+            $isInterface  = false;
+            $resolvedName = $className;
 
-            if ($reflectionClass === null || $reflectionClass->isInternal() === true) {
+            $classReflection = $this->resolveClassReflection($className);
+
+            if ($classReflection !== null) {
+                if ($classReflection->isBuiltin() === true) {
+                    continue;
+                }
+
+                $isInterface  = $classReflection->isInterface();
+                $resolvedName = $classReflection->getName();
+            } else {
+                $nativeReflection = $this->reflectClassNative($className);
+
+                if ($nativeReflection === null || $nativeReflection->isInternal() === true) {
+                    continue;
+                }
+
+                $isInterface  = $nativeReflection->isInterface();
+                $resolvedName = $nativeReflection->getName();
+            }
+
+            if ($isInterface === false) {
                 continue;
             }
 
-            if ($reflectionClass->isInterface() === false) {
-                continue;
-            }
-
-            $interfaceClassName     = $reflectionClass->getName();
-            $normalizedBaseNameList = $this->nameNormalizer->normalize($interfaceClassName);
-            $shortInterfaceName     = $this->extractShortClassName($interfaceClassName);
+            $normalizedBaseNameList = $this->nameNormalizer->normalize($resolvedName);
+            $shortInterfaceName     = $this->extractShortClassName($resolvedName);
 
             foreach ($normalizedBaseNameList as $normalizedBaseName) {
                 if ($this->denyList->isCandidateNameDenied($normalizedBaseName) === true) {
@@ -136,7 +154,71 @@ final class TypeCandidateResolver
      */
     private function expandHierarchyClassNameList(string $className): array
     {
-        $reflectionClass = $this->reflectClass($className);
+        $classReflection = $this->resolveClassReflection($className);
+
+        if ($classReflection !== null) {
+            return $this->expandHierarchyViaClassReflection($classReflection);
+        }
+
+        return $this->expandHierarchyNative($className);
+    }
+
+    /**
+     * Resolve ClassReflection via PHPStan's type system.
+     *
+     * ObjectType::getClassReflection() uses PHPStan's ReflectionProviderStaticAccessor — the
+     * analysis-time reflection provider that knows about every file in the analysis (including
+     * scanFiles). This is preferred over native PHP reflection because it works for classes that
+     * are not Composer-autoloaded (for example, classes in isolated fixture namespaces).
+     */
+    private function resolveClassReflection(string $className): ?ClassReflection
+    {
+        return (new ObjectType($className))->getClassReflection();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function expandHierarchyViaClassReflection(ClassReflection $classReflection): array
+    {
+        if ($classReflection->isBuiltin() === true) {
+            return [];
+        }
+
+        $hierarchyClassNameList = [];
+        $this->addUniqueString($hierarchyClassNameList, $classReflection->getName());
+
+        $parentClass = $classReflection->getParentClass();
+
+        while ($parentClass instanceof ClassReflection) {
+            if ($parentClass->isBuiltin() === false) {
+                $this->addUniqueString($hierarchyClassNameList, $parentClass->getName());
+            }
+
+            $parentClass = $parentClass->getParentClass();
+        }
+
+        foreach ($classReflection->getInterfaces() as $interfaceReflection) {
+            if (($interfaceReflection instanceof ClassReflection) === false) {
+                continue;
+            }
+
+            if ($interfaceReflection->isBuiltin() === true) {
+                continue;
+            }
+
+            $this->addUniqueString($hierarchyClassNameList, $interfaceReflection->getName());
+        }
+
+        return $hierarchyClassNameList;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function expandHierarchyNative(string $className): array
+    {
+        $reflectionClass = $this->reflectClassNative($className);
 
         if ($reflectionClass === null) {
             return [$className];
@@ -204,7 +286,7 @@ final class TypeCandidateResolver
     /**
      * @return ReflectionClass<object>|null
      */
-    private function reflectClass(string $className): ?ReflectionClass
+    private function reflectClassNative(string $className): ?ReflectionClass
     {
         if (class_exists($className) === false && interface_exists($className) === false) {
             return null;
