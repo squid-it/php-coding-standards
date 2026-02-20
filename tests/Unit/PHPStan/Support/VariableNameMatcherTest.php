@@ -42,4 +42,12 @@ final class VariableNameMatcherTest extends TestCase
     {
         self::assertFalse($this->variableNameMatcher->isValid('item', 'channel'));
     }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIsValidWithEmptyBaseNameFails(): void
+    {
+        self::assertFalse($this->variableNameMatcher->isValid('channel', ''));
+    }
 }

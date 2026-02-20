@@ -139,4 +139,59 @@ final class NameNormalizerTest extends TestCase
             $this->nameNormalizer->normalize('Acme\URLParserDto'),
         );
     }
+
+    /**
+     * @throws Throwable
+     */
+    public function testMandatorySuffixNormalizationWithEmptyStrippedNameSucceeds(): void
+    {
+        self::assertSame(
+            ['interface'],
+            $this->nameNormalizer->normalize('Interface'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testOptionalSuffixNormalizationWithEmptyStrippedNameSucceeds(): void
+    {
+        self::assertSame(
+            ['dto'],
+            $this->nameNormalizer->normalize('Dto'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testEmptyClassNameNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            [''],
+            $this->nameNormalizer->normalize(''),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testNonWordCharacterOnlyNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['_'],
+            $this->nameNormalizer->normalize('_'),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testNumericSegmentNormalizationSucceeds(): void
+    {
+        self::assertSame(
+            ['node2D'],
+            $this->nameNormalizer->normalize('Node2D'),
+        );
+    }
 }
