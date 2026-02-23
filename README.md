@@ -40,7 +40,7 @@ vendor/bin/php-cs-fixer fix
 This library provides two sets of custom PHPStan rules:
 
 - **Stable rules** — enforced conventions with a low false-positive rate, ready for CI.
-- **Experimental autoreview rules** — naming and architecture checks that support automated code review. Opt-in only.
+- **Experimental auto review rules** — naming and architecture checks that support automated code review. Opt-in only.
 
 ---
 
@@ -57,15 +57,15 @@ rules:
 
 #### Stable Rules Reference
 
-| Rule | Identifier | Description |
-|------|------------|-------------|
-| `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
-| `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
-| `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
+| Rule                            | Identifier                                       | Description                                                                                                                             |
+|---------------------------------|--------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `SingleClassPerFileRule`        | `squidit.architecture.singleClassPerFile`        | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
+| `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead.               |
+| `DisallowLogicalNotRule`        | `squidit.restrictions.disallowLogicalNot`        | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`).                       |
 
 ---
 
-#### Experimental Autoreview Rules
+#### Experimental Auto review Rules
 
 These rules are optional and must be explicitly opted into. They enforce naming conventions and architectural boundaries that support automated code review.
 
@@ -81,24 +81,26 @@ parameters:
     tmpDir: var/cache/phpstan-autoreview
 
 services:
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
-    -
-        class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+	-	
+		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
 
 rules:
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
@@ -111,16 +113,16 @@ rules:
 
 #### Experimental Rules Reference
 
-| Rule | Identifier(s) | Description |
-|------|---------------|-------------|
-| `TypeSuffixMismatchRule` | `squidit.naming.typeSuffixMismatch` | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type. |
-| `TypeSuffixMismatchRule` | `squidit.naming.interfaceBareName` | Optional check (disabled by default) that reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
-| `IterablePluralNamingRule` | `squidit.naming.iterablePluralMismatch` | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects. |
-| `IterablePluralNamingRule` | `squidit.naming.mapForbidden` | Reports when an iterable assignment target contains the word segment `Map`. |
-| `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
-| `LoggerContextKeyCamelCaseRule` | `squidit.naming.loggerContextKeyCamelCase` | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls. |
-| `EnumBackedValueCamelCaseRule` | `squidit.naming.enumBackedValueCamelCase` | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method. |
-| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`). |
+| Rule                             | Identifier(s)                                 | Description                                                                                                                                         |
+|----------------------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TypeSuffixMismatchRule`         | `squidit.naming.typeSuffixMismatch`           | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type.                |
+| `TypeSuffixMismatchRule`         | `squidit.naming.interfaceBareName`            | Optional check (disabled by default) that reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
+| `IterablePluralNamingRule`       | `squidit.naming.iterablePluralMismatch`       | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects.                                                   |
+| `IterablePluralNamingRule`       | `squidit.naming.mapForbidden`                 | Reports when an iterable assignment target contains the word segment `Map`.                                                                         |
+| `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch`      | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type.                            |
+| `LoggerContextKeyCamelCaseRule`  | `squidit.naming.loggerContextKeyCamelCase`    | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls.                                 |
+| `EnumBackedValueCamelCaseRule`   | `squidit.naming.enumBackedValueCamelCase`     | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method.            |
+| `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`).                                   |
 
 ---
 
@@ -128,7 +130,7 @@ rules:
 
 Checks typed properties, promoted constructor parameters, and local variable assignments. The variable or property name must reflect the inferred type — either as an exact base name match or with a contextual prefix.
 
-By default this rule enforces only `squidit.naming.typeSuffixMismatch`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
+By default, this rule enforces only `squidit.naming.typeSuffixMismatch`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
 
 Docblock narrowing support:
 - Assignment statements: inline `@var` on the assignment statement is used.
@@ -323,7 +325,7 @@ A class is classified as a VO/DTO when it passes both gates:
 
 **Configuring creator suffixes:**
 
-By default the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`. If you want custom suffixes, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
+By default, the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`. If you want custom suffixes, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
 
 ```neon
 services:
@@ -389,7 +391,7 @@ Both stable and experimental identifiers support the same suppression syntax.
 - `TypeCandidateResolver` resolves naming candidates from inferred PHPStan types.
 - `VariableNameMatcher` validates variable naming against normalized base candidates.
 - `DenyList` is an internal tuning object used by resolver/matcher flows to suppress specific class or candidate names when reducing false positives.
-- This support layer is internal for experimental autoreview rules and not part of the stable public API.
+- This support layer is internal for experimental auto review rules and not part of the stable public API.
 
 #### RuleTestCase Fixtures (Maintainers)
 

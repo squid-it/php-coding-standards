@@ -37,6 +37,8 @@ services:
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
 	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+	-
+		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
 
 rules:
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
