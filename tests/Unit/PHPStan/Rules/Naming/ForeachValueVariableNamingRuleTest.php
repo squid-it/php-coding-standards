@@ -15,6 +15,7 @@ use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\LineRuleError;
 use PHPStan\Type\ArrayType;
 use PHPStan\Type\IntegerType;
+use PHPStan\Type\IntersectionType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -25,8 +26,9 @@ use Throwable;
 
 final class ForeachValueVariableNamingRuleTest extends TestCase
 {
-    private const string FOREACH_ERROR_MESSAGE = 'Foreach value name "$item" does not match iterable "$children" (inferred value type: "ChildNode"). Allowed base names: child, childNode. Use one of these names directly or a contextual prefix ending with: Child, ChildNode.';
-    private const string EXPRESSION_ERROR      = 'Foreach value name "$element" does not match iterable "<expression>" (inferred value type: "ChildNode"). Allowed base names: childNode. Use one of these names directly or a contextual prefix ending with: ChildNode.';
+    private const string FOREACH_ERROR_MESSAGE              = 'Foreach value name "$item" does not match iterable "$children" (inferred value type: "ChildNode"). Allowed base names: child, childNode. Use one of these names directly or a contextual prefix ending with: Child, ChildNode.';
+    private const string EXPRESSION_ERROR                   = 'Foreach value name "$element" does not match iterable "<expression>" (inferred value type: "ChildNode"). Allowed base names: childNode. Use one of these names directly or a contextual prefix ending with: ChildNode.';
+    private const string FOREACH_INTERSECTION_ERROR_MESSAGE = 'Foreach value name "$item" does not match iterable "$children" (inferred value type: "ChildNode|NodeInterface"). Allowed base names: child, childNode, node. Use one of these names directly or a contextual prefix ending with: Child, ChildNode, Node.';
 
     private ForeachValueVariableNamingRule $rule;
 
@@ -100,6 +102,33 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
     /**
      * @throws Throwable
      */
+    public function testForeachValueNameIntersectionTypeMismatchFails(): void
+    {
+        $scope       = $this->createScopeStubWithType($this->createIntersectionChildNodeArrayType());
+        $foreachNode = $this->createForeachNode(new Variable('children'), 'item', 14);
+        $errorList   = $this->rule->processNode($foreachNode, $scope);
+
+        self::assertCount(1, $errorList);
+
+        $ruleError = $errorList[0];
+        self::assertSame(self::FOREACH_INTERSECTION_ERROR_MESSAGE, $ruleError->getMessage());
+
+        if (($ruleError instanceof IdentifierRuleError) === false) {
+            self::fail('Expected IdentifierRuleError implementation.');
+        }
+
+        self::assertSame('squidit.naming.foreachValueVarMismatch', $ruleError->getIdentifier());
+
+        if (($ruleError instanceof LineRuleError) === false) {
+            self::fail('Expected LineRuleError implementation.');
+        }
+
+        self::assertSame(14, $ruleError->getLine());
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testScopeTypeIsResolvedOnceForMismatchMessageFails(): void
     {
         /** @var MockObject&NodeCallbackInvoker&Scope $scope */
@@ -126,6 +155,17 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
         return new ArrayType(
             keyType: new IntegerType(),
             itemType: new ObjectType('LoopValueVariableNamingFixtures\Invalid\ChildNode'),
+        );
+    }
+
+    private function createIntersectionChildNodeArrayType(): Type
+    {
+        return new ArrayType(
+            keyType: new IntegerType(),
+            itemType: new IntersectionType([
+                new ObjectType('LoopValueVariableNamingFixtures\Invalid\ChildNode'),
+                new ObjectType('LoopValueVariableNamingFixtures\Invalid\NodeInterface'),
+            ]),
         );
     }
 

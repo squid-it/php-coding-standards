@@ -27,3 +27,8 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/UnionTypedPropertyMismatch.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/DuplicateInterfaceBaseName.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/GlobalClassTypedPropertyMismatch.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/IntersectionTypedPropertyMismatch.php
+		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/IntersectionPromotedPropertyMismatch.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/IntersectionInlineVarAnnotationNarrowsAssignmentType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/IntersectionTypedPropertyDocblockNarrowsType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/IntersectionPromotedPropertyDocblockNarrowsType.php

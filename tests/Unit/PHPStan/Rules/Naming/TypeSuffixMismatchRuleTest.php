@@ -68,6 +68,11 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string DENYLIST_INTERFACE_FILE                                           = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedInterface.php';
     private const string DENYLIST_CONCRETE_FILE                                            = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListedConcreteClass.php';
     private const string DENYLIST_FIXTURE_FILE                                             = self::FIXTURES_DIR . '/Invalid/DenyListRegression/DenyListDoubleErrorCandidate.php';
+    private const string INVALID_INTERSECTION_PROPERTY_FILE                                = self::FIXTURES_DIR . '/Invalid/EdgeCases/IntersectionTypedPropertyMismatch.php';
+    private const string INVALID_INTERSECTION_PROMOTED_PROPERTY_FILE                       = self::FIXTURES_DIR . '/Invalid/EdgeCases/IntersectionPromotedPropertyMismatch.php';
+    private const string VALID_INTERSECTION_INLINE_VAR_ASSIGNMENT_FILE                     = self::FIXTURES_DIR . '/Valid/EdgeCases/IntersectionInlineVarAnnotationNarrowsAssignmentType.php';
+    private const string VALID_INTERSECTION_TYPED_PROPERTY_DOCBLOCK_FILE                   = self::FIXTURES_DIR . '/Valid/EdgeCases/IntersectionTypedPropertyDocblockNarrowsType.php';
+    private const string VALID_INTERSECTION_PROMOTED_PROPERTY_DOCBLOCK_FILE                = self::FIXTURES_DIR . '/Valid/EdgeCases/IntersectionPromotedPropertyDocblockNarrowsType.php';
     private const string FOO_DATA_MISMATCH_MESSAGE                                         = 'Name "$service" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
     private const string ASSIGNMENT_MISMATCH_MESSAGE                                       = 'Name "$item" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
     private const string UNION_MISMATCH_MESSAGE                                            = 'Name "$item" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
@@ -78,6 +83,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string TYPE_SUFFIX_MISMATCH_IDENTIFIER                                   = 'squidit.naming.typeSuffixMismatch';
     private const string DENYLIST_MISMATCH_MESSAGE                                         = 'Name "$denyListed" does not match inferred type "DenyListedConcreteClass". Allowed base names: denyListedConcreteClass. Use one of these names directly or a contextual prefix ending with: DenyListedConcreteClass.';
     private const string GLOBAL_FOO_DATA_MISMATCH                                          = 'Name "$service" does not match inferred type "GlobalFooData". Allowed base names: globalFooData. Use one of these names directly or a contextual prefix ending with: GlobalFooData.';
+    private const string INTERSECTION_PROPERTY_MISMATCH                                    = 'Name "$service" does not match inferred type "ChannelInterface|FooData". Allowed base names: channel, fooData. Use one of these names directly or a contextual prefix ending with: Channel, FooData.';
     private const string CONTAINER_INTERFACE_MISMATCH                                      = 'Name "$containerMason" does not match inferred type "ContainerInterface". Allowed base names: container. Use one of these names directly or a contextual prefix ending with: Container.';
 
     private bool $isCoverageModeEnabled;
@@ -421,6 +427,58 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         ], [
             [self::DNF_UNION_MISMATCH, 13],
         ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIntersectionTypedPropertyMismatchFails(): void
+    {
+        $this->analyse([
+            self::INVALID_FOO_DATA_FILE,
+            self::INVALID_CHANNEL_INTERFACE_FILE,
+            self::INVALID_INTERSECTION_PROPERTY_FILE,
+        ], [
+            [self::INTERSECTION_PROPERTY_MISMATCH, 12],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIntersectionPromotedPropertyMismatchFails(): void
+    {
+        $this->analyse([
+            self::INVALID_FOO_DATA_FILE,
+            self::INVALID_CHANNEL_INTERFACE_FILE,
+            self::INVALID_INTERSECTION_PROMOTED_PROPERTY_FILE,
+        ], [
+            [self::INTERSECTION_PROPERTY_MISMATCH, 13],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIntersectionInlineVarAnnotationNarrowsAssignmentTypeSucceeds(): void
+    {
+        $this->analyse([self::VALID_INTERSECTION_INLINE_VAR_ASSIGNMENT_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIntersectionTypedPropertyDocblockNarrowsTypeSucceeds(): void
+    {
+        $this->analyse([self::VALID_INTERSECTION_TYPED_PROPERTY_DOCBLOCK_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIntersectionPromotedPropertyDocblockNarrowsTypeSucceeds(): void
+    {
+        $this->analyse([self::VALID_INTERSECTION_PROMOTED_PROPERTY_DOCBLOCK_FILE], []);
     }
 
     /**
