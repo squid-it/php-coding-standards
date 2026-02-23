@@ -25,6 +25,7 @@ use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\No
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeIslandService;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeNonFactoryConsumer;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeOrderDto;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimePhpUnitTestCaseConsumer;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeProfileVo;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeReadonlyBehaviorService;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceAssembler;
@@ -39,9 +40,12 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     private const string READONLY_BEHAVIOR_ERROR         = 'Instantiation of service "RuntimeReadonlyBehaviorService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string ISLAND_METHOD_ERROR             = 'Instantiation of service "RuntimeIslandService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
+    private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
 
     private NoServiceInstantiationRule $rule;
     private ReflectionProvider $reflectionProvider;
+    /** @var array<int, string> */
+    private array $temporaryDirectoryPathList = [];
 
     protected function setUp(): void
     {
@@ -51,6 +55,15 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         ReflectionProviderStaticAccessor::registerInstance(PHPStanTestCase::createReflectionProvider());
         $this->rule               = new NoServiceInstantiationRule();
         $this->reflectionProvider = PHPStanTestCase::createReflectionProvider();
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->temporaryDirectoryPathList as $temporaryDirectoryPath) {
+            $this->removeDirectoryRecursively($temporaryDirectoryPath);
+        }
+
+        parent::tearDown();
     }
 
     /**
@@ -156,6 +169,78 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         );
 
         self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testPhpUnitTestCaseScopeInstantiationIsIgnoredByDefaultSucceeds(): void
+    {
+        $errorList = $this->rule->processNode(
+            $this->createNamedNewNode(36),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimePhpUnitTestCaseConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testPhpUnitTestCaseScopeInstantiationFailsWhenSkipDisabled(): void
+    {
+        $configuredRule = new NoServiceInstantiationRule(skipPhpUnitTestCaseClasses: false);
+        $errorList      = $configuredRule->processNode(
+            $this->createNamedNewNode(37),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimePhpUnitTestCaseConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::PHPUNIT_TEST_CASE_SERVICE_ERROR, $errorList[0]->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testExcludeComposerDevDirsEnabledSkipsAutoloadDevPsr4PathSucceeds(): void
+    {
+        $fixtureFilePath = $this->createTemporaryAutoloadDevFixtureFilePath();
+        $configuredRule  = new NoServiceInstantiationRule(excludeComposerDevDirs: true);
+        $errorList       = $configuredRule->processNode(
+            $this->createNamedNewNode(38),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+                filePath: $fixtureFilePath,
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testExcludeComposerDevDirsDisabledStillReportsAutoloadDevPsr4PathFails(): void
+    {
+        $fixtureFilePath = $this->createTemporaryAutoloadDevFixtureFilePath();
+        $errorList       = $this->rule->processNode(
+            $this->createNamedNewNode(39),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+                filePath: $fixtureFilePath,
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::DIRECT_SERVICE_ERROR, $errorList[0]->getMessage());
     }
 
     /**
@@ -380,6 +465,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         Type $newType,
         ?string $functionName = null,
         bool $isInClass = false,
+        string $filePath = __FILE__,
     ): Scope&NodeCallbackInvoker {
         /** @var NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
@@ -387,7 +473,107 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         $scope->method('getType')->willReturn($newType);
         $scope->method('getFunctionName')->willReturn($functionName);
         $scope->method('isInClass')->willReturn($isInClass);
+        $scope->method('getFile')->willReturn($filePath);
 
         return $scope;
+    }
+
+    private function createTemporaryAutoloadDevFixtureFilePath(): string
+    {
+        $temporaryProjectDirectoryPath = $this->createTemporaryProjectDirectoryPath();
+        $this->writeComposerJsonWithAutoloadDevTestsPath($temporaryProjectDirectoryPath);
+
+        $fixtureDirectoryPath = $temporaryProjectDirectoryPath . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'Fixtures';
+
+        if (is_dir($fixtureDirectoryPath) === false) {
+            $isFixtureDirectoryCreated = mkdir($fixtureDirectoryPath, 0777, true);
+
+            if ($isFixtureDirectoryCreated === false) {
+                self::fail('Failed to create temporary fixture directory for NoServiceInstantiationRule tests.');
+            }
+        }
+
+        $fixtureFilePath  = $fixtureDirectoryPath . DIRECTORY_SEPARATOR . 'FixtureFile.php';
+        $writtenByteCount = file_put_contents($fixtureFilePath, "<?php\n");
+
+        if ($writtenByteCount === false) {
+            self::fail('Failed to write temporary fixture file for NoServiceInstantiationRule tests.');
+        }
+
+        return $fixtureFilePath;
+    }
+
+    private function createTemporaryProjectDirectoryPath(): string
+    {
+        $temporaryDirectoryPath = sys_get_temp_dir()
+            . DIRECTORY_SEPARATOR
+            . 'no-service-instantiation-rule-'
+            . uniqid('', true);
+
+        if (is_dir($temporaryDirectoryPath) === false) {
+            $isTemporaryDirectoryCreated = mkdir($temporaryDirectoryPath, 0777, true);
+
+            if ($isTemporaryDirectoryCreated === false) {
+                self::fail('Failed to create temporary project directory for NoServiceInstantiationRule tests.');
+            }
+        }
+
+        $this->temporaryDirectoryPathList[] = $temporaryDirectoryPath;
+
+        return $temporaryDirectoryPath;
+    }
+
+    private function writeComposerJsonWithAutoloadDevTestsPath(string $projectRootPath): void
+    {
+        $composerJsonPath = $projectRootPath . DIRECTORY_SEPARATOR . 'composer.json';
+        $writtenByteCount = file_put_contents(
+            $composerJsonPath,
+            <<<'JSON'
+                {
+                    "autoload-dev": {
+                        "psr-4": {
+                            "Fixture\\Tests\\": "tests"
+                        }
+                    }
+                }
+                JSON,
+        );
+
+        if ($writtenByteCount === false) {
+            self::fail('Failed to write temporary composer.json for NoServiceInstantiationRule tests.');
+        }
+    }
+
+    private function removeDirectoryRecursively(string $directoryPath): void
+    {
+        if (is_dir($directoryPath) === false) {
+            return;
+        }
+
+        $directoryEntryList = scandir($directoryPath);
+
+        if ($directoryEntryList === false) {
+            return;
+        }
+
+        foreach ($directoryEntryList as $directoryEntry) {
+            if ($directoryEntry === '.' || $directoryEntry === '..') {
+                continue;
+            }
+
+            $entryPath = $directoryPath . DIRECTORY_SEPARATOR . $directoryEntry;
+
+            if (is_dir($entryPath) === true) {
+                $this->removeDirectoryRecursively($entryPath);
+
+                continue;
+            }
+
+            if (is_file($entryPath) === true) {
+                unlink($entryPath);
+            }
+        }
+
+        rmdir($directoryPath);
     }
 }

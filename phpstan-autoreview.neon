@@ -38,6 +38,8 @@ services:
 	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
 	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
+	-
 		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
 
 rules:
