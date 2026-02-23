@@ -99,7 +99,9 @@ services:
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
 	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
-	-	
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
+	-
 		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
 
 rules:
@@ -122,7 +124,7 @@ rules:
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch`      | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type.                            |
 | `LoggerContextKeyCamelCaseRule`  | `squidit.naming.loggerContextKeyCamelCase`    | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls.                                 |
 | `EnumBackedValueCamelCaseRule`   | `squidit.naming.enumBackedValueCamelCase`     | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method.            |
-| `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`).                                   |
+| `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), with configurable test/fixture skips. |
 
 ---
 
@@ -279,6 +281,8 @@ enum Status: string
 
 Disallows `new` expressions for service classes in non-creator classes. A class is exempt when:
 
+- The file path is inside a directory declared in the nearest `composer.json` `autoload-dev.psr-4` section (only when `$excludeComposerDevDirs: true`), or
+- The containing class extends `PHPUnit\Framework\TestCase` (when `$skipPhpUnitTestCaseClasses: true`, default), or
 - The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 - The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 - The instantiated class passes the VO/DTO classifier gates.
@@ -323,9 +327,11 @@ A class is classified as a VO/DTO when it passes both gates:
    - Any other declared public method disqualifies the class.
    - Prefixes `get`, `is`, `has` require a word boundary — `getOrder()` qualifies, `getter()` does not.
 
-**Configuring creator suffixes:**
+**Configuring creator suffixes and test/fixture skips:**
 
-By default, the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`. If you want custom suffixes, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
+By default, the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
+
+If you want custom suffixes or skip behavior, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
 
 ```neon
 services:
@@ -339,9 +345,19 @@ services:
                 - Builder
                 - Provider
                 - Assembler
+            $skipPhpUnitTestCaseClasses: true
+            $excludeComposerDevDirs: false
 ```
 
 Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Provider`).
+`$skipPhpUnitTestCaseClasses`:
+- Default: `true`
+- Set to `false` to enforce this rule inside PHPUnit test classes as well.
+
+`$excludeComposerDevDirs`:
+- Default: `false`
+- Set to `true` to skip this rule for files under directories declared in `autoload-dev.psr-4` of the nearest `composer.json`.
+- Example: `"SquidIT\\Tests\\PhpCodingStandards\\": "tests"` excludes `tests/*`.
 
 ---
 

@@ -12,6 +12,8 @@ use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
+use PHPUnit\Framework\TestCase;
+use SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher;
 use SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
 
@@ -19,6 +21,8 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * Disallows service instantiation in non-creator classes.
  *
  * This rule allows `new` only when:
+ * - The file is excluded by composer `autoload-dev.psr-4` (`excludeComposerDevDirs` option), or
+ * - The containing class extends `PHPUnit\Framework\TestCase` (`skipPhpUnitTestCaseClasses` option), or
  * - The containing class name ends with an allowed creator suffix, or
  * - The instantiated class is internal/builtin, or
  * - The instantiated class is classified as VO/DTO by `VoDtoClassifier`.
@@ -50,6 +54,9 @@ final readonly class NoServiceInstantiationRule implements Rule
         array $allowedCreatorClassSuffixList = ContainingClassResolver::DEFAULT_ALLOWED_CREATOR_CLASS_SUFFIX_LIST,
         private VoDtoClassifier $voDtoClassifier = new VoDtoClassifier(),
         private ContainingClassResolver $containingClassResolver = new ContainingClassResolver(),
+        private bool $skipPhpUnitTestCaseClasses = true,
+        private bool $excludeComposerDevDirs = false,
+        private ComposerDevAutoloadPathMatcher $composerDevAutoloadPathMatcher = new ComposerDevAutoloadPathMatcher(),
     ) {
         $this->allowedCreatorClassSuffixList = $this->normalizeAllowedCreatorClassSuffixList(
             $allowedCreatorClassSuffixList,
@@ -77,6 +84,17 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         if ($this->isInClassOutsideMethodScope($scope) === true) {
+            return [];
+        }
+
+        if (
+            $this->excludeComposerDevDirs === true
+            && $this->composerDevAutoloadPathMatcher->isFileInsideAutoloadDevPsr4Directory($scope->getFile()) === true
+        ) {
+            return [];
+        }
+
+        if ($this->skipPhpUnitTestCaseClasses === true && $this->isInPhpUnitTestCaseClassScope($scope) === true) {
             return [];
         }
 
@@ -129,6 +147,17 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         return $scope->getFunctionName() === null;
+    }
+
+    private function isInPhpUnitTestCaseClassScope(Scope $scope): bool
+    {
+        $classReflection = $scope->getClassReflection();
+
+        if ($classReflection === null) {
+            return false;
+        }
+
+        return $classReflection->isSubclassOf(TestCase::class);
     }
 
     /**
