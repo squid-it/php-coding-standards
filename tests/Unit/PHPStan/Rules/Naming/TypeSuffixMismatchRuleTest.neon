@@ -18,6 +18,7 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TypedPropertyDocblockNarrowsType.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyDocblockNarrowsType.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyParamDocblockNarrowsType.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyParamDocblockParentInterfaceNameValid.php
 		- Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/PromotedPropertyParamDocblockNoNarrowingMismatch.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/A/ChannelInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DuplicateBaseName/B/ChannelInterface.php

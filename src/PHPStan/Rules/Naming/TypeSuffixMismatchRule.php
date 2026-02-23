@@ -184,7 +184,27 @@ final readonly class TypeSuffixMismatchRule implements Rule
             return [];
         }
 
-        return $this->buildRuleErrorList($propertyName, $type, $node->getStartLine());
+        $ruleErrorList = $this->buildRuleErrorList($propertyName, $type, $node->getStartLine());
+
+        if (count($ruleErrorList) > 0) {
+            // When a @param or @var docblock narrowed the type, docblock-derived class names are
+            // short (unqualified) strings that scope cannot resolve to FQCNs — scope.resolveName()
+            // is a pass-through that only handles self/static/parent. This means hierarchy
+            // expansion for docblock types may be incomplete (e.g. a sub-interface whose parent
+            // lives only in scanFiles). Allow the declared property type as an additional check so
+            // that parent-interface base names remain valid candidates.
+            $declaredType = $this->resolveTypeFromTypeNode($node->type, $scope);
+
+            if ($declaredType !== null) {
+                $declaredCandidateList = $this->typeCandidateResolver->resolvePHPStanType($declaredType);
+
+                if ($this->isValidForAnyCandidateBaseName($propertyName, $declaredCandidateList)) {
+                    return [];
+                }
+            }
+        }
+
+        return $ruleErrorList;
     }
 
     private function resolveAssignmentType(
