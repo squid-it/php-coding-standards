@@ -111,6 +111,7 @@ rules:
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\ReadonlyClassPromotionRule
 ```
 
 #### Experimental Rules Reference
@@ -125,6 +126,7 @@ rules:
 | `LoggerContextKeyCamelCaseRule`  | `squidit.naming.loggerContextKeyCamelCase`    | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls.                                 |
 | `EnumBackedValueCamelCaseRule`   | `squidit.naming.enumBackedValueCamelCase`     | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method.            |
 | `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), with configurable test/fixture skips. |
+| `ReadonlyClassPromotionRule`     | `squidit.architecture.readonlyClassPromotion` | Suggests promoting a class to `readonly` when all declared properties are individually readonly, with safety guards for inheritance-sensitive cases. |
 
 ---
 
@@ -358,6 +360,49 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 - Default: `false`
 - Set to `true` to skip this rule for files under directories declared in `autoload-dev.psr-4` of the nearest `composer.json`.
 - Example: `"SquidIT\\Tests\\PhpCodingStandards\\": "tests"` excludes `tests/*`.
+
+---
+
+##### ReadonlyClassPromotionRule
+
+Suggests class-level readonly promotion when all declared properties are already individually `readonly`.
+
+This rule reports only when all of the following are true:
+- The class is `final`.
+- The class does not extend another class.
+- The class is not already declared `readonly`.
+- The class declares at least one property (explicit or promoted).
+- Every declared property is individually marked `readonly`.
+
+This keeps the rule conservative and avoids suggesting contract changes that can break inheritance.
+
+**Valid:**
+```php
+class NonFinalConfig
+{
+    public readonly string $dsn;
+}
+
+final class FinalConfig
+{
+    public readonly string $dsn;
+    private string $env; // mutable property, no suggestion
+}
+```
+
+**Invalid:**
+```php
+final class FinalConfig
+{
+    public readonly string $dsn;
+    private readonly string $env;
+    // squidit.architecture.readonlyClassPromotion
+}
+```
+
+When this identifier is reported, you can promote the class:
+- Change `final class FinalConfig` to `final readonly class FinalConfig`.
+- Remove property-level `readonly` modifiers from that class.
 
 ---
 
