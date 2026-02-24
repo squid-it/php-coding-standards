@@ -12,6 +12,7 @@ parameters:
 	tmpDir: var/cache/phpstan
 	excludePaths:
 		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile
+		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/ReadonlyClassPromotion
 	ignoreErrors:
 		-
 			identifier: squidit.restrictions.disallowAnonymousFunction

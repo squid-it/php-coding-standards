@@ -58,3 +58,4 @@ rules:
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\ReadonlyClassPromotionRule
