@@ -41,6 +41,16 @@ services:
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
 	-
 		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
+	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+		tags:
+			- phpstan.rules.rule
+		arguments:
+			allowedCreatorClassSuffixList:
+				- Factory
+				- Builder
+				- Provider
+			excludeComposerDevDirs: true
 
 rules:
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
@@ -48,4 +58,3 @@ rules:
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
-	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule

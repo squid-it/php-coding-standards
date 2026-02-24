@@ -166,7 +166,7 @@ services:
         tags:
             - phpstan.rules.rule
         arguments:
-            $enableInterfaceBareNameCheck: true
+            enableInterfaceBareNameCheck: true
 ```
 
 Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice.
@@ -281,8 +281,8 @@ enum Status: string
 
 Disallows `new` expressions for service classes in non-creator classes. A class is exempt when:
 
-- The file path is inside a directory declared in the nearest `composer.json` `autoload-dev.psr-4` section (only when `$excludeComposerDevDirs: true`), or
-- The containing class extends `PHPUnit\Framework\TestCase` (when `$skipPhpUnitTestCaseClasses: true`, default), or
+- The file path is inside a directory declared in the nearest `composer.json` `autoload-dev.psr-4` section (only when `excludeComposerDevDirs: true`), or
+- The containing class extends `PHPUnit\Framework\TestCase` (when `skipPhpUnitTestCaseClasses: true`, default), or
 - The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 - The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 - The instantiated class passes the VO/DTO classifier gates.
@@ -340,21 +340,21 @@ services:
         tags:
             - phpstan.rules.rule
         arguments:
-            $allowedCreatorClassSuffixList:
+            allowedCreatorClassSuffixList:
                 - Factory
                 - Builder
                 - Provider
                 - Assembler
-            $skipPhpUnitTestCaseClasses: true
-            $excludeComposerDevDirs: false
+            skipPhpUnitTestCaseClasses: true
+            excludeComposerDevDirs: false
 ```
 
 Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Provider`).
-`$skipPhpUnitTestCaseClasses`:
+`skipPhpUnitTestCaseClasses`:
 - Default: `true`
 - Set to `false` to enforce this rule inside PHPUnit test classes as well.
 
-`$excludeComposerDevDirs`:
+`excludeComposerDevDirs`:
 - Default: `false`
 - Set to `true` to skip this rule for files under directories declared in `autoload-dev.psr-4` of the nearest `composer.json`.
 - Example: `"SquidIT\\Tests\\PhpCodingStandards\\": "tests"` excludes `tests/*`.
