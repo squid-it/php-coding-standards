@@ -8,6 +8,7 @@ use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Testing\PHPStanTestCase;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\TypeCandidateResolver\CustomDomainDto;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Support\Fixtures\VoDtoClassifier\FromToClaimsDto;
 use Throwable;
 
 final class VoDtoClassifierTest extends PHPStanTestCase
@@ -33,5 +34,15 @@ final class VoDtoClassifierTest extends PHPStanTestCase
         $secondClassification = $this->voDtoClassifier->isVoDtoClass($classReflection);
 
         self::assertSame($firstClassification, $secondClassification);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testIsVoDtoClassWithFromAndToMethodPrefixesSucceeds(): void
+    {
+        $classReflection = $this->reflectionProvider->getClass(FromToClaimsDto::class);
+
+        self::assertTrue($this->voDtoClassifier->isVoDtoClass($classReflection));
     }
 }

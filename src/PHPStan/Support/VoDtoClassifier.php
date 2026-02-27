@@ -9,6 +9,24 @@ use ReflectionMethod;
 
 final class VoDtoClassifier
 {
+    /** @var array<int, string> */
+    private const array ALLOWED_PUBLIC_METHOD_PREFIX_LIST = [
+        'get',
+        'is',
+        'has',
+        'from',
+        'to',
+    ];
+
+    /** @var array<int, string> */
+    private const array ALLOWED_PUBLIC_METHOD_NAME_LIST = [
+        'toArray',
+        'jsonSerialize',
+        '__toString',
+        'equals',
+        'equalsTo',
+    ];
+
     /** @var array<string, bool> */
     private array $classificationByClassName = [];
 
@@ -115,25 +133,13 @@ final class VoDtoClassifier
             return true;
         }
 
-        if ($this->hasCamelCaseBoundaryPrefix($methodName, 'get') === true) {
-            return true;
+        foreach (self::ALLOWED_PUBLIC_METHOD_PREFIX_LIST as $allowedMethodPrefix) {
+            if ($this->hasCamelCaseBoundaryPrefix($methodName, $allowedMethodPrefix) === true) {
+                return true;
+            }
         }
 
-        if ($this->hasCamelCaseBoundaryPrefix($methodName, 'is') === true) {
-            return true;
-        }
-
-        if ($this->hasCamelCaseBoundaryPrefix($methodName, 'has') === true) {
-            return true;
-        }
-
-        return in_array($methodName, [
-            'toArray',
-            'jsonSerialize',
-            '__toString',
-            'equals',
-            'equalsTo',
-        ], true);
+        return in_array($methodName, self::ALLOWED_PUBLIC_METHOD_NAME_LIST, true);
     }
 
     private function hasCamelCaseBoundaryPrefix(string $methodName, string $prefix): bool
