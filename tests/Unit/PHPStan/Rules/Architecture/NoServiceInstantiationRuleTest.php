@@ -20,6 +20,7 @@ use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPUnit\Framework\MockObject\Stub;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeCustomException;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeHttpClient;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInheritedMutableService;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeIslandService;
@@ -347,6 +348,22 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
                 new ObjectType(\DateTimeImmutable::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testThrowableClassInstantiationSucceeds(): void
+    {
+        $errorList = $this->rule->processNode(
+            $this->createNamedNewNode(41),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeCustomException::class),
             ),
         );
 

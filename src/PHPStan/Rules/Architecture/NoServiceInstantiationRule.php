@@ -25,6 +25,7 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * - The containing class extends `PHPUnit\Framework\TestCase` (`skipPhpUnitTestCaseClasses` option), or
  * - The containing class name ends with an allowed creator suffix, or
  * - The instantiated class is internal/builtin, or
+ * - The instantiated class implements `Throwable` (exceptions/errors), or
  * - The instantiated class is classified as VO/DTO by `VoDtoClassifier`.
  *
  * Default allowed creator suffixes:
@@ -122,6 +123,10 @@ final readonly class NoServiceInstantiationRule implements Rule
         $errorList = [];
 
         foreach ($instantiatedClassReflectionList as $instantiatedClassReflection) {
+            if ($this->isThrowableClass($instantiatedClassReflection) === true) {
+                continue;
+            }
+
             if ($this->voDtoClassifier->isVoDtoClass($instantiatedClassReflection) === true) {
                 continue;
             }
@@ -158,6 +163,11 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         return $classReflection->isSubclassOf(TestCase::class);
+    }
+
+    private function isThrowableClass(ClassReflection $classReflection): bool
+    {
+        return $classReflection->isSubclassOf(\Throwable::class);
     }
 
     /**
