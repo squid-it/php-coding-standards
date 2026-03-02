@@ -125,7 +125,7 @@ rules:
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch`      | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type.                            |
 | `LoggerContextKeyCamelCaseRule`  | `squidit.naming.loggerContextKeyCamelCase`    | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls.                                 |
 | `EnumBackedValueCamelCaseRule`   | `squidit.naming.enumBackedValueCamelCase`     | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method.            |
-| `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), with configurable test/fixture skips. |
+| `NoServiceInstantiationRule`     | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), with configurable enum/test/fixture skips. |
 | `ReadonlyClassPromotionRule`     | `squidit.architecture.readonlyClassPromotion` | Suggests promoting a class to `readonly` when all declared properties are individually readonly, with safety guards for inheritance-sensitive cases. |
 
 ---
@@ -285,6 +285,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 
 - The file path is inside a directory declared in the nearest `composer.json` `autoload-dev.psr-4` section (only when `excludeComposerDevDirs: true`), or
 - The containing class extends `PHPUnit\Framework\TestCase` (when `skipPhpUnitTestCaseClasses: true`, default), or
+- The containing scope is an enum (when `allowInstantiationInEnums: true`, default), or
 - The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 - The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 - The instantiated class passes the VO/DTO classifier gates.
@@ -303,6 +304,20 @@ class HttpClientFactory
 // VO/DTO and internal class instantiation anywhere
 $dto   = new OrderDto($id, $amount);
 $clock = new DateTimeImmutable();
+
+enum BuiltInServiceType
+{
+    case Signals;
+    case ControlApi;
+
+    public function createBuiltInService(): object
+    {
+        return match ($this) {
+            self::Signals => new SwowSignalHandler(),
+            self::ControlApi => new BuiltInControlApiSystemService(),
+        };
+    }
+}
 ```
 
 **Invalid:**
@@ -329,9 +344,9 @@ A class is classified as a VO/DTO when it passes both gates:
    - Any other declared public method disqualifies the class.
    - Prefixes `get`, `is`, `has` require a word boundary — `getOrder()` qualifies, `getter()` does not.
 
-**Configuring creator suffixes and test/fixture skips:**
+**Configuring creator suffixes and enum/test/fixture skips:**
 
-By default, the rule allows instantiation inside any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
+By default, the rule allows instantiation inside enums and any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
 
 If you want custom suffixes or skip behavior, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
 
@@ -347,11 +362,16 @@ services:
                 - Builder
                 - Provider
                 - Assembler
+            allowInstantiationInEnums: true
             skipPhpUnitTestCaseClasses: true
             excludeComposerDevDirs: false
 ```
 
 Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Provider`).
+`allowInstantiationInEnums`:
+- Default: `true`
+- Set to `false` to enforce this rule inside enum methods too (opt out from enum instantiation allowance).
+
 `skipPhpUnitTestCaseClasses`:
 - Default: `true`
 - Set to `false` to enforce this rule inside PHPUnit test classes as well.
@@ -360,6 +380,17 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 - Default: `false`
 - Set to `true` to skip this rule for files under directories declared in `autoload-dev.psr-4` of the nearest `composer.json`.
 - Example: `"SquidIT\\Tests\\PhpCodingStandards\\": "tests"` excludes `tests/*`.
+
+**Opt out example (disallow enum instantiation):**
+```neon
+services:
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+        tags:
+            - phpstan.rules.rule
+        arguments:
+            allowInstantiationInEnums: false
+```
 
 ---
 

@@ -23,6 +23,7 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * This rule allows `new` only when:
  * - The file is excluded by composer `autoload-dev.psr-4` (`excludeComposerDevDirs` option), or
  * - The containing class extends `PHPUnit\Framework\TestCase` (`skipPhpUnitTestCaseClasses` option), or
+ * - The containing class scope is an enum (`allowInstantiationInEnums` option, enabled by default), or
  * - The containing class name ends with an allowed creator suffix, or
  * - The instantiated class is internal/builtin, or
  * - The instantiated class implements `Throwable` (exceptions/errors), or
@@ -32,6 +33,10 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * - `Factory`
  * - `Builder`
  * - `Provider`
+ *
+ * Default enum behavior:
+ * - Instantiation inside enum methods is allowed.
+ * - Set constructor argument `allowInstantiationInEnums` to `false` to opt out.
  *
  * Valid examples:
  * - `new DateTimeImmutable()` inside any class.
@@ -58,6 +63,7 @@ final readonly class NoServiceInstantiationRule implements Rule
         private bool $skipPhpUnitTestCaseClasses = true,
         private bool $excludeComposerDevDirs = false,
         private ComposerDevAutoloadPathMatcher $composerDevAutoloadPathMatcher = new ComposerDevAutoloadPathMatcher(),
+        private bool $allowInstantiationInEnums = true,
     ) {
         $this->allowedCreatorClassSuffixList = $this->normalizeAllowedCreatorClassSuffixList(
             $allowedCreatorClassSuffixList,
@@ -85,6 +91,10 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         if ($this->isInClassOutsideMethodScope($scope) === true) {
+            return [];
+        }
+
+        if ($this->allowInstantiationInEnums === true && $this->isInEnumScope($scope) === true) {
             return [];
         }
 
@@ -163,6 +173,17 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         return $classReflection->isSubclassOf(TestCase::class);
+    }
+
+    private function isInEnumScope(Scope $scope): bool
+    {
+        $classReflection = $scope->getClassReflection();
+
+        if ($classReflection === null) {
+            return false;
+        }
+
+        return $classReflection->isEnum();
     }
 
     private function isThrowableClass(ClassReflection $classReflection): bool
