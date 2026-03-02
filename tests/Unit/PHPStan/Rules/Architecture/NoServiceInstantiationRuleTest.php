@@ -33,6 +33,7 @@ use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\No
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceBuilder;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceFactory;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceProvider;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceSelectorEnum;
 use Throwable;
 
 final class NoServiceInstantiationRuleTest extends PHPStanTestCase
@@ -42,6 +43,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     private const string ISLAND_METHOD_ERROR             = 'Instantiation of service "RuntimeIslandService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
+    private const string ENUM_SERVICE_ERROR              = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeServiceSelectorEnum". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
 
     private NoServiceInstantiationRule $rule;
     private ReflectionProvider $reflectionProvider;
@@ -204,6 +206,40 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 
         self::assertCount(1, $errorList);
         self::assertSame(self::PHPUNIT_TEST_CASE_SERVICE_ERROR, $errorList[0]->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testEnumScopeInstantiationIsIgnoredByDefaultSucceeds(): void
+    {
+        $errorList = $this->rule->processNode(
+            $this->createNamedNewNode(38),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeServiceSelectorEnum::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testEnumScopeInstantiationFailsWhenAllowInstantiationInEnumsDisabled(): void
+    {
+        $configuredRule = new NoServiceInstantiationRule(allowInstantiationInEnums: false);
+        $errorList      = $configuredRule->processNode(
+            $this->createNamedNewNode(39),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeServiceSelectorEnum::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::ENUM_SERVICE_ERROR, $errorList[0]->getMessage());
     }
 
     /**
