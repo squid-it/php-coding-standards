@@ -12,18 +12,18 @@ use PHPStan\Type\UnionType;
 
 /**
  * Resolves object and iterable element types from inline PHPDoc tags,
- * including template references when a template type map is provided.
+ * including template references when a template type list is provided.
  */
 final readonly class PhpDocTypeResolver
 {
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
     public function resolveVarTagObjectType(
         ?string $docCommentText,
         string $variableName,
         bool $allowUnnamedVarTag,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): ?Type {
         $typeText = $this->resolveVarTagTypeText(
             docCommentText: $docCommentText,
@@ -37,18 +37,18 @@ final readonly class PhpDocTypeResolver
 
         return $this->resolveObjectTypeFromPhpDocTypeText(
             typeText: $typeText,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
     public function resolveNamedTagObjectType(
         ?string $docCommentText,
         string $tagName,
         string $variableName,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): ?Type {
         if ($docCommentText === null) {
             return null;
@@ -66,12 +66,12 @@ final readonly class PhpDocTypeResolver
 
         return $this->resolveObjectTypeFromPhpDocTypeText(
             typeText: $typeText,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      *
      * @return array<int, string>
      */
@@ -79,7 +79,7 @@ final readonly class PhpDocTypeResolver
         ?string $docCommentText,
         string $variableName,
         bool $allowUnnamedVarTag,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): array {
         $typeText = $this->resolveVarTagTypeText(
             docCommentText: $docCommentText,
@@ -93,7 +93,7 @@ final readonly class PhpDocTypeResolver
 
         return $this->extractIterableValueObjectClassNameListFromPhpDocTypeText(
             typeText: $typeText,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
@@ -221,9 +221,9 @@ final readonly class PhpDocTypeResolver
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
-    private function resolveObjectTypeFromPhpDocTypeText(string $typeText, array $templateTypeByNameMap): ?Type
+    private function resolveObjectTypeFromPhpDocTypeText(string $typeText, array $templateTypeList): ?Type
     {
         $typePartList        = $this->splitByTopLevelDelimiterList($typeText, ['|', '&']);
         $objectClassNameList = [];
@@ -235,10 +235,10 @@ final readonly class PhpDocTypeResolver
                 continue;
             }
 
-            if (array_key_exists($typePart, $templateTypeByNameMap) === true) {
+            if (array_key_exists($typePart, $templateTypeList) === true) {
                 $this->addObjectClassNameListFromType(
                     objectClassNameList: $objectClassNameList,
-                    type: $templateTypeByNameMap[$typePart],
+                    type: $templateTypeList[$typePart],
                 );
 
                 continue;
@@ -254,10 +254,10 @@ final readonly class PhpDocTypeResolver
             if ($genericTypeMatchCount === 1) {
                 $baseTypeName = ltrim($genericTypeMatch[1], '\\');
 
-                if (array_key_exists($baseTypeName, $templateTypeByNameMap) === true) {
+                if (array_key_exists($baseTypeName, $templateTypeList) === true) {
                     $this->addObjectClassNameListFromType(
                         objectClassNameList: $objectClassNameList,
-                        type: $templateTypeByNameMap[$baseTypeName],
+                        type: $templateTypeList[$baseTypeName],
                     );
 
                     continue;
@@ -302,13 +302,13 @@ final readonly class PhpDocTypeResolver
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      *
      * @return array<int, string>
      */
     private function extractIterableValueObjectClassNameListFromPhpDocTypeText(
         string $typeText,
-        array $templateTypeByNameMap,
+        array $templateTypeList,
     ): array {
         $typePartList        = $this->splitByTopLevelDelimiterList($typeText, ['|', '&']);
         $objectClassNameList = [];
@@ -316,7 +316,7 @@ final readonly class PhpDocTypeResolver
         foreach ($typePartList as $typePart) {
             $resolvedClassNameList = $this->extractIterableValueObjectClassNameListFromTypePart(
                 typePart: $typePart,
-                templateTypeByNameMap: $templateTypeByNameMap,
+                templateTypeList: $templateTypeList,
             );
 
             foreach ($resolvedClassNameList as $resolvedClassName) {
@@ -328,13 +328,13 @@ final readonly class PhpDocTypeResolver
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      *
      * @return array<int, string>
      */
     private function extractIterableValueObjectClassNameListFromTypePart(
         string $typePart,
-        array $templateTypeByNameMap,
+        array $templateTypeList,
     ): array {
         $normalizedTypePart = trim($typePart);
         $normalizedTypePart = trim($normalizedTypePart, " \t\n\r\0\x0B()");
@@ -347,11 +347,11 @@ final readonly class PhpDocTypeResolver
             return [];
         }
 
-        if (array_key_exists($normalizedTypePart, $templateTypeByNameMap) === true) {
+        if (array_key_exists($normalizedTypePart, $templateTypeList) === true) {
             $objectClassNameList = [];
             $this->addObjectClassNameListFromType(
                 objectClassNameList: $objectClassNameList,
-                type: $templateTypeByNameMap[$normalizedTypePart],
+                type: $templateTypeList[$normalizedTypePart],
             );
 
             return $objectClassNameList;
@@ -360,7 +360,7 @@ final readonly class PhpDocTypeResolver
         if (str_ends_with($normalizedTypePart, '[]') === true) {
             return $this->extractIterableValueObjectClassNameListFromTypePart(
                 typePart: substr($normalizedTypePart, 0, -2),
-                templateTypeByNameMap: $templateTypeByNameMap,
+                templateTypeList: $templateTypeList,
             );
         }
 
@@ -382,7 +382,7 @@ final readonly class PhpDocTypeResolver
 
             return $this->extractIterableValueObjectClassNameListFromTypePart(
                 typePart: $valueTypePart,
-                templateTypeByNameMap: $templateTypeByNameMap,
+                templateTypeList: $templateTypeList,
             );
         }
 

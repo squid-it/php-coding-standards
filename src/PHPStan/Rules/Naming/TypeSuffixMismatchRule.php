@@ -43,7 +43,7 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * - Promoted properties: `public function __construct(private FooData $service)` (reported)
  *   - Parameter-level `@var` narrowing and constructor `@param` narrowing are respected.
  * - Template references in PHPDoc (`@var TConnection`, `@param TConnection`) are resolved from
- *   active class/function template maps when available.
+ *   active class/function template type lists when available.
  *   - Unbounded templates (`@template T`) or broad bounds (`@template T of object`) do not
  *     provide a concrete class-name candidate on their own.
  *   - Concrete bounds (`@template T of FooData` or unions such as `FooData|BarData`) are treated
@@ -200,7 +200,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
 
         if (count($ruleErrorList) > 0) {
             // When a @param or @var docblock narrowed the type, docblock-derived class names are
-            // short (unqualified) strings that scope cannot resolve to FQCNs — scope.resolveName()
+            // short (unqualified) strings that scope cannot resolve to FQCNs Ã¢â‚¬â€ scope.resolveName()
             // is a pass-through that only handles self/static/parent. This means hierarchy
             // expansion for docblock types may be incomplete (e.g. a sub-interface whose parent
             // lives only in scanFiles). Allow the declared property type as an additional check so
@@ -225,13 +225,13 @@ final readonly class TypeSuffixMismatchRule implements Rule
         Scope $scope,
         ?string $statementDocCommentText,
     ): Type {
-        $templateTypeByNameMap = $this->resolveTemplateTypeByNameMap($scope);
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
 
         $docCommentType = $this->resolveVarTagTypeFromDocCommentText(
             docCommentText: $statementDocCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: true,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -242,7 +242,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             node: $node,
             variableName: $variableName,
             allowUnnamedVarTag: true,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -265,13 +265,13 @@ final readonly class TypeSuffixMismatchRule implements Rule
             return $this->resolveTypeFromTypeNode($node->type, $scope);
         }
 
-        $templateTypeByNameMap = $this->resolveTemplateTypeByNameMap($scope);
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
 
         $docCommentType = $this->resolveVarTagTypeFromNode(
             node: $node,
             variableName: $node->var->name,
             allowUnnamedVarTag: true,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -283,7 +283,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             $docCommentType = $this->resolveParamTagTypeFromPromotedPropertyNode(
                 node: $node,
                 scope: $scope,
-                templateTypeByNameMap: $templateTypeByNameMap,
+                templateTypeList: $templateTypeList,
             );
 
             if ($docCommentType !== null) {
@@ -299,26 +299,26 @@ final readonly class TypeSuffixMismatchRule implements Rule
      */
     private function resolveTypedPropertyType(Property $node, string $propertyName, Scope $scope): ?Type
     {
-        $templateTypeByNameMap = $this->resolveTemplateTypeByNameMap($scope);
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
 
         $docCommentType = $this->resolveVarTagTypeFromNode(
             node: $node,
             variableName: $propertyName,
             allowUnnamedVarTag: count($node->props) === 1,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
 
         return $docCommentType ?? $this->resolveTypeFromTypeNode($node->type, $scope);
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
     private function resolveVarTagTypeFromNode(
         Node $node,
         string $variableName,
         bool $allowUnnamedVarTag,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): ?Type {
         $docCommentText = $this->resolveDocCommentText($node);
 
@@ -330,24 +330,24 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
     private function resolveVarTagTypeFromDocCommentText(
         ?string $docCommentText,
         string $variableName,
         bool $allowUnnamedVarTag,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): ?Type {
         return $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
@@ -363,12 +363,12 @@ final readonly class TypeSuffixMismatchRule implements Rule
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
      */
     private function resolveParamTagTypeFromPromotedPropertyNode(
         Param $node,
         Scope $scope,
-        array $templateTypeByNameMap = [],
+        array $templateTypeList = [],
     ): ?Type {
         if (($node->var instanceof Variable) === false) {
             return null;
@@ -388,67 +388,67 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: $node->var->name,
-            templateTypeByNameMap: $templateTypeByNameMap,
+            templateTypeList: $templateTypeList,
         );
     }
 
     /**
      * @return array<string, Type>
      */
-    private function resolveTemplateTypeByNameMap(Scope $scope): array
+    private function resolveTemplateTypeList(Scope $scope): array
     {
         if ($this->isCoverageModeEnabled() === true) {
             return [];
         }
 
-        $templateTypeByNameMap = [];
-        $classReflection       = $scope->getClassReflection();
+        $templateTypeList = [];
+        $classReflection  = $scope->getClassReflection();
 
         if ($classReflection !== null) {
-            $this->mergeTemplateTypeByNameMap(
-                templateTypeByNameMap: $templateTypeByNameMap,
-                candidateTemplateTypeByNameMap: $classReflection->getActiveTemplateTypeMap()->getTypes(),
+            $this->mergeTemplateTypeList(
+                templateTypeList: $templateTypeList,
+                candidateTemplateTypeList: $classReflection->getActiveTemplateTypeMap()->getTypes(),
             );
 
             foreach ($classReflection->getTemplateTags() as $templateName => $templateTag) {
-                if (array_key_exists($templateName, $templateTypeByNameMap) === true) {
+                if (array_key_exists($templateName, $templateTypeList) === true) {
                     continue;
                 }
 
-                $templateTypeByNameMap[$templateName] = $templateTag->getBound();
+                $templateTypeList[$templateName] = $templateTag->getBound();
             }
         }
 
         $functionReflection = $scope->getFunction();
 
         if ($functionReflection === null) {
-            return $templateTypeByNameMap;
+            return $templateTypeList;
         }
 
         $parametersAcceptor = $functionReflection->getOnlyVariant();
 
-        $this->mergeTemplateTypeByNameMap(
-            templateTypeByNameMap: $templateTypeByNameMap,
-            candidateTemplateTypeByNameMap: $parametersAcceptor->getTemplateTypeMap()->getTypes(),
+        $this->mergeTemplateTypeList(
+            templateTypeList: $templateTypeList,
+            candidateTemplateTypeList: $parametersAcceptor->getTemplateTypeMap()->getTypes(),
         );
 
-        return $templateTypeByNameMap;
+        return $templateTypeList;
     }
 
     /**
-     * @param array<string, Type> $templateTypeByNameMap
-     * @param array<string, Type> $candidateTemplateTypeByNameMap
+     * @param array<string, Type> $templateTypeList
+     * @param array<string, Type> $candidateTemplateTypeList
      */
-    private function mergeTemplateTypeByNameMap(
-        array &$templateTypeByNameMap,
-        array $candidateTemplateTypeByNameMap,
+    private function mergeTemplateTypeList(
+        array &$templateTypeList,
+        array $candidateTemplateTypeList,
     ): void {
-        foreach ($candidateTemplateTypeByNameMap as $templateName => $templateType) {
-            if (array_key_exists($templateName, $templateTypeByNameMap) === true) {
+        foreach ($candidateTemplateTypeList as $templateName => $templateType) {
+            if (array_key_exists($templateName, $templateTypeList) === true) {
                 continue;
             }
 
-            $templateTypeByNameMap[$templateName] = $templateType;
+            $templateTypeList[$templateName] = $templateType;
         }
     }
 
