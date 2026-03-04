@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Naming;
 
+use PhpParser\Comment\Doc;
 use PhpParser\Modifiers;
 use PhpParser\Node\ComplexType;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\Error as ExprError;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
@@ -91,6 +93,8 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string READ_CHANNEL_INTERFACE_SUFFIX_MESSAGE                             = 'Interface-typed name "$readChannelInterface" must not end with "Interface". Prefer "$readChannel".';
     private const string WRITE_CHANNEL_INTERFACE_SUFFIX_MESSAGE                            = 'Interface-typed name "$writeChannelInterface" must not end with "Interface". Prefer "$writeChannel".';
     private const string LOCAL_CHANNEL_INTERFACE_SUFFIX_MESSAGE                            = 'Interface-typed name "$localChannelInterface" must not end with "Interface". Prefer "$localChannel".';
+    private const string INTERFACE_ONLY_SUFFIX_MESSAGE                                     = 'Interface-typed name "$Interface" must not end with "Interface".';
+    private const string ASSIGNMENT_DOCBLOCK_TRANSPORT_MISMATCH_MESSAGE                    = 'Name "$channel" does not match inferred type "TransportInterface". Allowed base names: transport. Use one of these names directly or a contextual prefix ending with: Transport.';
     private const string TYPE_SUFFIX_MISMATCH_IDENTIFIER                                   = 'squidit.naming.typeSuffixMismatch';
     private const string DENYLIST_MISMATCH_MESSAGE                                         = 'Name "$denyListed" does not match inferred type "DenyListedConcreteClass". Allowed base names: denyListedConcreteClass. Use one of these names directly or a contextual prefix ending with: DenyListedConcreteClass.';
     private const string GLOBAL_FOO_DATA_MISMATCH                                          = 'Name "$service" does not match inferred type "GlobalFooData". Allowed base names: globalFooData. Use one of these names directly or a contextual prefix ending with: GlobalFooData.';
@@ -316,6 +320,129 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
             self::LOCAL_CHANNEL_INTERFACE_SUFFIX_MESSAGE,
             19,
         );
+    }
+
+    public function testInterfaceSuffixWithoutSuggestionFails(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ChannelInterface' => RuntimeChannelInterface::class,
+        ]);
+        $rule = new TypeSuffixMismatchRule();
+
+        $errorList = $rule->processNode(
+            $this->createPropertyNodeWithTypeNode(
+                new Name('ChannelInterface'),
+                'Interface',
+                12,
+            ),
+            $scope,
+        );
+
+        $this->assertSingleInterfaceSuffixError(
+            $errorList,
+            self::INTERFACE_ONLY_SUFFIX_MESSAGE,
+            12,
+        );
+    }
+
+    public function testPromotedPropertyWithNonVariableNodeReturnsEmptySucceeds(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ChannelInterface' => RuntimeChannelInterface::class,
+        ]);
+        $rule = new TypeSuffixMismatchRule();
+
+        $errorList = $rule->processNode(
+            new Param(
+                var: new ExprError(),
+                type: new Name('ChannelInterface'),
+                flags: Modifiers::PRIVATE,
+                attributes: ['startLine' => 10],
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    public function testPromotedPropertyWithNonStringVariableNameReturnsEmptySucceeds(): void
+    {
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'ChannelInterface' => RuntimeChannelInterface::class,
+        ]);
+        $rule = new TypeSuffixMismatchRule();
+
+        $errorList = $rule->processNode(
+            new Param(
+                var: new Variable(new Variable('dynamicName')),
+                type: new Name('ChannelInterface'),
+                flags: Modifiers::PRIVATE,
+                attributes: ['startLine' => 10],
+            ),
+            $scope,
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    public function testAssignmentUsesAssignNodeDocCommentTypeSucceeds(): void
+    {
+        /** @var NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = $this->createScopeStubForResolvedTypeName([
+            'TransportInterface' => RuntimeTransportInterface::class,
+        ]);
+        $scope->method('getType')->willReturn(new ObjectType(RuntimeFooInterface::class));
+        $rule = new TypeSuffixMismatchRule();
+
+        $errorList = $rule->processNode(
+            new Expression(
+                expr: new Assign(
+                    var: new Variable('channel'),
+                    expr: new Variable('item'),
+                    attributes: [
+                        'startLine' => 21,
+                        'comments'  => [
+                            new Doc('/** @var TransportInterface $channel */'),
+                        ],
+                    ],
+                ),
+                attributes: ['startLine' => 21],
+            ),
+            $scope,
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::ASSIGNMENT_DOCBLOCK_TRANSPORT_MISMATCH_MESSAGE, $errorList[0]->getMessage());
+    }
+
+    public function testPromotedPropertyConstructorParamDocCommentTypeFallsBackToDeclaredTypeSucceeds(): void
+    {
+        $fixtureFilePath    = $this->createTemporaryConstructorDocCommentFixtureFile();
+        $originalXdebugMode = $this->disableCoverageModeFlagForRuleInstantiation();
+
+        try {
+            /** @var NodeCallbackInvoker&Scope&Stub $scope */
+            $scope = $this->createScopeStubForResolvedTypeName([
+                'ChannelInterface'   => RuntimeChannelInterface::class,
+                'TransportInterface' => RuntimeTransportInterface::class,
+            ]);
+            $scope->method('getFile')->willReturn($fixtureFilePath);
+            $rule = new TypeSuffixMismatchRule();
+
+            $errorList = $rule->processNode(
+                $this->createPromotedParamNodeWithTypeNode(
+                    new Name('ChannelInterface'),
+                    'channel',
+                    11,
+                ),
+                $scope,
+            );
+
+            self::assertSame([], $errorList);
+        } finally {
+            $this->restoreCoverageModeFlagAfterRuleInstantiation($originalXdebugMode);
+            $this->deleteTemporaryFixtureFileIfExists($fixtureFilePath);
+        }
     }
 
     /**
@@ -856,6 +983,71 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         }
 
         self::assertSame($expectedLine, $errorList[0]->getLine());
+    }
+
+    private function disableCoverageModeFlagForRuleInstantiation(): string|false
+    {
+        $originalXdebugMode = getenv('XDEBUG_MODE');
+        putenv('XDEBUG_MODE=');
+
+        return $originalXdebugMode;
+    }
+
+    private function restoreCoverageModeFlagAfterRuleInstantiation(string|false $originalXdebugMode): void
+    {
+        if ($originalXdebugMode === false) {
+            putenv('XDEBUG_MODE');
+
+            return;
+        }
+
+        putenv('XDEBUG_MODE=' . $originalXdebugMode);
+    }
+
+    private function createTemporaryConstructorDocCommentFixtureFile(): string
+    {
+        $fixtureFilePath = tempnam(sys_get_temp_dir(), 'type_suffix_rule_');
+
+        if ($fixtureFilePath === false) {
+            self::fail('Unable to create temporary fixture file for constructor @param doc comment parsing.');
+        }
+
+        $fixtureContents = <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            final class TemporaryPromotedParamFixture
+            {
+                /**
+                 * @param TransportInterface $channel
+                 */
+                public function __construct(
+                    private ChannelInterface $channel,
+                ) {}
+            }
+            PHP;
+
+        $writtenBytes = file_put_contents($fixtureFilePath, $fixtureContents);
+
+        if ($writtenBytes === false) {
+            self::fail('Unable to write temporary fixture file for constructor @param doc comment parsing.');
+        }
+
+        return $fixtureFilePath;
+    }
+
+    private function deleteTemporaryFixtureFileIfExists(string $fixtureFilePath): void
+    {
+        if (file_exists($fixtureFilePath) === false) {
+            return;
+        }
+
+        $deleted = unlink($fixtureFilePath);
+
+        if ($deleted === false) {
+            self::fail('Unable to delete temporary fixture file used for constructor @param doc comment parsing.');
+        }
     }
 
     private function skipCoverageUnstablePromotedPropertyParamDocblockFixture(): void
