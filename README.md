@@ -119,6 +119,7 @@ rules:
 | Rule                             | Identifier(s)                                 | Description                                                                                                                                         |
 |----------------------------------|-----------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `TypeSuffixMismatchRule`         | `squidit.naming.typeSuffixMismatch`           | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type.                |
+| `TypeSuffixMismatchRule`         | `squidit.naming.interfaceSuffix`              | Always-on check that reports interface-typed names ending with `Interface` and suggests dropping the suffix.                                       |
 | `TypeSuffixMismatchRule`         | `squidit.naming.interfaceBareName`            | Optional check (disabled by default) that reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
 | `IterablePluralNamingRule`       | `squidit.naming.iterablePluralMismatch`       | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects.                                                   |
 | `IterablePluralNamingRule`       | `squidit.naming.mapForbidden`                 | Reports when an iterable assignment target contains the word segment `Map`.                                                                         |
@@ -134,7 +135,7 @@ rules:
 
 Checks typed properties, promoted constructor parameters, and local variable assignments. The variable or property name must reflect the inferred type — either as an exact base name match or with a contextual prefix.
 
-By default, this rule enforces only `squidit.naming.typeSuffixMismatch`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
+By default, this rule enforces `squidit.naming.typeSuffixMismatch` and `squidit.naming.interfaceSuffix`. The optional interface bare-name check (`squidit.naming.interfaceBareName`) is disabled by default.
 
 Docblock narrowing support:
 - Assignment statements: inline `@var` on the assignment statement is used.
@@ -151,9 +152,10 @@ private FooService $activeFooService;
 **Invalid:**
 ```php
 private FooService $item;          // squidit.naming.typeSuffixMismatch
-private FooServiceInterface $fooService;    // squidit.naming.interfaceBareName
-                                            // (only when interface bare-name check is enabled)
+private FooServiceInterface $fooServiceInterface;    // squidit.naming.interfaceSuffix
 ```
+
+The `interfaceSuffix` identifier fires when an interface-typed name ends with `Interface`. For example, use `$readChannel` instead of `$readChannelInterface`.
 
 The `interfaceBareName` identifier fires when the name matches an interface-derived base name exactly, without any contextual prefix. A prefix like `active` or `current` silences it.
 
@@ -464,7 +466,17 @@ parameters:
             path: src/Legacy/*
 ```
 
-When the optional interface bare-name check is enabled, you can suppress it the same way:
+You can suppress `squidit.naming.interfaceSuffix` the same way:
+
+```neon
+parameters:
+    ignoreErrors:
+        -
+            identifier: squidit.naming.interfaceSuffix
+            path: src/Legacy/*
+```
+
+When the optional interface bare-name check is enabled, you can suppress it as well:
 
 ```neon
 parameters:

@@ -47,10 +47,14 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * - `private FooData $fooData;`
  * - `private FooData $initialFooData;`
  * - `$localFooData = new FooData();`
+ * - `private ChannelInterface $readChannel;`
  *
  * Optional interface bare-name check (disabled by default):
  * - `private ChannelInterface $channel;` reports `squidit.naming.interfaceBareName`
  *   when enabled, to encourage contextual names like `$readChannel`.
+ *
+ * Always-on interface suffix check:
+ * - `private ChannelInterface $readChannelInterface;` reports `squidit.naming.interfaceSuffix`.
  *
  * @implements Rule<Node>
  */
@@ -441,8 +445,23 @@ final readonly class TypeSuffixMismatchRule implements Rule
         }
 
         sort($candidateBaseNameList);
+        $interfaceBaseNameToTypeMap = $this->typeCandidateResolver->resolveInterfaceBaseNameToTypeMap($type);
 
         $errorList = [];
+
+        if (
+            count($interfaceBaseNameToTypeMap) > 0
+            && $this->hasInterfaceSuffix($name) === true
+        ) {
+            $errorList[] = RuleErrorBuilder::message(
+                $this->buildInterfaceSuffixMessage($name),
+            )
+                ->identifier('squidit.naming.interfaceSuffix')
+                ->line($line)
+                ->build();
+
+            return $errorList;
+        }
 
         if ($this->isValidForAnyCandidateBaseName($name, $candidateBaseNameList) === false) {
             $errorList[] = RuleErrorBuilder::message(
@@ -456,8 +475,6 @@ final readonly class TypeSuffixMismatchRule implements Rule
         if ($this->enableInterfaceBareNameCheck === false) {
             return $errorList;
         }
-
-        $interfaceBaseNameToTypeMap = $this->typeCandidateResolver->resolveInterfaceBaseNameToTypeMap($type);
 
         if (array_key_exists($name, $interfaceBaseNameToTypeMap) === true) {
             $errorList[] = RuleErrorBuilder::message(
@@ -518,6 +535,30 @@ final readonly class TypeSuffixMismatchRule implements Rule
             $interfaceTypeName,
             ucfirst($name),
         );
+    }
+
+    private function buildInterfaceSuffixMessage(string $name): string
+    {
+        $suffixLength = strlen('Interface');
+        $suggested    = substr($name, 0, strlen($name) - $suffixLength);
+
+        if ($suggested === '') {
+            return sprintf(
+                'Interface-typed name "$%s" must not end with "Interface".',
+                $name,
+            );
+        }
+
+        return sprintf(
+            'Interface-typed name "$%s" must not end with "Interface". Prefer "$%s".',
+            $name,
+            $suggested,
+        );
+    }
+
+    private function hasInterfaceSuffix(string $name): bool
+    {
+        return str_ends_with($name, 'Interface');
     }
 
     /**

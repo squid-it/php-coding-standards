@@ -12,6 +12,7 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/ChannelInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/NoObjectTypedProperties.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DnfTypedPropertyIgnored.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InterfaceWordInVariableNamesAllowed.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotation/ContainerInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotation/ContainerMasonInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/InlineVarAnnotationNarrowsAssignmentType.php
