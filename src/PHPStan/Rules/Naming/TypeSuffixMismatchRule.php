@@ -139,7 +139,35 @@ final readonly class TypeSuffixMismatchRule implements Rule
             statementDocCommentText: $statementDocCommentText,
         );
 
-        return $this->buildRuleErrorList($variableName, $type, $node->getStartLine());
+        $ruleErrorList = $this->buildRuleErrorList($variableName, $type, $node->getStartLine());
+
+        if (count($ruleErrorList) === 0) {
+            return [];
+        }
+
+        $expressionType = $scope->getType($node->expr);
+
+        if (
+            $this->hasGenericVarTagInAssignment(
+                node: $node,
+                statementDocCommentText: $statementDocCommentText,
+            ) === true
+            && count($expressionType->getObjectClassNames()) === 0
+        ) {
+            return [];
+        }
+
+        if ($this->hasSameObjectClassNameSet($type, $expressionType) === false) {
+            return $ruleErrorList;
+        }
+
+        $expressionCandidateBaseNameList = $this->typeCandidateResolver->resolvePHPStanType($expressionType);
+
+        if ($this->isValidForAnyCandidateBaseName($variableName, $expressionCandidateBaseNameList) === true) {
+            return [];
+        }
+
+        return $ruleErrorList;
     }
 
     /**
@@ -231,6 +259,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $statementDocCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: true,
+            scope: $scope,
             templateTypeList: $templateTypeList,
         );
 
@@ -242,6 +271,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             node: $node,
             variableName: $variableName,
             allowUnnamedVarTag: true,
+            scope: $scope,
             templateTypeList: $templateTypeList,
         );
 
@@ -271,6 +301,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             node: $node,
             variableName: $node->var->name,
             allowUnnamedVarTag: true,
+            scope: $scope,
             templateTypeList: $templateTypeList,
         );
 
@@ -305,6 +336,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             node: $node,
             variableName: $propertyName,
             allowUnnamedVarTag: count($node->props) === 1,
+            scope: $scope,
             templateTypeList: $templateTypeList,
         );
 
@@ -318,6 +350,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
         Node $node,
         string $variableName,
         bool $allowUnnamedVarTag,
+        Scope $scope,
         array $templateTypeList = [],
     ): ?Type {
         $docCommentText = $this->resolveDocCommentText($node);
@@ -330,6 +363,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
+            scope: $scope,
             templateTypeList: $templateTypeList,
         );
     }
@@ -341,14 +375,17 @@ final readonly class TypeSuffixMismatchRule implements Rule
         ?string $docCommentText,
         string $variableName,
         bool $allowUnnamedVarTag,
+        Scope $scope,
         array $templateTypeList = [],
     ): ?Type {
-        return $this->phpDocTypeResolver->resolveVarTagObjectType(
+        $docCommentType = $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
             templateTypeList: $templateTypeList,
         );
+
+        return $this->resolveDocCommentTypeInScope($docCommentType, $scope);
     }
 
     private function resolveDocCommentText(Node $node): ?string
@@ -384,12 +421,175 @@ final readonly class TypeSuffixMismatchRule implements Rule
             return null;
         }
 
-        return $this->phpDocTypeResolver->resolveNamedTagObjectType(
+        $docCommentType = $this->phpDocTypeResolver->resolveNamedTagObjectType(
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: $node->var->name,
             templateTypeList: $templateTypeList,
         );
+
+        return $this->resolveDocCommentTypeInScope($docCommentType, $scope);
+    }
+
+    private function resolveDocCommentTypeInScope(?Type $docCommentType, Scope $scope): ?Type
+    {
+        if ($docCommentType === null) {
+            return null;
+        }
+
+        $resolvedObjectClassNameList = [];
+
+        foreach ($docCommentType->getObjectClassNames() as $objectClassName) {
+            $resolvedObjectClassName = $this->resolveDocCommentObjectClassNameInScope($objectClassName, $scope);
+
+            if (in_array($resolvedObjectClassName, $resolvedObjectClassNameList, true) === false) {
+                $resolvedObjectClassNameList[] = $resolvedObjectClassName;
+            }
+        }
+
+        if (count($resolvedObjectClassNameList) === 0) {
+            return $docCommentType;
+        }
+
+        $resolvedObjectTypeList = [];
+
+        foreach ($resolvedObjectClassNameList as $resolvedObjectClassName) {
+            $resolvedObjectTypeList[] = new ObjectType($resolvedObjectClassName);
+        }
+
+        if (count($resolvedObjectTypeList) === 1) {
+            return $resolvedObjectTypeList[0];
+        }
+
+        return new UnionType($resolvedObjectTypeList);
+    }
+
+    private function resolveDocCommentObjectClassNameInScope(string $objectClassName, Scope $scope): string
+    {
+        if (str_contains($objectClassName, '\\') === true) {
+            return ltrim($objectClassName, '\\');
+        }
+
+        if ($this->isCoverageModeEnabled() === true) {
+            return ltrim($scope->resolveName(new Name($objectClassName)), '\\');
+        }
+
+        $docCommentNameScope = $this->resolveDocCommentNameScopeForFile($scope->getFile());
+
+        if (array_key_exists($objectClassName, $docCommentNameScope['useAliasToClassNameList']) === true) {
+            return $docCommentNameScope['useAliasToClassNameList'][$objectClassName];
+        }
+
+        if ($docCommentNameScope['namespaceName'] !== '') {
+            return $docCommentNameScope['namespaceName'] . '\\' . $objectClassName;
+        }
+
+        return ltrim($scope->resolveName(new Name($objectClassName)), '\\');
+    }
+
+    private function hasGenericVarTagInAssignment(Assign $node, ?string $statementDocCommentText): bool
+    {
+        if ($statementDocCommentText !== null && str_contains($statementDocCommentText, '@var') === true && str_contains($statementDocCommentText, '<') === true) {
+            return true;
+        }
+
+        $assignmentDocCommentText = $node->getDocComment()?->getText();
+
+        if ($assignmentDocCommentText !== null && str_contains($assignmentDocCommentText, '@var') === true && str_contains($assignmentDocCommentText, '<') === true) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasSameObjectClassNameSet(Type $firstType, Type $secondType): bool
+    {
+        $firstTypeClassNameList  = $firstType->getObjectClassNames();
+        $secondTypeClassNameList = $secondType->getObjectClassNames();
+
+        sort($firstTypeClassNameList);
+        sort($secondTypeClassNameList);
+
+        return $firstTypeClassNameList === $secondTypeClassNameList;
+    }
+
+    /**
+     * @return array{namespaceName: string, useAliasToClassNameList: array<string, string>}
+     */
+    private function resolveDocCommentNameScopeForFile(string $filePath): array
+    {
+        static $docCommentNameScopeByFilePath = [];
+
+        if (array_key_exists($filePath, $docCommentNameScopeByFilePath) === true) {
+            return $docCommentNameScopeByFilePath[$filePath];
+        }
+
+        $resolvedNameScope = [
+            'namespaceName'           => '',
+            'useAliasToClassNameList' => [],
+        ];
+
+        if ($filePath === '' || file_exists($filePath) === false) {
+            $docCommentNameScopeByFilePath[$filePath] = $resolvedNameScope;
+
+            return $resolvedNameScope;
+        }
+
+        $lineList = file($filePath, FILE_IGNORE_NEW_LINES);
+
+        if ($lineList === false) {
+            $docCommentNameScopeByFilePath[$filePath] = $resolvedNameScope;
+
+            return $resolvedNameScope;
+        }
+
+        foreach ($lineList as $lineText) {
+            if (preg_match('/^\s*namespace\s+([^;]+);$/', $lineText, $namespaceMatchList) === 1) {
+                $resolvedNameScope['namespaceName'] = trim($namespaceMatchList[1]);
+
+                continue;
+            }
+
+            if (preg_match('/^\s*use\s+(?!function\b|const\b)([^;]+);$/i', $lineText, $useMatchList) !== 1) {
+                continue;
+            }
+
+            $useImportText = trim($useMatchList[1]);
+
+            if (str_contains($useImportText, '{') === true) {
+                continue;
+            }
+
+            $useClassName = $useImportText;
+            $useAlias     = null;
+
+            if (preg_match('/^(.+)\s+as\s+([A-Za-z_][A-Za-z0-9_]*)$/i', $useImportText, $useAliasMatchList) === 1) {
+                $useClassName = trim($useAliasMatchList[1]);
+                $useAlias     = trim($useAliasMatchList[2]);
+            }
+
+            $useClassName = ltrim($useClassName, '\\');
+
+            if ($useAlias === null || $useAlias === '') {
+                $lastNamespaceSeparatorPosition = strrpos($useClassName, '\\');
+
+                if ($lastNamespaceSeparatorPosition === false) {
+                    $useAlias = $useClassName;
+                } else {
+                    $useAlias = substr($useClassName, $lastNamespaceSeparatorPosition + 1);
+                }
+            }
+
+            if ($useAlias === '') {
+                continue;
+            }
+
+            $resolvedNameScope['useAliasToClassNameList'][$useAlias] = $useClassName;
+        }
+
+        $docCommentNameScopeByFilePath[$filePath] = $resolvedNameScope;
+
+        return $resolvedNameScope;
     }
 
     /**
