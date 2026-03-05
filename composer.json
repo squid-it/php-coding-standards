@@ -43,7 +43,7 @@
     "test:unit": "phpunit --testsuite unit",
     "test:unit:coverage": [
       "@putenv XDEBUG_MODE=coverage",
-      "phpunit --testsuite unit --coverage-cobertura coverage/coverage.xml",
+      "vendor/bin/phpunit --testsuite unit --coverage-cobertura coverage/coverage.xml",
       "@test:coverage:remove-source"
     ],
     "test:unit:coverage-text": [

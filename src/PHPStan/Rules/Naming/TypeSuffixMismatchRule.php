@@ -42,6 +42,14 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  *   - Property-level `@var` narrowing is respected.
  * - Promoted properties: `public function __construct(private FooData $service)` (reported)
  *   - Parameter-level `@var` narrowing and constructor `@param` narrowing are respected.
+ * - Template references in PHPDoc (`@var TConnection`, `@param TConnection`) are resolved from
+ *   active class/function template type lists when available.
+ *   - Unbounded templates (`@template T`) or broad bounds (`@template T of object`) do not
+ *     provide a concrete class-name candidate on their own.
+ *   - Concrete bounds (`@template T of FooData` or unions such as `FooData|BarData`) are treated
+ *     as normal naming candidates.
+ *   - For assignment `@var`, if template resolution does not yield concrete object class names,
+ *     type inference falls back to the assigned expression type.
  *
  * Valid examples:
  * - `private FooData $fooData;`
@@ -192,7 +200,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
 
         if (count($ruleErrorList) > 0) {
             // When a @param or @var docblock narrowed the type, docblock-derived class names are
-            // short (unqualified) strings that scope cannot resolve to FQCNs — scope.resolveName()
+            // short (unqualified) strings that scope cannot resolve to FQCNs Ã¢â‚¬â€ scope.resolveName()
             // is a pass-through that only handles self/static/parent. This means hierarchy
             // expansion for docblock types may be incomplete (e.g. a sub-interface whose parent
             // lives only in scanFiles). Allow the declared property type as an additional check so
@@ -217,10 +225,13 @@ final readonly class TypeSuffixMismatchRule implements Rule
         Scope $scope,
         ?string $statementDocCommentText,
     ): Type {
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
+
         $docCommentType = $this->resolveVarTagTypeFromDocCommentText(
             docCommentText: $statementDocCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: true,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -231,6 +242,7 @@ final readonly class TypeSuffixMismatchRule implements Rule
             node: $node,
             variableName: $variableName,
             allowUnnamedVarTag: true,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -253,10 +265,13 @@ final readonly class TypeSuffixMismatchRule implements Rule
             return $this->resolveTypeFromTypeNode($node->type, $scope);
         }
 
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
+
         $docCommentType = $this->resolveVarTagTypeFromNode(
             node: $node,
             variableName: $node->var->name,
             allowUnnamedVarTag: true,
+            templateTypeList: $templateTypeList,
         );
 
         if ($docCommentType !== null) {
@@ -265,7 +280,11 @@ final readonly class TypeSuffixMismatchRule implements Rule
 
         // In coverage mode this branch can trigger a Windows/Xdebug crash in RuleTestCase runs.
         if ($this->isCoverageModeEnabled() === false) {
-            $docCommentType = $this->resolveParamTagTypeFromPromotedPropertyNode($node, $scope);
+            $docCommentType = $this->resolveParamTagTypeFromPromotedPropertyNode(
+                node: $node,
+                scope: $scope,
+                templateTypeList: $templateTypeList,
+            );
 
             if ($docCommentType !== null) {
                 return $docCommentType;
@@ -280,19 +299,26 @@ final readonly class TypeSuffixMismatchRule implements Rule
      */
     private function resolveTypedPropertyType(Property $node, string $propertyName, Scope $scope): ?Type
     {
+        $templateTypeList = $this->resolveTemplateTypeList($scope);
+
         $docCommentType = $this->resolveVarTagTypeFromNode(
             node: $node,
             variableName: $propertyName,
             allowUnnamedVarTag: count($node->props) === 1,
+            templateTypeList: $templateTypeList,
         );
 
         return $docCommentType ?? $this->resolveTypeFromTypeNode($node->type, $scope);
     }
 
+    /**
+     * @param array<string, Type> $templateTypeList
+     */
     private function resolveVarTagTypeFromNode(
         Node $node,
         string $variableName,
         bool $allowUnnamedVarTag,
+        array $templateTypeList = [],
     ): ?Type {
         $docCommentText = $this->resolveDocCommentText($node);
 
@@ -304,18 +330,24 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
+            templateTypeList: $templateTypeList,
         );
     }
 
+    /**
+     * @param array<string, Type> $templateTypeList
+     */
     private function resolveVarTagTypeFromDocCommentText(
         ?string $docCommentText,
         string $variableName,
         bool $allowUnnamedVarTag,
+        array $templateTypeList = [],
     ): ?Type {
         return $this->phpDocTypeResolver->resolveVarTagObjectType(
             docCommentText: $docCommentText,
             variableName: $variableName,
             allowUnnamedVarTag: $allowUnnamedVarTag,
+            templateTypeList: $templateTypeList,
         );
     }
 
@@ -330,8 +362,14 @@ final readonly class TypeSuffixMismatchRule implements Rule
         return null;
     }
 
-    private function resolveParamTagTypeFromPromotedPropertyNode(Param $node, Scope $scope): ?Type
-    {
+    /**
+     * @param array<string, Type> $templateTypeList
+     */
+    private function resolveParamTagTypeFromPromotedPropertyNode(
+        Param $node,
+        Scope $scope,
+        array $templateTypeList = [],
+    ): ?Type {
         if (($node->var instanceof Variable) === false) {
             return null;
         }
@@ -350,7 +388,68 @@ final readonly class TypeSuffixMismatchRule implements Rule
             docCommentText: $docCommentText,
             tagName: 'param',
             variableName: $node->var->name,
+            templateTypeList: $templateTypeList,
         );
+    }
+
+    /**
+     * @return array<string, Type>
+     */
+    private function resolveTemplateTypeList(Scope $scope): array
+    {
+        if ($this->isCoverageModeEnabled() === true) {
+            return [];
+        }
+
+        $templateTypeList = [];
+        $classReflection  = $scope->getClassReflection();
+
+        if ($classReflection !== null) {
+            $this->mergeTemplateTypeList(
+                templateTypeList: $templateTypeList,
+                candidateTemplateTypeList: $classReflection->getActiveTemplateTypeMap()->getTypes(),
+            );
+
+            foreach ($classReflection->getTemplateTags() as $templateName => $templateTag) {
+                if (array_key_exists($templateName, $templateTypeList) === true) {
+                    continue;
+                }
+
+                $templateTypeList[$templateName] = $templateTag->getBound();
+            }
+        }
+
+        $functionReflection = $scope->getFunction();
+
+        if ($functionReflection === null) {
+            return $templateTypeList;
+        }
+
+        $parametersAcceptor = $functionReflection->getOnlyVariant();
+
+        $this->mergeTemplateTypeList(
+            templateTypeList: $templateTypeList,
+            candidateTemplateTypeList: $parametersAcceptor->getTemplateTypeMap()->getTypes(),
+        );
+
+        return $templateTypeList;
+    }
+
+    /**
+     * @param array<string, Type> $templateTypeList
+     * @param array<string, Type> $candidateTemplateTypeList
+     */
+    private function mergeTemplateTypeList(
+        array &$templateTypeList,
+        array $candidateTemplateTypeList,
+    ): void {
+        foreach ($candidateTemplateTypeList as $templateName => $templateType) {
+            if (array_key_exists($templateName, $templateTypeList) === true) {
+                continue;
+            }
+
+            $templateTypeList[$templateName] = $templateType;
+        }
     }
 
     private function isCoverageModeEnabled(): bool

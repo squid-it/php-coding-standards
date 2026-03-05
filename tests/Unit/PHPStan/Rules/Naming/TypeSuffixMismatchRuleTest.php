@@ -59,9 +59,22 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string VALID_DYNAMIC_ASSIGNMENT_FILE                                     = self::FIXTURES_DIR . '/Valid/EdgeCases/AssignmentWithDynamicVariableName.php';
     private const string VALID_INLINE_VAR_ASSIGNMENT_FILE                                  = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotationNarrowsAssignmentType.php';
     private const string VALID_TYPED_PROPERTY_DOCBLOCK_FILE                                = self::FIXTURES_DIR . '/Valid/EdgeCases/TypedPropertyDocblockNarrowsType.php';
+    private const string VALID_TEMPLATE_UNBOUNDED_TYPED_PROPERTY_FILE                      = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateUnboundedTypedProperty.php';
+    private const string VALID_TEMPLATE_OBJECT_BOUND_TYPED_PROPERTY_FILE                   = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateObjectBoundTypedProperty.php';
+    private const string VALID_TEMPLATE_UNBOUNDED_INLINE_VAR_ASSIGNMENT_FILE               = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateUnboundedInlineVarAssignment.php';
+    private const string VALID_TEMPLATE_OBJECT_BOUND_INLINE_VAR_ASSIGNMENT_FILE            = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateObjectBoundInlineVarAssignment.php';
+    private const string TEMPLATE_HIERARCHY_GENERIC_INTERFACE_FILE                         = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateHierarchy/GenericConnectionInterface.php';
+    private const string TEMPLATE_HIERARCHY_ABSTRACT_CONTAINER_FILE                        = self::FIXTURES_DIR . '/Valid/EdgeCases/TemplateHierarchy/AbstractConnectionContainer.php';
     private const string VALID_PROMOTED_PROPERTY_DOCBLOCK_FILE                             = self::FIXTURES_DIR . '/Valid/EdgeCases/PromotedPropertyDocblockNarrowsType.php';
     private const string VALID_PROMOTED_PROPERTY_PARAM_DOCBLOCK_FILE                       = self::FIXTURES_DIR . '/Valid/EdgeCases/PromotedPropertyParamDocblockNarrowsType.php';
     private const string INVALID_PROMOTED_PROPERTY_PARAM_DOCBLOCK_NO_NARROWING_FILE        = self::FIXTURES_DIR . '/Invalid/EdgeCases/PromotedPropertyParamDocblockNoNarrowingMismatch.php';
+    private const string INVALID_TEMPLATE_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE            = self::FIXTURES_DIR . '/Invalid/EdgeCases/TemplateBoundToConcreteTypedPropertyMismatch.php';
+    private const string INVALID_TEMPLATE_BOUND_TO_UNION_TYPED_PROPERTY_FILE               = self::FIXTURES_DIR . '/Invalid/EdgeCases/TemplateBoundToUnionTypedPropertyMismatch.php';
+    private const string INVALID_TEMPLATE_IMPLEMENTS_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE = self::FIXTURES_DIR . '/Invalid/EdgeCases/ImplementsTemplateBoundToConcreteTypedPropertyMismatch.php';
+    private const string INVALID_TEMPLATE_EXTENDS_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE    = self::FIXTURES_DIR . '/Invalid/EdgeCases/ExtendsTemplateBoundToConcreteTypedPropertyMismatch.php';
+    private const string INVALID_TEMPLATE_CONCRETE_BOUND_INLINE_VAR_ASSIGNMENT_FILE        = self::FIXTURES_DIR . '/Invalid/EdgeCases/TemplateConcreteBoundInlineVarAssignmentMismatch.php';
+    private const string INVALID_TEMPLATE_UNION_BOUND_INLINE_VAR_ASSIGNMENT_FILE           = self::FIXTURES_DIR . '/Invalid/EdgeCases/TemplateUnionBoundInlineVarAssignmentMismatch.php';
+    private const string INVALID_TEMPLATE_UNBOUNDED_CONCRETE_INLINE_VAR_ASSIGNMENT_FILE    = self::FIXTURES_DIR . '/Invalid/EdgeCases/TemplateUnboundedInlineVarConcreteAssignmentMismatch.php';
     private const string VALID_PROMOTED_PROPERTY_PARAM_DOCBLOCK_PARENT_INTERFACE_NAME_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/PromotedPropertyParamDocblockParentInterfaceNameValid.php';
     private const string VALID_SCALAR_ASSIGNMENT_FILE                                      = self::FIXTURES_DIR . '/Valid/EdgeCases/ScalarAssignmentNoObjectType.php';
     private const string VALID_NO_OBJECT_TYPES_FILE                                        = self::FIXTURES_DIR . '/Valid/EdgeCases/NoObjectTypedProperties.php';
@@ -100,6 +113,8 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string GLOBAL_FOO_DATA_MISMATCH                                          = 'Name "$service" does not match inferred type "GlobalFooData". Allowed base names: globalFooData. Use one of these names directly or a contextual prefix ending with: GlobalFooData.';
     private const string INTERSECTION_PROPERTY_MISMATCH                                    = 'Name "$service" does not match inferred type "ChannelInterface|FooData". Allowed base names: channel, fooData. Use one of these names directly or a contextual prefix ending with: Channel, FooData.';
     private const string CONTAINER_INTERFACE_MISMATCH                                      = 'Name "$containerMason" does not match inferred type "ContainerInterface". Allowed base names: container. Use one of these names directly or a contextual prefix ending with: Container.';
+    private const string TEMPLATE_BOUND_FOO_DATA_MISMATCH                                  = 'Name "$connection" does not match inferred type "FooData". Allowed base names: fooData. Use one of these names directly or a contextual prefix ending with: FooData.';
+    private const string TEMPLATE_BOUND_UNION_MISMATCH                                     = 'Name "$connection" does not match inferred type "BarData|FooData". Allowed base names: barData, fooData. Use one of these names directly or a contextual prefix ending with: BarData, FooData.';
 
     private bool $isCoverageModeEnabled;
     private DenyList $denyList;
@@ -183,6 +198,144 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     public function testTypedPropertyDocblockNarrowsTypeSucceeds(): void
     {
         $this->analyse([self::VALID_TYPED_PROPERTY_DOCBLOCK_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateUnboundedTypedPropertySucceeds(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([self::VALID_TEMPLATE_UNBOUNDED_TYPED_PROPERTY_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateObjectBoundTypedPropertySucceeds(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([self::VALID_TEMPLATE_OBJECT_BOUND_TYPED_PROPERTY_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateBoundToConcreteTypedPropertyMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::INVALID_TEMPLATE_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_FOO_DATA_MISMATCH, 15],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateBoundToUnionTypedPropertyMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::VALID_BAR_DATA_FILE,
+            self::INVALID_TEMPLATE_BOUND_TO_UNION_TYPED_PROPERTY_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_UNION_MISMATCH, 16],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateBoundViaImplementsTypedPropertyMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::TEMPLATE_HIERARCHY_GENERIC_INTERFACE_FILE,
+            self::INVALID_TEMPLATE_IMPLEMENTS_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_FOO_DATA_MISMATCH, 17],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateBoundViaExtendsTypedPropertyMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::TEMPLATE_HIERARCHY_ABSTRACT_CONTAINER_FILE,
+            self::INVALID_TEMPLATE_EXTENDS_BOUND_TO_CONCRETE_TYPED_PROPERTY_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_FOO_DATA_MISMATCH, 17],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateUnboundedInlineVarAssignmentSucceeds(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([self::VALID_TEMPLATE_UNBOUNDED_INLINE_VAR_ASSIGNMENT_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateObjectBoundInlineVarAssignmentSucceeds(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([self::VALID_TEMPLATE_OBJECT_BOUND_INLINE_VAR_ASSIGNMENT_FILE], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateUnboundedInlineVarAssignmentWithConcreteSourceMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::INVALID_TEMPLATE_UNBOUNDED_CONCRETE_INLINE_VAR_ASSIGNMENT_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_FOO_DATA_MISMATCH, 17],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateConcreteBoundInlineVarAssignmentMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::INVALID_TEMPLATE_CONCRETE_BOUND_INLINE_VAR_ASSIGNMENT_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_FOO_DATA_MISMATCH, 17],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testTemplateUnionBoundInlineVarAssignmentMismatchFails(): void
+    {
+        $this->skipCoverageUnstableTemplateBoundFixture();
+        $this->analyse([
+            self::VALID_FOO_DATA_FILE,
+            self::VALID_BAR_DATA_FILE,
+            self::INVALID_TEMPLATE_UNION_BOUND_INLINE_VAR_ASSIGNMENT_FILE,
+        ], [
+            [self::TEMPLATE_BOUND_UNION_MISMATCH, 18],
+        ]);
     }
 
     /**
@@ -1055,6 +1208,15 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         if ($this->isCoverageModeEnabled === true) {
             self::markTestSkipped(
                 'Coverage-mode instability on Windows for RuleTestCase fixture with promoted property method-level @param.',
+            );
+        }
+    }
+
+    private function skipCoverageUnstableTemplateBoundFixture(): void
+    {
+        if ($this->isCoverageModeEnabled === true) {
+            self::markTestSkipped(
+                'Coverage-mode instability on Windows for RuleTestCase template-bound fixture assertions.',
             );
         }
     }

@@ -17,6 +17,12 @@ parameters:
 		-
 			identifier: void.pure
 			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/*
+		-
+			identifier: property.phpDocType
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateUnboundedTypedProperty.php
+		-
+			identifier: varTag.nativeType
+			path: tests/Unit/PHPStan/Rules/Naming/Fixtures/TypeSuffixMismatch/Invalid/EdgeCases/TemplateUnboundedInlineVarConcreteAssignmentMismatch.php
 
 services:
 	-
