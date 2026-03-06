@@ -154,6 +154,7 @@ Template-aware narrowing behavior:
 ```php
 private FooService $fooService;
 private FooService $activeFooService;
+$definitionList = $this->definitionAggregate; // inferred type: DefinitionAggregate
 ```
 
 **Invalid:**
@@ -215,11 +216,19 @@ The `mapForbidden` identifier fires whenever the name contains `Map` as a camelC
 
 Checks the value variable in a `foreach` statement. Naming candidates are resolved from two sources: the singularized iterable variable name and the inferred iterable element type. The value variable must match one of those candidates directly, or use it as a suffix with a contextual prefix.
 
+Additional allowed patterns:
+- `*Key => *Value` and `*Index => *Value` pairs are accepted when key/value share the same stem (for example `$settingKey => $settingValue`).
+- Value names ending with `Value` are accepted when derived from the iterable variable stem (for example `$settings` -> `$settingValue`).
+- Iterables typed as `RecursiveIterator` / `RecursiveIteratorIterator` are skipped by this rule.
+
 **Valid** (given `$children` typed as `array<int, ChildNode>`):
 ```php
 foreach ($children as $child) {}
 foreach ($children as $childNode) {}
 foreach ($children as $firstChildNode) {}
+foreach ($settings as $settingValue) {}
+foreach ($settings as $settingKey => $settingValue) {}
+foreach ($settings as $settingIndex => $settingValue) {}
 ```
 
 **Invalid:**
@@ -517,4 +526,9 @@ Both stable and experimental identifiers support the same suppression syntax.
 - Register that `.neon` from the test class with `public static function getAdditionalConfigFiles(): array` to avoid `ReflectionProvider class not found` misconfiguration errors.
 - Avoid manual `require_once` of fixture files in rule tests unless there is no alternative.
 - Keep fixture-related `excludePaths` and `ignoreErrors` narrow and scoped to the exact fixture directory/identifier.
+- Coverage mitigation playbook:
+- Prefer plain `PHPUnit\Framework\TestCase` tests for rule-internal branch coverage when fixture analysis is not required.
+- Use `#[RunInSeparateProcess]` for tests that must exercise fallback paths tied to missing PHPStan static reflection state.
+- Keep `RuleTestCase` fixture coverage minimal on Windows in `XDEBUG_MODE=coverage`; skip only the exact unstable cases.
+- Keep fixture dependencies in isolated fixture namespaces and always register cross-file dependencies in `.neon` `scanFiles`.
 - This prevents coverage instability where `composer test:unit:coverage` can crash with Windows exit code `-1073741819` after report generation.

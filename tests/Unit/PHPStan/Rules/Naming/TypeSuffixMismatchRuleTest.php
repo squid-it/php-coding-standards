@@ -57,6 +57,8 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     private const string VALID_FOO_DATA_FILE                                                    = self::FIXTURES_DIR . '/Valid/FooData.php';
     private const string VALID_BAR_DATA_FILE                                                    = self::FIXTURES_DIR . '/Valid/BarData.php';
     private const string VALID_DYNAMIC_ASSIGNMENT_FILE                                          = self::FIXTURES_DIR . '/Valid/EdgeCases/AssignmentWithDynamicVariableName.php';
+    private const string VALID_DEFINITION_AGGREGATE_FILE                                        = self::FIXTURES_DIR . '/Valid/EdgeCases/DefinitionAggregate.php';
+    private const string VALID_AGGREGATE_LIST_ALIAS_ASSIGNMENT_FILE                             = self::FIXTURES_DIR . '/Valid/EdgeCases/AggregateTypedAssignmentAllowsListAlias.php';
     private const string VALID_INLINE_VAR_ASSIGNMENT_FILE                                       = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotationNarrowsAssignmentType.php';
     private const string VALID_INLINE_VAR_GENERIC_CONCRETE_MULTI_LEVEL_INTERFACE_HIERARCHY_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarGenericConcreteMultiLevelInterfaceHierarchy.php';
     private const string VALID_MULTI_LEVEL_CHANNEL_INTERFACE_FILE                               = self::FIXTURES_DIR . '/Valid/EdgeCases/MultiLevelChannelHierarchy/ChannelInterface.php';
@@ -186,6 +188,17 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         $this->analyse([
             self::VALID_FOO_DATA_FILE,
             self::VALID_DYNAMIC_ASSIGNMENT_FILE,
+        ], []);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testAggregateTypedAssignmentAllowsListAliasSucceeds(): void
+    {
+        $this->analyse([
+            self::VALID_DEFINITION_AGGREGATE_FILE,
+            self::VALID_AGGREGATE_LIST_ALIAS_ASSIGNMENT_FILE,
         ], []);
     }
 

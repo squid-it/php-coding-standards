@@ -8,10 +8,12 @@ use PhpParser\Node;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Stmt\Foreach_;
 use PHPStan\Analyser\Scope;
+use PHPStan\Reflection\MissingStaticAccessorInstanceException;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
+use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
 use SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer;
@@ -67,10 +69,18 @@ final readonly class ForeachValueVariableNamingRule implements Rule
             return [];
         }
 
-        $valueVariableName        = $node->valueVar->name;
-        $allowedBaseNameListTuple = $this->resolveAllowedBaseNameList($node, $scope);
-        $allowedBaseNameList      = $allowedBaseNameListTuple['allowedBaseNameList'];
-        $iterableType             = $allowedBaseNameListTuple['iterableType'];
+        $valueVariableName = $node->valueVar->name;
+        $iterableType      = $scope->getType($node->expr);
+
+        if ($this->isRecursiveIteratorType($iterableType) === true) {
+            return [];
+        }
+
+        if ($this->isValidKeyOrIndexToValuePair($node, $valueVariableName) === true) {
+            return [];
+        }
+
+        $allowedBaseNameList = $this->resolveAllowedBaseNameList($node, $iterableType);
 
         if (count($allowedBaseNameList) === 0) {
             return [];
@@ -107,9 +117,9 @@ final readonly class ForeachValueVariableNamingRule implements Rule
     }
 
     /**
-     * @return array{allowedBaseNameList: array<int, string>, iterableType: Type}
+     * @return array<int, string>
      */
-    private function resolveAllowedBaseNameList(Foreach_ $foreachNode, Scope $scope): array
+    private function resolveAllowedBaseNameList(Foreach_ $foreachNode, Type $iterableType): array
     {
         $allowedBaseNameList = [];
 
@@ -117,28 +127,43 @@ final readonly class ForeachValueVariableNamingRule implements Rule
 
         if ($iterableBaseName !== null && $iterableBaseName !== '') {
             $this->addUniqueString($allowedBaseNameList, $iterableBaseName);
+            $this->addUniqueString($allowedBaseNameList, $iterableBaseName . 'Value');
         }
 
-        $iterableType = $scope->getType($foreachNode->expr);
-
         if ($iterableType->isIterable()->yes() === false) {
-            return [
-                'allowedBaseNameList' => $allowedBaseNameList,
-                'iterableType'        => $iterableType,
-            ];
+            return $allowedBaseNameList;
         }
 
         $iterableValueType = $iterableType->getIterableValueType();
-        $typeCandidateList = $this->typeCandidateResolver->resolvePHPStanType($iterableValueType);
+        $typeCandidateList = $this->resolveTypeCandidateList($iterableValueType);
 
         foreach ($typeCandidateList as $typeCandidate) {
             $this->addUniqueString($allowedBaseNameList, $typeCandidate);
         }
 
-        return [
-            'allowedBaseNameList' => $allowedBaseNameList,
-            'iterableType'        => $iterableType,
-        ];
+        return $allowedBaseNameList;
+    }
+
+    private function isRecursiveIteratorType(Type $iterableType): bool
+    {
+        try {
+            if ((new ObjectType(\RecursiveIterator::class))->isSuperTypeOf($iterableType)->yes() === true) {
+                return true;
+            }
+
+            return (new ObjectType(\RecursiveIteratorIterator::class))->isSuperTypeOf($iterableType)->yes();
+        } catch (MissingStaticAccessorInstanceException) {
+            foreach ($iterableType->getObjectClassNames() as $objectClassName) {
+                if (
+                    $objectClassName === \RecursiveIterator::class
+                    || $objectClassName === \RecursiveIteratorIterator::class
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     private function resolveSingularizedIterableBaseName(Node\Expr $iterableExpressionNode): ?string
@@ -175,6 +200,154 @@ final readonly class ForeachValueVariableNamingRule implements Rule
     private function endsWithChildren(string $iterableVariableName): bool
     {
         return str_ends_with(strtolower($iterableVariableName), 'children');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveTypeCandidateList(Type $iterableValueType): array
+    {
+        try {
+            return $this->typeCandidateResolver->resolvePHPStanType($iterableValueType);
+        } catch (MissingStaticAccessorInstanceException) {
+            return $this->resolveTypeCandidateListWithoutReflectionProvider($iterableValueType);
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function resolveTypeCandidateListWithoutReflectionProvider(Type $iterableValueType): array
+    {
+        $candidateBaseNameList = [];
+
+        foreach ($iterableValueType->getObjectClassNames() as $objectClassName) {
+            $shortClassName = $this->extractShortClassName($objectClassName);
+            $normalizedName = $this->normalizeFallbackTypeCandidate($shortClassName);
+
+            if ($normalizedName === '') {
+                continue;
+            }
+
+            $this->addUniqueString($candidateBaseNameList, $normalizedName);
+        }
+
+        return $candidateBaseNameList;
+    }
+
+    private function normalizeFallbackTypeCandidate(string $shortClassName): string
+    {
+        $baseName = $shortClassName;
+
+        if (str_starts_with($baseName, 'Abstract') === true) {
+            $remaining = substr($baseName, strlen('Abstract'));
+
+            if ($remaining !== '' && ctype_upper($remaining[0]) === true) {
+                $baseName = $remaining;
+            }
+        }
+
+        foreach (['Interface', 'Abstract', 'Trait'] as $suffix) {
+            if (str_ends_with($baseName, $suffix) === false) {
+                continue;
+            }
+
+            $stripped = substr($baseName, 0, strlen($baseName) - strlen($suffix));
+
+            if ($stripped !== '') {
+                $baseName = $stripped;
+            }
+
+            break;
+        }
+
+        return $this->toCamelCase($baseName);
+    }
+
+    private function toCamelCase(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        $matchList = [];
+        preg_match_all('/[A-Z]+(?=[A-Z][a-z]|[0-9]|$)|[A-Z]?[a-z]+|[0-9]+/', $value, $matchList);
+
+        if (count($matchList) === 0) {
+            return lcfirst($value);
+        }
+
+        /** @var array<int, string> $partList */
+        $partList = $matchList[0];
+
+        if (count($partList) === 0) {
+            return lcfirst($value);
+        }
+
+        $camelCasePartList = [];
+
+        foreach ($partList as $index => $part) {
+            $partLowerCase = strtolower($part);
+
+            if ($index === 0) {
+                $camelCasePartList[] = $partLowerCase;
+
+                continue;
+            }
+
+            if (ctype_digit($part) === true) {
+                $camelCasePartList[] = $part;
+
+                continue;
+            }
+
+            $camelCasePartList[] = ucfirst($partLowerCase);
+        }
+
+        return implode('', $camelCasePartList);
+    }
+
+    private function isValidKeyOrIndexToValuePair(Foreach_ $foreachNode, string $valueVariableName): bool
+    {
+        if (($foreachNode->keyVar instanceof Variable) === false || is_string($foreachNode->keyVar->name) === false) {
+            return false;
+        }
+
+        return $this->hasMatchingStemForKeyOrIndexAndValue(
+            keyVariableName: $foreachNode->keyVar->name,
+            valueVariableName: $valueVariableName,
+        );
+    }
+
+    private function hasMatchingStemForKeyOrIndexAndValue(string $keyVariableName, string $valueVariableName): bool
+    {
+        $matchingKeySuffix = null;
+
+        foreach (['Key', 'Index'] as $keySuffix) {
+            if (str_ends_with($keyVariableName, $keySuffix) === true) {
+                $matchingKeySuffix = $keySuffix;
+
+                break;
+            }
+        }
+
+        if ($matchingKeySuffix === null || str_ends_with($valueVariableName, 'Value') === false) {
+            return false;
+        }
+
+        $keyStem = substr($keyVariableName, 0, strlen($keyVariableName) - strlen($matchingKeySuffix));
+
+        if ($keyStem === '') {
+            return false;
+        }
+
+        $valueStem = substr($valueVariableName, 0, strlen($valueVariableName) - strlen('Value'));
+
+        if ($valueStem === '') {
+            return false;
+        }
+
+        return $keyStem === $valueStem;
     }
 
     /**

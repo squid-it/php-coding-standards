@@ -26,6 +26,7 @@ parameters:
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateObjectBoundTypedProperty.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateUnboundedInlineVarAssignment.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateObjectBoundInlineVarAssignment.php
+		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/DefinitionAggregate.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateHierarchy/GenericConnectionInterface.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/TemplateHierarchy/AbstractConnectionContainer.php
 		- Fixtures/TypeSuffixMismatch/Valid/EdgeCases/PromotedPropertyDocblockNarrowsType.php

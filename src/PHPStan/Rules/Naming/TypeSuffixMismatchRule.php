@@ -762,7 +762,10 @@ final readonly class TypeSuffixMismatchRule implements Rule
             return $errorList;
         }
 
-        if ($this->isValidForAnyCandidateBaseName($name, $candidateBaseNameList) === false) {
+        if (
+            $this->isValidForAnyCandidateBaseName($name, $candidateBaseNameList) === false
+            && $this->isValidAggregateListAliasName($name, $candidateBaseNameList) === false
+        ) {
             $errorList[] = RuleErrorBuilder::message(
                 $this->buildTypeSuffixMismatchMessage($name, $type, $candidateBaseNameList),
             )
@@ -858,6 +861,40 @@ final readonly class TypeSuffixMismatchRule implements Rule
     private function hasInterfaceSuffix(string $name): bool
     {
         return str_ends_with($name, 'Interface');
+    }
+
+    /**
+     * @param array<int, string> $candidateBaseNameList
+     */
+    private function isValidAggregateListAliasName(string $name, array $candidateBaseNameList): bool
+    {
+        if (str_ends_with($name, 'List') === false) {
+            return false;
+        }
+
+        $listStem = substr($name, 0, strlen($name) - strlen('List'));
+
+        if ($listStem === '') {
+            return false;
+        }
+
+        foreach ($candidateBaseNameList as $candidateBaseName) {
+            if (str_ends_with($candidateBaseName, 'Aggregate') === false) {
+                continue;
+            }
+
+            $aggregateStem = substr($candidateBaseName, 0, strlen($candidateBaseName) - strlen('Aggregate'));
+
+            if ($aggregateStem === '') {
+                continue;
+            }
+
+            if ($this->variableNameMatcher->isValid($listStem, $aggregateStem) === true) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
