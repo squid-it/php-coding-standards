@@ -16,6 +16,8 @@ use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\VerbosityLevel;
+use RecursiveIterator;
+use RecursiveIteratorIterator;
 use SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
@@ -147,16 +149,16 @@ final readonly class ForeachValueVariableNamingRule implements Rule
     private function isRecursiveIteratorType(Type $iterableType): bool
     {
         try {
-            if ((new ObjectType(\RecursiveIterator::class))->isSuperTypeOf($iterableType)->yes() === true) {
+            if (new ObjectType(RecursiveIterator::class)->isSuperTypeOf($iterableType)->yes() === true) {
                 return true;
             }
 
-            return (new ObjectType(\RecursiveIteratorIterator::class))->isSuperTypeOf($iterableType)->yes();
+            return new ObjectType(RecursiveIteratorIterator::class)->isSuperTypeOf($iterableType)->yes();
         } catch (MissingStaticAccessorInstanceException) {
             foreach ($iterableType->getObjectClassNames() as $objectClassName) {
                 if (
-                    $objectClassName === \RecursiveIterator::class
-                    || $objectClassName === \RecursiveIteratorIterator::class
+                    $objectClassName === RecursiveIterator::class
+                    || $objectClassName === RecursiveIteratorIterator::class
                 ) {
                     return true;
                 }

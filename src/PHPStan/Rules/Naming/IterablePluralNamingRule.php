@@ -18,13 +18,12 @@ use PHPStan\ShouldNotHappenException;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver;
-use SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
 
 /**
- * Enforces plural or collection-style naming for object iterables.
+ * Enforces `List`-suffixed naming for object iterables.
  *
  * This rule checks assignment targets where the inferred expression type is iterable and each element
  * type resolves to object-based naming candidates.
@@ -32,14 +31,14 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher;
  * Inline assignment `@var` narrowing is respected for iterable value types.
  *
  * Valid examples:
- * - `$nodes = [$node];`
  * - `$nodeList = [$node];`
  * - `$activeNodeList = [$node];`
- * - `$nodeById = ['id' => $node];`
+ * - `$primaryNodeList = ['id' => $node];`
  *
  * Invalid examples:
+ * - `$nodes = [$node];` (must use `*List` naming)
  * - `$itemList = [$node];` (does not match inferred element type)
- * - `$nodeMap = ['id' => $node];` (`Map` segment is forbidden)
+ * - `$nodeMap = ['id' => $node];` (`Map` segment is forbidden, must use `*List`)
  *
  * @implements Rule<Expression>
  */
@@ -48,16 +47,11 @@ final readonly class IterablePluralNamingRule implements Rule
     /** @var array<int, string> */
     private const array COLLECTION_SUFFIX_LIST = [
         'List',
-        'Collection',
-        'Lookup',
-        'ById',
-        'ByKey',
     ];
 
     public function __construct(
         private TypeCandidateResolver $typeCandidateResolver = new TypeCandidateResolver(),
         private VariableNameMatcher $variableNameMatcher = new VariableNameMatcher(),
-        private Pluralizer $pluralizer = new Pluralizer(),
         private TypeMessageDescriber $typeMessageDescriber = new TypeMessageDescriber(),
         private PhpDocTypeResolver $phpDocTypeResolver = new PhpDocTypeResolver(),
     ) {}
@@ -211,12 +205,6 @@ final readonly class IterablePluralNamingRule implements Rule
     private function isValidForAnyIterableCandidateBaseName(string $name, array $candidateBaseNameList): bool
     {
         foreach ($candidateBaseNameList as $candidateBaseName) {
-            $pluralBaseName = $this->pluralizer->pluralize($candidateBaseName);
-
-            if ($this->variableNameMatcher->isValid($name, $pluralBaseName) === true) {
-                return true;
-            }
-
             foreach (self::COLLECTION_SUFFIX_LIST as $collectionSuffix) {
                 if (
                     $this->variableNameMatcher->isValid(
@@ -258,19 +246,38 @@ final readonly class IterablePluralNamingRule implements Rule
         $typeDescription = $elementTypeDescription ?? $this->typeMessageDescriber->describeIterableValueType($type);
 
         return sprintf(
-            'Iterable name "$%s" does not match inferred iterable element type "%s". Allowed base names: %s. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.',
+            'Iterable name "$%s" does not match inferred iterable element type "%s". Allowed base names: %s. Use one of these names directly or a contextual prefix ending with: %s.',
             $name,
             $typeDescription,
             implode(', ', $candidateBaseNameList),
+            implode(', ', $this->buildAllowedListSuffixNameList($candidateBaseNameList)),
         );
     }
 
     private function buildMapForbiddenMessage(string $name): string
     {
         return sprintf(
-            'Iterable name "$%s" contains forbidden segment "Map". Use "List", "Collection", "Lookup", "ById", or "ByKey" naming instead.',
+            'Iterable name "$%s" contains forbidden segment "Map". Use "*List" naming instead.',
             $name,
         );
+    }
+
+    /**
+     * @param array<int, string> $candidateBaseNameList
+     *
+     * @return array<int, string>
+     */
+    private function buildAllowedListSuffixNameList(array $candidateBaseNameList): array
+    {
+        $allowedNameList = [];
+
+        foreach ($candidateBaseNameList as $candidateBaseName) {
+            foreach (self::COLLECTION_SUFFIX_LIST as $collectionSuffix) {
+                $allowedNameList[] = $candidateBaseName . $collectionSuffix;
+            }
+        }
+
+        return $allowedNameList;
     }
 
     private function extractAssignmentTargetName(Assign $assignNode): ?string

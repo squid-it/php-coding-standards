@@ -8,6 +8,6 @@ final class InvalidPluralName
 {
     public function run(Node $node): void
     {
-        $itemList = [$node];
+        $nodes = [$node];
     }
 }

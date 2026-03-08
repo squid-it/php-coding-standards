@@ -121,7 +121,7 @@ rules:
 | `TypeSuffixMismatchRule`         | `squidit.naming.typeSuffixMismatch`           | Enforces that typed properties, promoted parameters, and local variable assignments are named consistently with their inferred type.                |
 | `TypeSuffixMismatchRule`         | `squidit.naming.interfaceSuffix`              | Always-on check that reports interface-typed names ending with `Interface` and suggests dropping the suffix.                                       |
 | `TypeSuffixMismatchRule`         | `squidit.naming.interfaceBareName`            | Optional check (disabled by default) that reports when a variable or property name uses an interface-derived base name without a contextual prefix. |
-| `IterablePluralNamingRule`       | `squidit.naming.iterablePluralMismatch`       | Enforces plural or collection-style naming when an assignment holds an iterable of typed objects.                                                   |
+| `IterablePluralNamingRule`       | `squidit.naming.iterablePluralMismatch`       | Enforces `*List` naming when an assignment holds an iterable of typed objects.                                                                       |
 | `IterablePluralNamingRule`       | `squidit.naming.mapForbidden`                 | Reports when an iterable assignment target contains the word segment `Map`.                                                                         |
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch`      | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type.                            |
 | `LoggerContextKeyCamelCaseRule`  | `squidit.naming.loggerContextKeyCamelCase`    | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls.                                 |
@@ -187,28 +187,28 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 
 ##### IterablePluralNamingRule
 
-Checks assignment targets where the inferred type is an iterable of typed objects. The variable or property name must use a plural or recognized collection-style form.
+Checks assignment targets where the inferred type is an iterable of typed objects. The variable or property name must end with `List` and still match the inferred element type.
 
 Docblock narrowing support:
 - Assignment statements: inline `@var` on the assignment statement is used to resolve iterable value type candidates (named and unnamed `@var`).
 
-**Allowed collection suffixes:** `List`, `Collection`, `Lookup`, `ById`, `ByKey`
+**Required collection suffix:** `List`
 
 **Valid:**
 ```php
-$nodes = [$node];
 $nodeList = [$node];
 $activeNodeList = [$node];
-$nodeById = ['id' => $node];
+$primaryNodeList = ['id' => $node]; // associative keys are allowed
 ```
 
 **Invalid:**
 ```php
-$items = [$node];      // squidit.naming.iterablePluralMismatch
-$nodeMap = [$node];    // squidit.naming.mapForbidden
+$nodes = [$node];        // squidit.naming.iterablePluralMismatch
+$nodeById = [$node];     // squidit.naming.iterablePluralMismatch
+$nodeMap = [$node];      // squidit.naming.mapForbidden
 ```
 
-The `mapForbidden` identifier fires whenever the name contains `Map` as a camelCase word segment (for example `nodeMap`, `nodeMapById`). Use `Lookup`, `ById`, or `ByKey` instead.
+The `mapForbidden` identifier fires whenever the name contains `Map` as a camelCase word segment (for example `nodeMap`, `nodeMapById`). Use `*List` naming instead.
 
 ---
 
@@ -503,6 +503,38 @@ parameters:
 ```
 
 Both stable and experimental identifiers support the same suppression syntax.
+
+##### Baseline and Ignore Lists (Migration to `*List`)
+
+If you are enabling strict iterable `*List` naming on an existing codebase, you can keep CI green while gradually migrating legacy names.
+
+Generate a baseline from your auto review config:
+
+```bash
+vendor/bin/phpstan analyse -c phpstan-autoreview.neon --generate-baseline=phpstan-baseline.neon
+```
+
+Include that baseline in your project config:
+
+```neon
+includes:
+    - phpstan-baseline.neon
+```
+
+If you prefer an explicit ignore list instead of a baseline, use targeted ignores:
+
+```neon
+parameters:
+    ignoreErrors:
+        -
+            identifier: squidit.naming.iterablePluralMismatch
+            path: src/Legacy/*
+        -
+            identifier: squidit.naming.mapForbidden
+            path: src/Legacy/*
+```
+
+Narrow these ignores to the smallest possible paths and remove them as files are renamed to `*List`.
 
 ---
 

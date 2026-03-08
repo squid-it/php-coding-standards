@@ -8,13 +8,10 @@ final class ValidScenarios
 {
     public function run(Node $node): void
     {
-        $nodes          = [$node];
-        $nodeList       = [$node];
-        $activeNodeList = [$node];
-        $nodeById       = ['primary' => $node];
-        $nodeLookup     = ['primary' => $node];
-        $nodeByKey      = ['primary' => $node];
+        $nodeList        = [$node];
+        $activeNodeList  = [$node];
+        $primaryNodeList = ['primary' => $node];
 
-        $nodes[] = new Node();
+        $nodeList[] = new Node();
     }
 }

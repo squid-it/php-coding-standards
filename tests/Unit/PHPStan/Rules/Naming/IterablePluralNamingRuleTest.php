@@ -22,9 +22,13 @@ final class IterablePluralNamingRuleTest extends RuleTestCase
     private const string INLINE_VAR_CONTAINER_INTERFACE_FILE       = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotation/ContainerInterface.php';
     private const string INLINE_VAR_CONTAINER_MASON_INTERFACE_FILE = self::FIXTURES_DIR . '/Valid/EdgeCases/InlineVarAnnotation/ContainerMasonInterface.php';
     private const string INVALID_NODE_FILE                         = self::FIXTURES_DIR . '/Invalid/Node.php';
-    private const string PLURAL_MISMATCH_ERROR_MESSAGE             = 'Iterable name "$itemList" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
-    private const string MAP_FORBIDDEN_ERROR_MESSAGE               = 'Iterable name "$nodeMap" contains forbidden segment "Map". Use "List", "Collection", "Lookup", "ById", or "ByKey" naming instead.';
-    private const string MAP_MISMATCH_ERROR_MESSAGE                = 'Iterable name "$nodeMap" does not match inferred iterable element type "Node". Allowed base names: node. Use plural form or collection suffixes: List, Collection, Lookup, ById, ByKey.';
+    private const string MISSING_LIST_SUFFIX_ERROR_MESSAGE         = 'Iterable name "$nodes" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
+    private const string LEGACY_BY_ID_SUFFIX_ERROR_MESSAGE         = 'Iterable name "$nodeById" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
+    private const string LEGACY_BY_KEY_SUFFIX_ERROR_MESSAGE        = 'Iterable name "$nodeByKey" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
+    private const string LEGACY_LOOKUP_SUFFIX_ERROR_MESSAGE        = 'Iterable name "$nodeLookup" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
+    private const string LEGACY_COLLECTION_SUFFIX_ERROR_MESSAGE    = 'Iterable name "$nodeCollection" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
+    private const string MAP_FORBIDDEN_ERROR_MESSAGE               = 'Iterable name "$nodeMap" contains forbidden segment "Map". Use "*List" naming instead.';
+    private const string MAP_MISMATCH_ERROR_MESSAGE                = 'Iterable name "$nodeMap" does not match inferred iterable element type "Node". Allowed base names: node. Use one of these names directly or a contextual prefix ending with: nodeList.';
 
     private bool $isCoverageModeEnabled;
 
@@ -109,13 +113,29 @@ final class IterablePluralNamingRuleTest extends RuleTestCase
     /**
      * @throws Throwable
      */
-    public function testInvalidPluralNameFails(): void
+    public function testMissingListSuffixFails(): void
     {
         $this->analyse([
             self::INVALID_NODE_FILE,
             self::FIXTURES_DIR . '/Invalid/InvalidPluralName.php',
         ], [
-            [self::PLURAL_MISMATCH_ERROR_MESSAGE, 11],
+            [self::MISSING_LIST_SUFFIX_ERROR_MESSAGE, 11],
+        ]);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testLegacyCollectionSuffixesFail(): void
+    {
+        $this->analyse([
+            self::INVALID_NODE_FILE,
+            self::FIXTURES_DIR . '/Invalid/InvalidLegacyCollectionSuffixes.php',
+        ], [
+            [self::LEGACY_BY_ID_SUFFIX_ERROR_MESSAGE, 11],
+            [self::LEGACY_BY_KEY_SUFFIX_ERROR_MESSAGE, 12],
+            [self::LEGACY_LOOKUP_SUFFIX_ERROR_MESSAGE, 13],
+            [self::LEGACY_COLLECTION_SUFFIX_ERROR_MESSAGE, 14],
         ]);
     }
 

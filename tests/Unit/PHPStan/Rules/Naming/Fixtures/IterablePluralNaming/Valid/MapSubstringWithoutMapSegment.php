@@ -8,11 +8,11 @@ final class MapSubstringWithoutMapSegment
 {
     public function run(Node $node): void
     {
-        $mapperNodes          = [$node];
-        $heatmapNodes         = [$node];
-        $sitemapNodes         = [$node];
-        $imageMapperNodeList  = [$node];
-        $sitemapNodeById      = ['primary' => $node];
-        $heatmapNodeCollection = [$node];
+        $mapperNodeList        = [$node];
+        $heatmapNodeList       = [$node];
+        $sitemapNodeList       = [$node];
+        $imageMapperNodeList   = [$node];
+        $sitemapPrimaryNodeList = ['primary' => $node];
+        $heatmapCurrentNodeList = [$node];
     }
 }
