@@ -16,7 +16,7 @@ final class VoDtoClassifier
         'has',
         'from',
         'to',
-        'with'
+        'with',
     ];
 
     /** @var array<int, string> */
@@ -26,6 +26,7 @@ final class VoDtoClassifier
         '__toString',
         'equals',
         'equalsTo',
+        'with',
     ];
 
     /** @var array<string, bool> */

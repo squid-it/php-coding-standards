@@ -437,7 +437,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 * The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 * The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 * The instantiated class passes the VO/DTO classifier gates, or
-* The instantiation occurs outside of a method scope (e.g., in default property values or promoted constructor properties), or
+* The instantiation occurs outside a method scope (e.g., in default property values or promoted constructor properties), or
 
 
 * The instantiation is an anonymous class.
@@ -510,11 +510,11 @@ A class is classified as a VO/DTO when it passes both gates:
 
 
 2. **Public API gate** (all must be true):
-* Public methods are limited to: `__construct`, exact names (`toArray`, `jsonSerialize`, `__toString`, `equals`, `equalsTo`), or methods starting with allowed prefixes (`get`, `is`, `has`, `from`, `to`).
+* Public methods are limited to: `__construct`, exact names (`toArray`, `jsonSerialize`, `__toString`, `equals`, `equalsTo`, `with`), or methods starting with allowed prefixes (`get`, `is`, `has`, `from`, `to`).
 
 
 * Any other declared public method disqualifies the class.
-* Prefixes `get`, `is`, `has`, `from`, and `to` require a camelCase word boundary — `getOrder()` qualifies, `getter()` does not.
+* Prefixes `get`, `is`, `has`, `from`, `to` and `with` require a camelCase word boundary — `getOrder()` qualifies, `getter()` does not.
 
 
 
