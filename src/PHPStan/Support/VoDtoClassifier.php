@@ -16,6 +16,7 @@ final class VoDtoClassifier
         'has',
         'from',
         'to',
+        'with'
     ];
 
     /** @var array<int, string> */
