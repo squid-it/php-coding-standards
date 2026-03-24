@@ -13,6 +13,7 @@ use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\ShouldNotHappenException;
 use PHPUnit\Framework\TestCase;
+use SquidIT\PhpCodingStandards\PHPStan\Support\AllowedInvokableClassClassifier;
 use SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher;
 use SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
@@ -27,7 +28,9 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * - The containing class name ends with an allowed creator suffix, or
  * - The instantiated class is internal/builtin, or
  * - The instantiated class implements `Throwable` (exceptions/errors), or
- * - The instantiated class is classified as VO/DTO by `VoDtoClassifier`.
+ * - The instantiated class is classified as VO/DTO by `VoDtoClassifier`, or
+ * - The instantiated class is classified as an allowed invokable task object by
+ *   `AllowedInvokableClassClassifier`.
  *
  * Default allowed creator suffixes:
  * - `Factory`
@@ -42,6 +45,8 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * - `new DateTimeImmutable()` inside any class.
  * - `new HttpClient()` inside `HttpClientFactory`.
  * - `new OrderDto(...)` when the class passes VO/DTO gates.
+ * - `new ProcessTask()` when the class exposes only `__invoke()` plus `get*` / `has*` / `is*`
+ *   inspection methods.
  *
  * Invalid example:
  * - `new HttpClient()` inside `ReportService`.
@@ -59,6 +64,7 @@ final readonly class NoServiceInstantiationRule implements Rule
     public function __construct(
         array $allowedCreatorClassSuffixList = ContainingClassResolver::DEFAULT_ALLOWED_CREATOR_CLASS_SUFFIX_LIST,
         private VoDtoClassifier $voDtoClassifier = new VoDtoClassifier(),
+        private AllowedInvokableClassClassifier $allowedInvokableClassClassifier = new AllowedInvokableClassClassifier(),
         private ContainingClassResolver $containingClassResolver = new ContainingClassResolver(),
         private bool $skipPhpUnitTestCaseClasses = true,
         private bool $excludeComposerDevDirs = false,
@@ -138,6 +144,12 @@ final readonly class NoServiceInstantiationRule implements Rule
             }
 
             if ($this->voDtoClassifier->isVoDtoClass($instantiatedClassReflection) === true) {
+                continue;
+            }
+
+            if (
+                $this->allowedInvokableClassClassifier->isAllowedInvokableClass($instantiatedClassReflection) === true
+            ) {
                 continue;
             }
 
