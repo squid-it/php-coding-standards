@@ -201,6 +201,8 @@ services:
 	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
 	-
+		class: SquidIT\PhpCodingStandards\PHPStan\Support\AllowedInvokableClassClassifier
+	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
 	-
 		class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
@@ -229,7 +231,7 @@ rules:
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
 | `LoggerContextKeyCamelCaseRule` | `squidit.naming.loggerContextKeyCamelCase` | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls. |
 | `EnumBackedValueCamelCaseRule` | `squidit.naming.enumBackedValueCamelCase` | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method. |
-| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), with configurable enum/test/fixture skips. |
+| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), while allowing VO/DTO carriers and narrowly-defined invokable task objects, with configurable enum/test/fixture skips. |
 | `ReadonlyClassPromotionRule` | `squidit.architecture.readonlyClassPromotion` | Suggests promoting a class to `readonly` when all declared properties are individually readonly, with safety guards for inheritance-sensitive cases. |
 
 ---
@@ -437,6 +439,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 * The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 * The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 * The instantiated class passes the VO/DTO classifier gates, or
+* The instantiated class passes the allowed invokable class gates, or
 * The instantiation occurs outside a method scope (e.g., in default property values or promoted constructor properties), or
 
 
@@ -459,6 +462,9 @@ final readonly class HttpClientFactory
 // VO/DTO and internal class instantiation anywhere
 $orderDto = new OrderDto($id, $amount);
 $dateTime = new DateTimeImmutable();
+
+// Allowed invokable task object anywhere
+$processTask = new ProcessTask();
 
 enum BuiltInServiceType
 {
@@ -519,6 +525,39 @@ A class is classified as a VO/DTO when it passes both gates:
 
 
 
+
+**Allowed invokable class classification:**
+
+An invokable class is allowed when it passes all of the following checks:
+
+* The class declares or inherits a public `__invoke()` method.
+* Public methods are limited to: `__construct`, `__invoke`, or methods starting with `get`, `has`, or `is`.
+* The `get`, `has`, and `is` prefixes require a camelCase word boundary - `getLastError()` qualifies, `getter()` does not.
+* Mutable execution state is allowed for this category so coroutine/task objects can expose post-run inspection methods such as `getLastError()`, `getLastException()`, `hasFailed()`, or `isSuccessful()`.
+
+**Valid invokable example:**
+
+```php
+final class ProcessTask
+{
+    private ?string $lastError = null;
+
+    public function __invoke(): void
+    {
+        $this->lastError = null;
+    }
+
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
+    }
+
+    public function hasFailed(): bool
+    {
+        return $this->lastError !== null;
+    }
+}
+```
 
 **Configuring creator suffixes and enum/test/fixture skips:**
 

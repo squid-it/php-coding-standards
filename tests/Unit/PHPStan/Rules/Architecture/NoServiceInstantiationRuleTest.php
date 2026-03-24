@@ -23,6 +23,8 @@ use SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiation
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeCustomException;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeHttpClient;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInheritedMutableService;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInvokableTask;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInvokableWithBehaviorMethod;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeIslandService;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeNonFactoryConsumer;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeOrderDto;
@@ -40,12 +42,13 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 {
     private const string DIRECT_SERVICE_ERROR            = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string READONLY_BEHAVIOR_ERROR         = 'Instantiation of service "RuntimeReadonlyBehaviorService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
+    private const string INVOKABLE_BEHAVIOR_ERROR        = 'Instantiation of service "RuntimeInvokableWithBehaviorMethod" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string ISLAND_METHOD_ERROR             = 'Instantiation of service "RuntimeIslandService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string ENUM_SERVICE_ERROR              = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeServiceSelectorEnum". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
 
-    private NoServiceInstantiationRule $rule;
+    private NoServiceInstantiationRule $noServiceInstantiationRule;
     private ReflectionProvider $reflectionProvider;
     /** @var array<int, string> */
     private array $temporaryDirectoryPathList = [];
@@ -56,8 +59,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 
         // @phpstan-ignore-next-line phpstanApi.method
         ReflectionProviderStaticAccessor::registerInstance(PHPStanTestCase::createReflectionProvider());
-        $this->rule               = new NoServiceInstantiationRule();
-        $this->reflectionProvider = PHPStanTestCase::createReflectionProvider();
+        $this->noServiceInstantiationRule = new NoServiceInstantiationRule();
+        $this->reflectionProvider         = PHPStanTestCase::createReflectionProvider();
     }
 
     protected function tearDown(): void
@@ -83,7 +86,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     public function testNonFactoryServiceInstantiationFails(): void
     {
         $line      = 30;
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode($line),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -112,9 +115,33 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     /**
      * @throws Throwable
      */
+    public function testDuplicateInstantiatedClassReflectionsAreReportedOnceSucceeds(): void
+    {
+        /** @var Stub&Type $duplicatedObjectType */
+        $duplicatedObjectType = self::createStub(Type::class);
+        $duplicatedObjectType->method('getObjectClassReflections')->willReturn([
+            $this->resolveClassReflection(RuntimeHttpClient::class),
+            $this->resolveClassReflection(RuntimeHttpClient::class),
+        ]);
+
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(31),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                $duplicatedObjectType,
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::DIRECT_SERVICE_ERROR, $errorList[0]->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testFactoryScopeInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(32),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeServiceFactory::class),
@@ -130,7 +157,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testBuilderScopeInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(33),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeServiceBuilder::class),
@@ -146,7 +173,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testProviderScopeInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(34),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeServiceProvider::class),
@@ -177,9 +204,64 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     /**
      * @throws Throwable
      */
+    public function testCustomCreatorSuffixConfigurationWithSingleSuffixErrorMessageSucceeds(): void
+    {
+        $customRule = new NoServiceInstantiationRule(['Assembler']);
+        $errorList  = $customRule->processNode(
+            $this->createNamedNewNode(36),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(
+            'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Assembler" or inject the dependency.',
+            $errorList[0]->getMessage(),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testCustomCreatorSuffixConfigurationSkipsEmptyAndDuplicateSuffixesSucceeds(): void
+    {
+        $customRule = new NoServiceInstantiationRule([' ', 'Assembler', 'Assembler']);
+        $errorList  = $customRule->processNode(
+            $this->createNamedNewNode(37),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeServiceAssembler::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testEmptyCustomCreatorSuffixListFallsBackToDefaultsSucceeds(): void
+    {
+        $customRule = new NoServiceInstantiationRule([' ', '']);
+        $errorList  = $customRule->processNode(
+            $this->createNamedNewNode(38),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeServiceFactory::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testPhpUnitTestCaseScopeInstantiationIsIgnoredByDefaultSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(36),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimePhpUnitTestCaseConsumer::class),
@@ -213,7 +295,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testEnumScopeInstantiationIsIgnoredByDefaultSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(38),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeServiceSelectorEnum::class),
@@ -267,7 +349,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     public function testExcludeComposerDevDirsDisabledStillReportsAutoloadDevPsr4PathFails(): void
     {
         $fixtureFilePath = $this->createTemporaryAutoloadDevFixtureFilePath();
-        $errorList       = $this->rule->processNode(
+        $errorList       = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(39),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -285,7 +367,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testPromotedConstructorParameterDefaultInstantiationIsIgnoredSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(37),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -304,7 +386,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     public function testConstructorBodyInstantiationStillFails(): void
     {
         $line      = 39;
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode($line),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -323,7 +405,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testVoDtoInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(34),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -339,7 +421,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testReadonlyPropertiesVoInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(36),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -356,7 +438,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     public function testReadonlyBehaviorServiceInstantiationFails(): void
     {
         $line      = 38;
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode($line),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -377,10 +459,71 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     /**
      * @throws Throwable
      */
+    public function testAllowedInvokableTaskInstantiationSucceeds(): void
+    {
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(40),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeInvokableTask::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testInvokableWithBehaviorMethodInstantiationFails(): void
+    {
+        $line      = 41;
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode($line),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
+                new ObjectType(RuntimeInvokableWithBehaviorMethod::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::INVOKABLE_BEHAVIOR_ERROR, $errorList[0]->getMessage());
+
+        if (($errorList[0] instanceof LineRuleError) === false) {
+            self::fail('Expected LineRuleError implementation.');
+        }
+
+        self::assertSame($line, $errorList[0]->getLine());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testGlobalContainingClassNameInMessageSucceeds(): void
+    {
+        $line      = 41;
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode($line),
+            $this->createScopeStub(
+                $this->resolveClassReflection(\stdClass::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(
+            'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "stdClass". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.',
+            $errorList[0]->getMessage(),
+        );
+    }
+
+    /**
+     * @throws Throwable
+     */
     public function testInternalClassInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
-            $this->createNamedNewNode(40),
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(42),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
                 new ObjectType(\DateTimeImmutable::class),
@@ -395,8 +538,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testThrowableClassInstantiationSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
-            $this->createNamedNewNode(41),
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(43),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
                 new ObjectType(RuntimeCustomException::class),
@@ -411,8 +554,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testGlobalScopeInstantiationIsIgnoredSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
-            $this->createNamedNewNode(42),
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(44),
             $this->createScopeStub(
                 null,
                 new ObjectType(RuntimeHttpClient::class),
@@ -427,8 +570,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testDynamicTypeWithoutObjectClassIsIgnoredSucceeds(): void
     {
-        $errorList = $this->rule->processNode(
-            $this->createNamedNewNode(44),
+        $errorList = $this->noServiceInstantiationRule->processNode(
+            $this->createNamedNewNode(46),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
                 new MixedType(),
@@ -447,12 +590,12 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
             class: new ParserClass(
                 name: null,
                 subNodes: ['stmts' => []],
-                attributes: ['startLine' => 46],
+                attributes: ['startLine' => 48],
             ),
             args: [],
-            attributes: ['startLine' => 46],
+            attributes: ['startLine' => 48],
         );
-        $errorList = $this->rule->processNode(
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $anonymousClassNewNode,
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -468,8 +611,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testReadonlyClassWithIslandMethodFails(): void
     {
-        $line      = 48;
-        $errorList = $this->rule->processNode(
+        $line      = 50;
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode($line),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),
@@ -486,8 +629,8 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
      */
     public function testInheritedMutablePropertyServiceFails(): void
     {
-        $line      = 50;
-        $errorList = $this->rule->processNode(
+        $line      = 52;
+        $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode($line),
             $this->createScopeStub(
                 $this->resolveClassReflection(RuntimeNonFactoryConsumer::class),

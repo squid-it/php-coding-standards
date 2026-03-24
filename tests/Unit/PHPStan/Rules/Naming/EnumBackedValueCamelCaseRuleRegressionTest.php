@@ -32,13 +32,13 @@ final class EnumBackedValueCamelCaseRuleRegressionTest extends TestCase
     private const string TOTAL_METHOD_ERROR         = 'Backed enum value "foo_bar" on case "TotalMethodDoesNotWhitelist::FooBar" must be camelCase unless the same literal is referenced by a to*() method.';
     private const string NON_RETURN_TO_METHOD_ERROR = 'Backed enum value "foo_bar" on case "ToMethodExceptionLiteralDoesNotWhitelist::FooBar" must be camelCase unless the same literal is referenced by a to*() method.';
 
-    private EnumBackedValueCamelCaseRule $rule;
+    private EnumBackedValueCamelCaseRule $enumBackedValueCamelCaseRule;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->rule = new EnumBackedValueCamelCaseRule();
+        $this->enumBackedValueCamelCaseRule = new EnumBackedValueCamelCaseRule();
     }
 
     /**
@@ -63,7 +63,7 @@ final class EnumBackedValueCamelCaseRuleRegressionTest extends TestCase
                 ),
             ],
         );
-        $errorList = $this->rule->processNode($enumNode, $this->createScopeStub());
+        $errorList = $this->enumBackedValueCamelCaseRule->processNode($enumNode, $this->createScopeStub());
 
         self::assertCount(1, $errorList);
 
@@ -135,7 +135,7 @@ final class EnumBackedValueCamelCaseRuleRegressionTest extends TestCase
                 ),
             ],
         );
-        $errorList = $this->rule->processNode($enumNode, $this->createScopeStub());
+        $errorList = $this->enumBackedValueCamelCaseRule->processNode($enumNode, $this->createScopeStub());
 
         self::assertCount(1, $errorList);
         self::assertSame(self::NON_RETURN_TO_METHOD_ERROR, $errorList[0]->getMessage());
