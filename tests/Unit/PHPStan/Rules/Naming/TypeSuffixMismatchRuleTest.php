@@ -376,6 +376,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
      */
     public function testPromotedPropertyDocblockNarrowsTypeSucceeds(): void
     {
+        $this->skipCoverageUnstablePromotedPropertyInlineVarDocblockFixture();
         $this->analyse([self::VALID_PROMOTED_PROPERTY_DOCBLOCK_FILE], []);
     }
 
@@ -886,6 +887,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
      */
     public function testIntersectionPromotedPropertyDocblockNarrowsTypeSucceeds(): void
     {
+        $this->skipCoverageUnstablePromotedPropertyInlineVarDocblockFixture();
         $this->analyse([self::VALID_INTERSECTION_PROMOTED_PROPERTY_DOCBLOCK_FILE], []);
     }
 
@@ -1241,6 +1243,15 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         if ($this->isCoverageModeEnabled === true) {
             self::markTestSkipped(
                 'Coverage-mode instability on Windows for RuleTestCase fixture with promoted property method-level @param.',
+            );
+        }
+    }
+
+    private function skipCoverageUnstablePromotedPropertyInlineVarDocblockFixture(): void
+    {
+        if ($this->isCoverageModeEnabled === true) {
+            self::markTestSkipped(
+                'Coverage-mode instability on Windows for RuleTestCase fixture with inline @var on a promoted property argument line.',
             );
         }
     }
