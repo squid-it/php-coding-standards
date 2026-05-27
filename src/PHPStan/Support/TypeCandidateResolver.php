@@ -27,7 +27,10 @@ final class TypeCandidateResolver
      * - Processes named object types only.
      * - Ignores non-object union members (for example: null/false).
      * - Expands class hierarchy (self, parents, interfaces).
-     * - Excludes internal/builtin symbols based on ReflectionClass::isInternal().
+     * - Excludes internal/builtin symbols from hierarchy expansion based on ReflectionClass::isInternal().
+     * - When the inferred type is a union of two or more object classes, each builtin/internal
+     *   union member still contributes its own normalized short name as a candidate, so for
+     *   example `MockObject|Swow\Selector` allows `$selector` in addition to `$mockObject`.
      * - Applies deny-list filtering for FQCNs and candidate names.
      *
      * @return array<int, string>
@@ -36,6 +39,7 @@ final class TypeCandidateResolver
     {
         $candidateNameList = [];
         $classNameList     = $this->extractNamedObjectClassNameList($type);
+        $isUnion           = count($classNameList) > 1;
 
         foreach ($classNameList as $className) {
             if ($this->denyList->isClassNameDenied($className) === true) {
@@ -43,6 +47,10 @@ final class TypeCandidateResolver
             }
 
             $resolvedCandidateNameList = $this->resolveCandidateNameListForClassName($className);
+
+            if (count($resolvedCandidateNameList) === 0 && $isUnion === true) {
+                $resolvedCandidateNameList = $this->resolveUnionMemberShortNameCandidateList($className);
+            }
 
             foreach ($resolvedCandidateNameList as $candidateName) {
                 $this->addUniqueString($candidateNameList, $candidateName);
@@ -114,6 +122,28 @@ final class TypeCandidateResolver
         }
 
         return $interfaceBaseNameToTypeMap;
+    }
+
+    /**
+     * Fallback used for union members whose hierarchy expansion yields nothing because the class
+     * is reported as builtin/internal (PHPStan flags ext-* classes such as `Swow\Selector` this way).
+     *
+     * @return array<int, string>
+     */
+    private function resolveUnionMemberShortNameCandidateList(string $className): array
+    {
+        $candidateNameList  = [];
+        $normalizedNameList = $this->nameNormalizer->normalize($className);
+
+        foreach ($normalizedNameList as $normalizedName) {
+            if ($this->denyList->isCandidateNameDenied($normalizedName) === true) {
+                continue;
+            }
+
+            $this->addUniqueString($candidateNameList, $normalizedName);
+        }
+
+        return $candidateNameList;
     }
 
     /**

@@ -62,9 +62,20 @@ final class TypeCandidateResolverTest extends TestCase
     }
 
     /**
+     * Reproduces the union-type regression reported against `MockObject|Selector` style declarations.
+     *
+     * When a union contains an extension-provided class (PHPStan reports such classes as builtin
+     * via `ClassReflection::isBuiltin()`), the resolver currently drops that member entirely, so
+     * its short name is never offered as an allowed base name. The variable `$selector` for a
+     * `MockObject|Swow\Selector` property then reports `squidit.naming.typeSuffixMismatch` with
+     * only `mockObject, stub` listed as allowed base names.
+     *
+     * Expected behavior: the builtin member's short name must still be a valid base name candidate
+     * when it appears alongside at least one userland type in a union.
+     *
      * @throws Throwable
      */
-    public function testResolveExcludesInternalAndKeepsUserlandHierarchyCandidatesSucceeds(): void
+    public function testResolveUnionWithBuiltinClassIncludesBuiltinShortNameSucceeds(): void
     {
         $unionType = new UnionType([
             new ObjectType(ArrayObject::class),
@@ -74,7 +85,13 @@ final class TypeCandidateResolverTest extends TestCase
         $candidateNameList = $this->typeCandidateResolver->resolvePHPStanType($unionType);
         sort($candidateNameList);
 
-        self::assertSame(['userlandDomainException'], $candidateNameList);
+        $expectedCandidateNameList = [
+            'arrayObject',
+            'userlandDomainException',
+        ];
+        sort($expectedCandidateNameList);
+
+        self::assertSame($expectedCandidateNameList, $candidateNameList);
     }
 
     /**
