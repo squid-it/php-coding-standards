@@ -17,6 +17,7 @@ use PhpParser\Node\PropertyItem;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\Property;
 use PhpParser\Node\UnionType as ParserUnionType;
+use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
@@ -461,7 +462,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
 
     public function testInterfaceSuffixInPromotedPropertyArgumentFails(): void
     {
-        /** @var NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createScopeStubForResolvedTypeName([
             'ChannelInterface' => RuntimeChannelInterface::class,
         ]);
@@ -486,7 +487,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
 
     public function testInterfaceSuffixInAssignmentFails(): void
     {
-        /** @var NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createScopeStubForResolvedTypeName([
             'ChannelInterface' => RuntimeChannelInterface::class,
         ]);
@@ -574,7 +575,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
 
     public function testAssignmentUsesAssignNodeDocCommentTypeSucceeds(): void
     {
-        /** @var NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = $this->createScopeStubForResolvedTypeName([
             'TransportInterface' => RuntimeTransportInterface::class,
         ]);
@@ -608,7 +609,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         $originalXdebugMode = $this->disableCoverageModeFlagForRuleInstantiation();
 
         try {
-            /** @var NodeCallbackInvoker&Scope&Stub $scope */
+            /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
             $scope = $this->createScopeStubForResolvedTypeName([
                 'ChannelInterface'   => RuntimeChannelInterface::class,
                 'TransportInterface' => RuntimeTransportInterface::class,
@@ -1070,12 +1071,14 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
     /**
      * @param array<string, string> $resolvedTypeNameMap
      */
-    private function createScopeStubForResolvedTypeName(array $resolvedTypeNameMap): Scope&NodeCallbackInvoker
+    private function createScopeStubForResolvedTypeName(array $resolvedTypeNameMap): Scope&NodeCallbackInvoker&CollectedDataEmitter
     {
         $this->resolvedTypeNameMap = $resolvedTypeNameMap;
 
-        /** @var NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = self::createStubForIntersectionOfInterfaces(
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+        );
         $scope->method('resolveName')
             ->willReturnCallback($this->resolveTypeNameForScope(...));
 
