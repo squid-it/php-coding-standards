@@ -7,6 +7,7 @@ namespace SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture;
 use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Class_ as ParserClass;
+use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassReflection;
@@ -21,6 +22,7 @@ use PHPStan\Type\Type;
 use PHPUnit\Framework\MockObject\Stub;
 use SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeCustomException;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeExampleDiServiceProvider;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeHttpClient;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInheritedMutableService;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeInvokableTask;
@@ -47,6 +49,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
     private const string ENUM_SERVICE_ERROR              = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeServiceSelectorEnum". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
+    private const string LEAGUE_PROVIDER_SERVICE_ERROR   = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeExampleDiServiceProvider". Move creation to a class ending with "*Factory", or "*Builder" or inject the dependency.';
 
     private NoServiceInstantiationRule $noServiceInstantiationRule;
     private ReflectionProvider $reflectionProvider;
@@ -322,6 +325,45 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 
         self::assertCount(1, $errorList);
         self::assertSame(self::ENUM_SERVICE_ERROR, $errorList[0]->getMessage());
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testLeagueServiceProviderScopeInstantiationIsAllowedByDefaultSucceeds(): void
+    {
+        // 'Provider' is deliberately excluded from the suffix list; only the interface can exempt it.
+        $configuredRule = new NoServiceInstantiationRule(['Factory', 'Builder']);
+        $errorList      = $configuredRule->processNode(
+            $this->createNamedNewNode(60),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeExampleDiServiceProvider::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertSame([], $errorList);
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testLeagueServiceProviderScopeInstantiationFailsWhenAllowInstantiationInLeagueServiceProvidersDisabled(): void
+    {
+        $configuredRule = new NoServiceInstantiationRule(
+            ['Factory', 'Builder'],
+            allowInstantiationInLeagueServiceProviders: false,
+        );
+        $errorList = $configuredRule->processNode(
+            $this->createNamedNewNode(61),
+            $this->createScopeStub(
+                $this->resolveClassReflection(RuntimeExampleDiServiceProvider::class),
+                new ObjectType(RuntimeHttpClient::class),
+            ),
+        );
+
+        self::assertCount(1, $errorList);
+        self::assertSame(self::LEAGUE_PROVIDER_SERVICE_ERROR, $errorList[0]->getMessage());
     }
 
     /**
@@ -662,9 +704,11 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         ?string $functionName = null,
         bool $isInClass = false,
         string $filePath = __FILE__,
-    ): Scope&NodeCallbackInvoker {
-        /** @var NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
+    ): Scope&NodeCallbackInvoker&CollectedDataEmitter {
+        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        $scope = self::createStubForIntersectionOfInterfaces(
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+        );
         $scope->method('getClassReflection')->willReturn($classReflection);
         $scope->method('getType')->willReturn($newType);
         $scope->method('getFunctionName')->willReturn($functionName);

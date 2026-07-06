@@ -49,9 +49,10 @@ final class RulesTest extends TestCase
 
     public function testGetRulesWithOverridesDoesNotMutateDefaultRulesSucceeds(): void
     {
-        Rules::getRules(['@Symfony' => false]);
-        $rules = Rules::getRules();
+        $overriddenRules = Rules::getRules(['@Symfony' => false]);
+        self::assertFalse($overriddenRules['@Symfony']);
 
+        $rules = Rules::getRules();
         self::assertTrue($rules['@Symfony']);
     }
 }

@@ -19,6 +19,7 @@ use PhpParser\Node\Stmt\EnumCase;
 use PhpParser\Node\Stmt\Expression;
 use PhpParser\Node\Stmt\If_;
 use PhpParser\Node\Stmt\Return_;
+use PHPStan\Analyser\CollectedDataEmitter;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
@@ -184,11 +185,17 @@ final class EnumBackedValueCamelCaseRuleRegressionTest extends TestCase
         );
     }
 
-    private function createScopeStub(): Scope&NodeCallbackInvoker
+    private function createScopeStub(): Scope&NodeCallbackInvoker&CollectedDataEmitter
     {
-        $scope = self::createStubForIntersectionOfInterfaces([Scope::class, NodeCallbackInvoker::class]);
+        $scope = self::createStubForIntersectionOfInterfaces(
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+        );
 
-        if (($scope instanceof Scope) === false || ($scope instanceof NodeCallbackInvoker) === false) {
+        if (
+            ($scope instanceof Scope) === false
+            || ($scope instanceof NodeCallbackInvoker) === false
+            || ($scope instanceof CollectedDataEmitter) === false
+        ) {
             self::fail('Unable to create scope stub.');
         }
 

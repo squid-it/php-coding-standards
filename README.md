@@ -231,7 +231,7 @@ rules:
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
 | `LoggerContextKeyCamelCaseRule` | `squidit.naming.loggerContextKeyCamelCase` | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls. |
 | `EnumBackedValueCamelCaseRule` | `squidit.naming.enumBackedValueCamelCase` | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method. |
-| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), while allowing VO/DTO carriers and narrowly-defined invokable task objects, with configurable enum/test/fixture skips. |
+| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), while allowing VO/DTO carriers, narrowly-defined invokable task objects, and (by default) classes implementing League's `ServiceProviderInterface`, with configurable enum/test/fixture skips. |
 | `ReadonlyClassPromotionRule` | `squidit.architecture.readonlyClassPromotion` | Suggests promoting a class to `readonly` when all declared properties are individually readonly, with safety guards for inheritance-sensitive cases. |
 
 ---
@@ -436,6 +436,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 * The file path is inside a directory declared in the nearest `composer.json` `autoload-dev.psr-4` section (only when `excludeComposerDevDirs: true`), or
 * The containing class extends `PHPUnit\Framework\TestCase` (when `skipPhpUnitTestCaseClasses: true`, default), or
 * The containing scope is an enum (when `allowInstantiationInEnums: true`, default), or
+* The containing class implements `League\Container\ServiceProvider\ServiceProviderInterface` (when `allowInstantiationInLeagueServiceProviders: true`, default, and `league/container` is installed), or
 * The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
 * The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 * The instantiated class passes the VO/DTO classifier gates, or
@@ -561,7 +562,7 @@ final class ProcessTask
 
 **Configuring creator suffixes and enum/test/fixture skips:**
 
-By default, the rule allows instantiation inside enums and any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
+By default, the rule allows instantiation inside enums, inside classes implementing League's `ServiceProviderInterface`, and any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
 
 If you want custom suffixes or skip behavior, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
 
@@ -578,6 +579,7 @@ services:
                 - Provider
                 - Assembler
             allowInstantiationInEnums: true
+            allowInstantiationInLeagueServiceProviders: true
             skipPhpUnitTestCaseClasses: true
             excludeComposerDevDirs: false
 ```
@@ -587,6 +589,13 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 
 * Default: `true`
 * Set to `false` to enforce this rule inside enum methods too (opt out from enum instantiation allowance).
+
+`allowInstantiationInLeagueServiceProviders`:
+
+* Default: `true`
+* Allows `new` inside classes implementing `League\Container\ServiceProvider\ServiceProviderInterface`, so DI service providers can build their service definitions even when `Provider` is removed from `allowedCreatorClassSuffixList`.
+* Set to `false` to enforce this rule inside League service providers as well.
+* No effect when `league/container` is not installed.
 
 `skipPhpUnitTestCaseClasses`:
 
@@ -609,6 +618,18 @@ services:
             - phpstan.rules.rule
         arguments:
             allowInstantiationInEnums: false
+```
+
+**Opt out example (disallow League service provider instantiation):**
+
+```neon
+services:
+    -
+        class: SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+        tags:
+            - phpstan.rules.rule
+        arguments:
+            allowInstantiationInLeagueServiceProviders: false
 ```
 
 ---

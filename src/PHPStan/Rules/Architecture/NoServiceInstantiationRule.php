@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 use SquidIT\PhpCodingStandards\PHPStan\Support\AllowedInvokableClassClassifier;
 use SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher;
 use SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver;
+use SquidIT\PhpCodingStandards\PHPStan\Support\LeagueServiceProviderClassifier;
 use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
 
 /**
@@ -25,6 +26,8 @@ use SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier;
  * - The file is excluded by composer `autoload-dev.psr-4` (`excludeComposerDevDirs` option), or
  * - The containing class extends `PHPUnit\Framework\TestCase` (`skipPhpUnitTestCaseClasses` option), or
  * - The containing class scope is an enum (`allowInstantiationInEnums` option, enabled by default), or
+ * - The containing class implements `League\Container\ServiceProvider\ServiceProviderInterface`
+ *   (`allowInstantiationInLeagueServiceProviders` option, enabled by default), or
  * - The containing class name ends with an allowed creator suffix, or
  * - The instantiated class is internal/builtin, or
  * - The instantiated class implements `Throwable` (exceptions/errors), or
@@ -70,6 +73,8 @@ final readonly class NoServiceInstantiationRule implements Rule
         private bool $excludeComposerDevDirs = false,
         private ComposerDevAutoloadPathMatcher $composerDevAutoloadPathMatcher = new ComposerDevAutoloadPathMatcher(),
         private bool $allowInstantiationInEnums = true,
+        private LeagueServiceProviderClassifier $leagueServiceProviderClassifier = new LeagueServiceProviderClassifier(),
+        private bool $allowInstantiationInLeagueServiceProviders = true,
     ) {
         $this->allowedCreatorClassSuffixList = $this->normalizeAllowedCreatorClassSuffixList(
             $allowedCreatorClassSuffixList,
@@ -101,6 +106,13 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         if ($this->allowInstantiationInEnums === true && $this->isInEnumScope($scope) === true) {
+            return [];
+        }
+
+        if (
+            $this->allowInstantiationInLeagueServiceProviders === true
+            && $this->isInLeagueServiceProviderScope($scope) === true
+        ) {
             return [];
         }
 
@@ -196,6 +208,17 @@ final readonly class NoServiceInstantiationRule implements Rule
         }
 
         return $classReflection->isEnum();
+    }
+
+    private function isInLeagueServiceProviderScope(Scope $scope): bool
+    {
+        $classReflection = $scope->getClassReflection();
+
+        if ($classReflection === null) {
+            return false;
+        }
+
+        return $this->leagueServiceProviderClassifier->isLeagueServiceProviderClass($classReflection);
     }
 
     private function isThrowableClass(ClassReflection $classReflection): bool
