@@ -1,4 +1,38 @@
-# PHP Coding Standards - PHP-CS-Fixer Rules
+# PHP Coding Standards
+
+Shared PHP-CS-Fixer rules and PHPStan rules for `squidit/php-coding-standards`.
+
+## Table of Contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [PHP-CS-Fixer Rules](#php-cs-fixer-rules)
+  - [Usage](#usage)
+  - [Manual Triggering](#manual-triggering)
+- [PHPStan Rules](#phpstan-rules)
+  - [Stable Rules](#stable-rules)
+  - [Stable Rules Reference](#stable-rules-reference)
+  - [Experimental Auto review Rules](#experimental-auto-review-rules)
+  - [Experimental Rules Reference](#experimental-rules-reference)
+  - [Suppressing Rules](#suppressing-rules)
+  - [Baseline and Ignore Lists (Migration to `*List`)](#baseline-and-ignore-lists-migration-to-list)
+- [Development](#development)
+
+## Requirements
+
+- PHP 8.4+
+- `friendsofphp/php-cs-fixer` ^3.95 (installed automatically as a dependency)
+- `phpstan/phpstan` ^2.2 (installed automatically as a dependency)
+
+## Installation
+
+```bash
+composer require --dev squidit/php-coding-standards
+```
+
+---
+
+# PHP-CS-Fixer Rules
 
 Default coding standard rules for PHP-CS-Fixer.
 
@@ -48,7 +82,7 @@ This library provides two sets of custom PHPStan rules:
 
 ### Stable Rules
 
-Add the following to your project's `phpstan.neon`:
+Copy [`phpstan.neon.example`](phpstan.neon.example) into your project as `phpstan.neon` (adjust `parameters.paths` to your layout) — the stable rules are enabled by default in that file:
 
 ```neon
 rules:
@@ -64,13 +98,6 @@ rules:
 | `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
 | `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
 | `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
-
-
-You are completely right, the Stable Rules section is looking a bit bare without any practical examples to anchor the descriptions.
-
-Let's fix that by adding clear **Valid** and **Invalid** code snippets for each of the three stable rules based on your codebase.
-
-Here are the proposed examples we can append to the **Stable Rules Reference** section:
 
 #### `SingleClassPerFileRule`
 
@@ -172,52 +199,7 @@ if (!$user) {
 
 These rules are optional and must be explicitly opted into. They enforce naming conventions and architectural boundaries that support automated code review.
 
-Copy-paste template for a dedicated `phpstan-autoreview.neon`:
-
-```neon
-parameters:
-    level: 9
-    paths:
-        - src
-        - tests
-    treatPhpDocTypesAsCertain: false
-    tmpDir: var/cache/phpstan-autoreview
-
-services:
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\AllowedInvokableClassClassifier
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
-	-
-		class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
-	-
-		class: \SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
-
-rules:
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
-    - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\ReadonlyClassPromotionRule
-```
+[`phpstan.neon.example`](phpstan.neon.example) contains every experimental rule and its required support `services:`, fully spelled out but commented out — uncomment the rules you want (and the shared `services:` block, which all naming rules depend on) to opt in. It also shows every configurable argument for `NoServiceInstantiationRule` and `TypeSuffixMismatchRule` at its default value.
 
 ### Experimental Rules Reference
 
@@ -734,10 +716,10 @@ Both stable and experimental identifiers support the same suppression syntax.
 
 If you are enabling strict iterable `*List` naming on an existing codebase, you can keep CI green while gradually migrating legacy names.
 
-Generate a baseline from your auto review config:
+Generate a baseline from your config (with the experimental rules uncommented, per [`phpstan.neon.example`](phpstan.neon.example)):
 
 ```bash
-vendor/bin/phpstan analyse -c phpstan-autoreview.neon --generate-baseline=phpstan-baseline.neon
+vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline=phpstan-baseline.neon
 ```
 
 Include that baseline in your project config:
@@ -792,3 +774,19 @@ Narrow these ignores to the smallest possible paths and remove them as files are
 * This prevents coverage instability where `composer test:unit:coverage` can crash with Windows exit code `-1073741819` after report generation.
 
 ---
+
+## Development
+
+Commands for contributors working on this repository (not needed by consumers of the package):
+
+```bash
+composer install                       # Install dependencies
+composer run-script fix                # cs:fix + analyse + test:unit:coverage
+composer run-script cs:fix             # Fix coding standards
+composer run-script cs:dry-run         # Check coding standards without fixing
+composer run-script analyse            # Run PHPStan (level 9) against src/tests
+composer run-script test:unit          # Run unit tests
+composer run-script test:unit:coverage # Run unit tests with coverage (requires Xdebug)
+```
+
+This project's own `phpstan.neon` and `phpstan-autoreview.neon` are self-analysis configs for this repository's `src`/`tests`, not consumer templates — use [`phpstan.neon.example`](phpstan.neon.example) for that.

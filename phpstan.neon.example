@@ -1,0 +1,185 @@
+# ==============================================================================
+# SquidIT PHP Coding Standards - PHPStan example configuration
+#
+# Copy this file into your own project as `phpstan.neon` (or `includes:` it
+# from your project's own config) and adjust `parameters.paths` to match your
+# project layout.
+#
+# Two rule tiers are available:
+#   - Stable rules       -> low false-positive rate, enabled below by default,
+#                            safe to run in CI immediately.
+#   - Experimental rules  -> naming/architecture checks for automated code
+#                            review, opt-in only. Every experimental block
+#                            below is commented out - uncomment what you want.
+#
+# Full rule documentation, valid/invalid examples, suppression syntax and
+# baseline/migration guidance live in README.md.
+# ==============================================================================
+
+parameters:
+	# PHPStan strictness level (0-9). These rules are written and tested
+	# against level 9; lower levels still work but may hide the type
+	# information some rules rely on (e.g. missing property/param types).
+	level: 9
+
+	# Directories PHPStan should scan. Adjust to your project's layout.
+	paths:
+		- src
+
+	# Recommended: PHPDoc types drift from real types over time, so PHPStan
+	# should not treat them as certain/authoritative by default.
+	treatPhpDocTypesAsCertain: false
+
+	# Where PHPStan stores its analysis cache between runs.
+	tmpDir: var/cache/phpstan
+
+	# Paths to exclude from analysis entirely (e.g. generated code, fixtures).
+	# excludePaths:
+	#     - src/Legacy/GeneratedCode/*
+
+	# Suppress specific rule identifiers, optionally scoped to a path.
+	# See README.md "Suppressing Rules" / "Baseline and Ignore Lists" sections.
+	# ignoreErrors:
+	#     -
+	#         identifier: squidit.naming.iterablePluralMismatch
+	#         path: src/Legacy/*
+
+# ------------------------------------------------------------------------------
+# Stable rules - enabled by default. See README.md "Stable Rules Reference".
+# ------------------------------------------------------------------------------
+rules:
+	# Enforces one class/interface/trait/enum declaration per file.
+	# Anonymous classes are exempt. Identifier: squidit.architecture.singleClassPerFile
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule
+
+	# Disallows closures and arrow functions; use an invokable class with
+	# __invoke() instead. Identifier: squidit.restrictions.disallowAnonymousFunction
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
+
+	# Disallows the logical NOT operator (!); use explicit comparisons instead
+	# (=== false, !== null). Identifier: squidit.restrictions.disallowLogicalNot
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
+
+	# ---- EXPERIMENTAL rules below - uncomment to opt in ----------------------
+	# Every experimental rule listed here also needs the `services:` block
+	# further down in this file to be uncommented (the naming rules share a
+	# common set of support/resolver services).
+
+	# Enforces that typed properties, promoted parameters, and variable
+	# assignments are named after their inferred type.
+	# Identifiers: squidit.naming.typeSuffixMismatch, squidit.naming.interfaceSuffix
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+
+	# Enforces `*List` naming for iterables of typed objects, forbids `*Map`.
+	# Identifiers: squidit.naming.iterablePluralMismatch, squidit.naming.mapForbidden
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\IterablePluralNamingRule
+
+	# Enforces foreach value variable naming derived from the singularized
+	# iterable name or the inferred element type.
+	# Identifier: squidit.naming.foreachValueVarMismatch
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\ForeachValueVariableNamingRule
+
+	# Enforces camelCase context array keys on Psr\Log\LoggerInterface calls.
+	# Identifier: squidit.naming.loggerContextKeyCamelCase
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\LoggerContextKeyCamelCaseRule
+
+	# Enforces camelCase backed values on string-backed enums (with a to*()
+	# method exception). Identifier: squidit.naming.enumBackedValueCamelCase
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\EnumBackedValueCamelCaseRule
+
+	# Suggests promoting a final class to `readonly` when every declared
+	# property is already individually readonly.
+	# Identifier: squidit.architecture.readonlyClassPromotion
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\ReadonlyClassPromotionRule
+
+	# Disallows `new` expressions for service classes outside creator classes
+	# (*Factory/*Builder/*Provider by default). See the fully-configured
+	# `services:` registration below instead of listing it here directly if
+	# you want to override any of its arguments.
+	# Identifier: squidit.architecture.noServiceInstantiation
+	# - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+
+# ------------------------------------------------------------------------------
+# EXPERIMENTAL support services - required ONLY if you enabled any of the
+# experimental Naming rules above. Uncomment this entire block together.
+#
+# NoServiceInstantiationRule and TypeSuffixMismatchRule accept constructor
+# arguments; register them here (fully expanded, with every default shown)
+# INSTEAD OF listing them under `rules:` above - never do both, PHPStan would
+# register the rule twice.
+# ------------------------------------------------------------------------------
+# services:
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\NameNormalizer
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\DenyList
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeCandidateResolver
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\VariableNameMatcher
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\TypeMessageDescriber
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\Pluralizer
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\Singularizer
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\VoDtoClassifier
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\ContainingClassResolver
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\ComposerDevAutoloadPathMatcher
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\PhpDocTypeResolver
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\AllowedInvokableClassClassifier
+#     -
+#         # Concrete implementation autowired for InterfaceAvailabilityCheckerInterface,
+#         # required by LeagueServiceProviderClassifier below.
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\InterfaceAvailabilityChecker
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Support\LeagueServiceProviderClassifier
+#
+#     # TypeSuffixMismatchRule, fully configured (all arguments at their
+#     # default value except enableInterfaceBareNameCheck, shown here for
+#     # discoverability - flip it to enable the stricter bare-name check).
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Rules\Naming\TypeSuffixMismatchRule
+#         tags:
+#             - phpstan.rules.rule
+#         arguments:
+#             # Reports bare interface-derived names without a contextual
+#             # prefix (e.g. $readChannel required instead of $channel for a
+#             # ChannelInterface-typed variable named after the interface).
+#             # Default: false
+#             enableInterfaceBareNameCheck: false
+#
+#     # NoServiceInstantiationRule, fully configured (every argument shown at
+#     # its default value).
+#     -
+#         class: SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\NoServiceInstantiationRule
+#         tags:
+#             - phpstan.rules.rule
+#         arguments:
+#             # Class name suffixes allowed to instantiate services directly.
+#             # An empty list falls back to these same defaults.
+#             # Default: [Factory, Builder, Instantiator]
+#             allowedCreatorClassSuffixList:
+#                 - Factory
+#                 - Builder
+#                 - Instantiator
+#             # Allow `new` inside enum methods (e.g. a match arm that builds
+#             # a built-in service per enum case). Default: true
+#             allowInstantiationInEnums: true
+#             # Allow `new` inside classes implementing League\Container's
+#             # ServiceProviderInterface, so DI service providers can build
+#             # their own service definitions. No effect if league/container
+#             # is not installed. Default: true
+#             allowInstantiationInLeagueServiceProviders: true
+#             # Skip enforcement inside classes extending
+#             # PHPUnit\Framework\TestCase. Default: true
+#             skipPhpUnitTestCaseClasses: true
+#             # Skip enforcement for files under directories declared in
+#             # `autoload-dev.psr-4` of the nearest composer.json (e.g. tests/).
+#             # Default: false
+#             excludeComposerDevDirs: false

@@ -15,11 +15,11 @@ jobs:
           - "8.4"
           - "8.5"
         operating-system:
-          - "ubuntu-latest"
+          - "ubuntu-26.04"
 
     steps:
       - name: "Checkout"
-        uses: "actions/checkout@v6"
+        uses: "actions/checkout@v7"
 
       - name: "Install PHP"
         uses: "shivammathur/setup-php@v2"
