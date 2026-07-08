@@ -40,7 +40,6 @@
       "@analyse",
       "@test:unit:coverage"
     ],
-    "test:integration": "phpunit --testsuite integration",
     "test:unit": "phpunit --testsuite unit",
     "test:unit:coverage": [
       "@putenv XDEBUG_MODE=coverage",

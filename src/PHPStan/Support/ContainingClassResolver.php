@@ -11,7 +11,7 @@ final readonly class ContainingClassResolver
     public const array DEFAULT_ALLOWED_CREATOR_CLASS_SUFFIX_LIST = [
         'Factory',
         'Builder',
-        'Provider',
+        'Instantiator',
     ];
 
     public function resolveContainingClassName(Scope $scope): ?string

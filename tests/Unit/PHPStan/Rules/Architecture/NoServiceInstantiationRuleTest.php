@@ -36,19 +36,19 @@ use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\No
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceAssembler;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceBuilder;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceFactory;
-use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceProvider;
+use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceInstantiator;
 use SquidIT\Tests\PhpCodingStandards\Unit\PHPStan\Rules\Architecture\Fixtures\NoServiceInstantiation\Runtime\RuntimeServiceSelectorEnum;
 use Throwable;
 
 final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 {
-    private const string DIRECT_SERVICE_ERROR            = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string READONLY_BEHAVIOR_ERROR         = 'Instantiation of service "RuntimeReadonlyBehaviorService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string INVOKABLE_BEHAVIOR_ERROR        = 'Instantiation of service "RuntimeInvokableWithBehaviorMethod" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string ISLAND_METHOD_ERROR             = 'Instantiation of service "RuntimeIslandService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
-    private const string ENUM_SERVICE_ERROR              = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeServiceSelectorEnum". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.';
+    private const string DIRECT_SERVICE_ERROR            = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string READONLY_BEHAVIOR_ERROR         = 'Instantiation of service "RuntimeReadonlyBehaviorService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string INVOKABLE_BEHAVIOR_ERROR        = 'Instantiation of service "RuntimeInvokableWithBehaviorMethod" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string ISLAND_METHOD_ERROR             = 'Instantiation of service "RuntimeIslandService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string INHERITED_MUTABLE_SERVICE_ERROR = 'Instantiation of service "RuntimeInheritedMutableService" is not allowed in non-creator class "RuntimeNonFactoryConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string PHPUNIT_TEST_CASE_SERVICE_ERROR = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimePhpUnitTestCaseConsumer". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
+    private const string ENUM_SERVICE_ERROR              = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeServiceSelectorEnum". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.';
     private const string LEAGUE_PROVIDER_SERVICE_ERROR   = 'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "RuntimeExampleDiServiceProvider". Move creation to a class ending with "*Factory", or "*Builder" or inject the dependency.';
 
     private NoServiceInstantiationRule $noServiceInstantiationRule;
@@ -179,7 +179,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(34),
             $this->createScopeStub(
-                $this->resolveClassReflection(RuntimeServiceProvider::class),
+                $this->resolveClassReflection(RuntimeServiceInstantiator::class),
                 new ObjectType(RuntimeHttpClient::class),
             ),
         );
@@ -554,7 +554,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
 
         self::assertCount(1, $errorList);
         self::assertSame(
-            'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "stdClass". Move creation to a class ending with "*Factory", "*Builder", or "*Provider" or inject the dependency.',
+            'Instantiation of service "RuntimeHttpClient" is not allowed in non-creator class "stdClass". Move creation to a class ending with "*Factory", "*Builder", or "*Instantiator" or inject the dependency.',
             $errorList[0]->getMessage(),
         );
     }
