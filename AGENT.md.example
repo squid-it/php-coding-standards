@@ -364,6 +364,7 @@ public function testConsecutiveCalls(): void
 
     // ... run test
 }
+```
 
 -----
 
