@@ -6,6 +6,7 @@ Shared PHP-CS-Fixer rules and PHPStan rules for `squidit/php-coding-standards`.
 
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [AI Agent Instructions](#ai-agent-instructions)
 - [PHP-CS-Fixer Rules](#php-cs-fixer-rules)
   - [Usage](#usage)
   - [Manual Triggering](#manual-triggering)
@@ -29,6 +30,40 @@ Shared PHP-CS-Fixer rules and PHPStan rules for `squidit/php-coding-standards`.
 ```bash
 composer require --dev squidit/php-coding-standards
 ```
+
+## AI Agent Instructions
+
+This package includes the company-wide PHP agent instructions in
+[`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md).
+
+Every consuming repository must provide an `AGENT.md` or `AGENTS.md` in its root directory. Keep one local file as the
+canonical repository instruction file. When both filenames are needed for agent discovery, the second file should only
+point to the canonical local file so the instructions are not duplicated.
+
+The canonical local file must explicitly instruct agents to read and follow the company-wide instructions from the
+installed Composer package before planning, reviewing, or modifying PHP code. It should contain only supplementary,
+repository-specific instructions:
+
+```markdown
+# Repository Agent Instructions
+
+Before planning, reviewing, or modifying PHP code, read and follow:
+
+[Company-wide PHP agent instructions](vendor/squidit/php-coding-standards/resources/ai-agent/AGENT.md)
+
+These company-wide instructions are mandatory. The repository-specific instructions below supplement them and must not
+contradict them.
+
+If the company-wide instruction file is unavailable, report that Composer dependencies must be installed before PHP work
+continues.
+
+## Repository-specific instructions
+
+- Add only guidance that applies specifically to this repository.
+```
+
+Do not copy the company-wide instructions into each repository. Referencing the vendor file prevents the copies from
+drifting apart, while `composer.lock` keeps the applied version deterministic for each repository.
 
 ---
 
@@ -213,7 +248,7 @@ These rules are optional and must be explicitly opted into. They enforce naming 
 | `ForeachValueVariableNamingRule` | `squidit.naming.foreachValueVarMismatch` | Enforces that the foreach value variable is named after the singularized iterable variable or the inferred element type. |
 | `LoggerContextKeyCamelCaseRule` | `squidit.naming.loggerContextKeyCamelCase` | Enforces camelCase for string-literal keys in the context array argument of `Psr\Log\LoggerInterface` method calls. |
 | `EnumBackedValueCamelCaseRule` | `squidit.naming.enumBackedValueCamelCase` | Enforces camelCase backed string values on string-backed enums, with an exception when the same literal is returned by a `to*()` method. |
-| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Provider`), while allowing VO/DTO carriers, narrowly-defined invokable task objects, and (by default) classes implementing League's `ServiceProviderInterface`, with configurable enum/test/fixture skips. |
+| `NoServiceInstantiationRule` | `squidit.architecture.noServiceInstantiation` | Disallows `new` expressions for service classes outside of creator classes (`*Factory`, `*Builder`, `*Instantiator`), while allowing VO/DTO carriers, narrowly-defined invokable task objects, and (by default) classes implementing League's `ServiceProviderInterface`, with configurable enum/test/fixture skips. |
 | `ReadonlyClassPromotionRule` | `squidit.architecture.readonlyClassPromotion` | Suggests promoting a class to `readonly` when all declared properties are individually readonly, with safety guards for inheritance-sensitive cases. |
 
 ---
@@ -419,7 +454,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 * The containing class extends `PHPUnit\Framework\TestCase` (when `skipPhpUnitTestCaseClasses: true`, default), or
 * The containing scope is an enum (when `allowInstantiationInEnums: true`, default), or
 * The containing class implements `League\Container\ServiceProvider\ServiceProviderInterface` (when `allowInstantiationInLeagueServiceProviders: true`, default, and `league/container` is installed), or
-* The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Provider` by default), or
+* The containing class name ends with a creator suffix (`Factory`, `Builder`, or `Instantiator` by default), or
 * The instantiated class is an internal/builtin PHP class (for example `DateTimeImmutable`), or
 * The instantiated class passes the VO/DTO classifier gates, or
 * The instantiated class passes the allowed invokable class gates, or
@@ -433,7 +468,7 @@ Disallows `new` expressions for service classes in non-creator classes. A class 
 **Valid:**
 
 ```php
-// Inside a *Factory, *Builder, or *Provider class
+// Inside a *Factory, *Builder, or *Instantiator class
 final readonly class HttpClientFactory
 {
     public function create(): HttpClient
@@ -544,7 +579,7 @@ final class ProcessTask
 
 **Configuring creator suffixes and enum/test/fixture skips:**
 
-By default, the rule allows instantiation inside enums, inside classes implementing League's `ServiceProviderInterface`, and any class ending with `Factory`, `Builder`, or `Provider`, and it skips classes extending `PHPUnit\Framework\TestCase`.
+By default, the rule allows instantiation inside enums, inside classes implementing League's `ServiceProviderInterface`, and any class ending with `Factory`, `Builder`, or `Instantiator`, and it skips classes extending `PHPUnit\Framework\TestCase`.
 
 If you want custom suffixes or skip behavior, remove `NoServiceInstantiationRule` from `rules:` and register it via `services`:
 
@@ -558,7 +593,7 @@ services:
             allowedCreatorClassSuffixList:
                 - Factory
                 - Builder
-                - Provider
+                - Instantiator
                 - Assembler
             allowInstantiationInEnums: true
             allowInstantiationInLeagueServiceProviders: true
@@ -566,7 +601,7 @@ services:
             excludeComposerDevDirs: false
 ```
 
-Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Provider`).
+Do not also list the rule under `rules:` when using `services:` wiring - PHPStan would register it twice. An empty list falls back to the defaults (`Factory`, `Builder`, `Instantiator`).
 `allowInstantiationInEnums`:
 
 * Default: `true`
@@ -575,7 +610,7 @@ Do not also list the rule under `rules:` when using `services:` wiring - PHPStan
 `allowInstantiationInLeagueServiceProviders`:
 
 * Default: `true`
-* Allows `new` inside classes implementing `League\Container\ServiceProvider\ServiceProviderInterface`, so DI service providers can build their service definitions even when `Provider` is removed from `allowedCreatorClassSuffixList`.
+* Allows `new` inside classes implementing `League\Container\ServiceProvider\ServiceProviderInterface`, so DI service providers can build their service definitions without adding `Provider` to `allowedCreatorClassSuffixList`.
 * Set to `false` to enforce this rule inside League service providers as well.
 * No effect when `league/container` is not installed.
 

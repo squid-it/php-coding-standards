@@ -6,8 +6,8 @@ composer.lock
 vendor/
 .claude/
 .AGENT.md
-AGENT.md
-AGENTS.md
+/AGENT.md
+/AGENTS.md
 CLAUDE.md
 /var
 coverage/
