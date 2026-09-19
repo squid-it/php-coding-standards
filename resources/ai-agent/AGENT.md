@@ -364,16 +364,41 @@ if ($workerCoroutine->isAlive() === true) {
 
 `kill()` is a last resort. It prevents the coroutine's `finally` blocks from running.
 
+*Note: you can always use `\SquidIT\SwowTools\Coroutine\SwowCoroutineTerminator` to automate stopping and killing a coroutine (it actually is preferred)*
+
 -----
 
-### Variable and value naming
+### Variable, property, and value naming
+
+These naming rules apply equally to local variables, typed property declarations, and promoted
+constructor properties. `TypeSuffixMismatchRule` enforces all three.
 
 - When instantiating classes, use the class name as the variable name in camelCase format
 - When assigning method return values to a variable, use the return type as the variable name in camelCase format
-- If the return type ends with `Interface`, the variable name needs to omit `Interface`
+- If the type ends with `Interface`, the name needs to omit `Interface`
 - When assigning an array of objects to a variable, use the object name post-fixed with `List` as the variable name
+- A contextual prefix is allowed and does not break the rule: `$activeFooService` is as valid as `$fooService`
+- The `Factory` and `Collection` suffixes are never stripped: `UserFactory` expects `$userFactory`
 - Logging context keys or array keys are always in camelCase
 - Enum values are always in camelCase
+
+Properties follow the type, not the domain role:
+
+```php
+// Wrong
+private ServerRequestInterface $request;
+public function __construct(
+    private readonly LoggerInterface $log
+) {}
+
+// Right
+private ServerRequestInterface $serverRequest;
+public function __construct(
+    private readonly LoggerInterface $logger
+) {}
+```
+
+Non-promoted method parameters are not checked by the rule, but follow the same convention for consistency.
 
 -----
 
