@@ -15,7 +15,25 @@ This file provides guidance and instructions for working with PHP code that foll
 - First resolve questions that can be answered from the codebase. If uncertainty remains that could materially affect the
   requirements, behavior, public API, architecture, or naming, ask focused clarification questions and wait for answers
   before implementation. Do not guess.
-- Once the requirements are clear, proceed without requesting a code review after each file unless explicitly asked.
+
+### Planning, implementation approval, and review
+
+- Discuss and agree on the implementation plan before changing files.
+  Read-only investigation and planning may proceed without modification approval.
+- Before creating, modifying, renaming, or deleting files, obtain explicit
+  approval to implement the agreed scope. Agreement on a plan alone does not
+  authorize file changes.
+- Approval covers all file changes necessary within the approved scope.
+  Do not request approval separately for each file unless explicitly instructed.
+- Existing explicit implementation approval remains valid for the same scope,
+  including across sessions. If a previous session only established the plan,
+  obtain implementation approval before making changes.
+- If implementation requires a material expansion of the approved scope,
+  explain the additional work and obtain approval for that expansion before
+  making those changes.
+- After completing implementation and the required verification, present all
+  changed files together and request review of the complete change set.
+  Request reviews per file only when explicitly instructed.
 
 -----
 
@@ -118,7 +136,23 @@ all locally configured experimental rules must pass. Commonly configured rules i
 - **Assume a long-running Swow coroutine environment** - clean up buffers, channels, and long-lived objects explicitly when appropriate.
 - **Exceptions must contain enough context for outer-layer logging** - include the main object id, related object ids, the action being performed, and the real failure message.
 
------
+### Date and time
+
+- UTC is the default timezone for application date and time values.
+- Interpret date and time values without an explicit timezone or offset as UTC.
+  A missing offset or `Z` is not, by itself, an ambiguity or defect.
+- When input explicitly carries a non-UTC timezone or offset, handling that input
+  is an implementation decision that must follow developer-approved requirements.
+  Do not silently reinterpret it as UTC or automatically introduce conversion.
+- If the required handling of non-UTC input is unspecified, ask the developer
+  before implementing timezone conversion or normalization.
+- Date-time serialization must follow the agreed output format and timezone
+  requirements. Do not add offsets, change formats, or introduce normalization
+  as an unsolicited correction.
+- `SquidIT\SwowTools\Time\Formatter\UtcDateTimeFormatter` normalizes values to UTC.
+  Use it when UTC-normalized serialization is required by the agreed
+  implementation. Its use must not implicitly decide how non-UTC input should
+  be handled.
 
 ### **Code Style**
 
@@ -418,8 +452,14 @@ Non-promoted method parameters are not checked by the rule, but follow the same 
 - Reuse mocks and stubs through `setUp()` when doing so meaningfully reduces boilerplate without obscuring individual tests
 - Use explicit `MockObject`/`Stub` intersection property types to prevent PHPStan warnings
 - Aim for 100% test coverage; 95% is acceptable for complicated cases
-- Newer PHPUnit versions report a notice when a mock has no expectation. Use a stub instead of suppressing that notice
-  when no interaction is being verified
+- New code must not rely on `AllowMockObjectsWithoutExpectations`.
+  Use mocks with expectations when verifying interactions, and stubs when
+  dependencies only supply values or behavior.
+- Existing uses of `AllowMockObjectsWithoutExpectations` may remain.
+  Do not proactively remove the attribute or refactor existing tests to eliminate it unless explicitly requested.
+- Adding tests to an existing class that carries the attribute does not require removing it. The new tests must use 
+  appropriate mocks or stubs without relying on the attribute to suppress missing-expectation notices.
+
 
 `$this->expectException` => `self::expectException`
 `$this->expectExceptionMessage` => `self::expectExceptionMessage`
