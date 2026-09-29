@@ -50,10 +50,21 @@ This file provides guidance and instructions for working with PHP code that foll
 ### SOLID and simplicity
 
 - Honor SOLID principles where they improve cohesion, dependency direction, testability, or maintainability.
+- We must honor Single Responsibility Principle (SRP) and the Dependency Inversion Principle (DIP)
 - Keep the design simple and proportionate to the current requirement. Do not over-engineer or introduce abstractions for
   speculative future needs.
 - Do not add an interface, factory, builder, instantiator, provider, or other architectural layer merely to demonstrate a
   design principle or bypass an automated rule.
+
+### Constructor & Method Parameter Limits
+
+- **Avoid Parameter Bloat:** Having more than 7–8 constructor or method parameters on service, orchestrator, or manager classes is a code smell indicating a violation of the Single Responsibility Principle (SRP).
+- **Exemption for Value Objects:** Readonly data-transfer/value objects (living in the `Data` subdirectory) are exempt from this limit when representing structured payloads or configuration snapshots.
+- **Remediation Strategy:** When a service constructor approaches or exceeds 8 arguments:
+  1. Group related scalar/configuration arguments into an immutable Value Object in the `Data` directory.
+  2. Extract dependency-extraction, pre-flight validation, or assembly logic into a dedicated Factory, Builder, or named static constructor (`from{X}()`, `create()`).
+  3. Evaluate whether the class is taking on too many responsibilities and should be split into smaller, focused collaborators.
+  4. when in doubt ask for clarification
 
 ### Object construction roles
 
