@@ -816,12 +816,13 @@ Commands for contributors working on this repository (not needed by consumers of
 
 ```bash
 composer install                       # Install dependencies
-composer run-script fix                # cs:fix + analyse + test:unit:coverage
+composer run-script fix                # cs:fix + analyse + test:unit:coverage + test:integration
 composer run-script cs:fix             # Fix coding standards
 composer run-script cs:dry-run         # Check coding standards without fixing
 composer run-script analyse            # Run PHPStan (level 9) against src/tests
 composer run-script test:unit          # Run unit tests
 composer run-script test:unit:coverage # Run unit tests with coverage (requires Xdebug)
+composer run-script test:integration   # Run php-cs-fixer integration tests (real fixer against fixtures)
 ```
 
 This project's own `phpstan.neon` and `phpstan-autoreview.neon` are self-analysis configs for this repository's `src`/`tests`, not consumer templates — use [`phpstan.neon.example`](phpstan.neon.example) for that.

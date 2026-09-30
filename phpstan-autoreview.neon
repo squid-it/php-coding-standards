@@ -6,6 +6,7 @@ parameters:
 	treatPhpDocTypesAsCertain: false
 	tmpDir: var/cache/phpstan-autoreview
 	excludePaths:
+		- tests/Integration/PhpCsFixer/Fixtures
 		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile
 	ignoreErrors:
 		-

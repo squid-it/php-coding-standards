@@ -54,6 +54,9 @@ jobs:
         env:
           XDEBUG_MODE: coverage
 
+      - name: "Run integration test suite"
+        run: composer run-script test:integration
+
       - name: "Validate test coverage"
         uses: "5monkeys/cobertura-action@v14"
         if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'

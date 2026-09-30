@@ -14,6 +14,7 @@ $finder = Finder::create()
         'tests/Unit/PHPStan/Rules/Architecture/Fixtures',
         'tests/Unit/PHPStan/Rules/Naming/Fixtures',
         'tests/Unit/PHPStan/Rules/Restrictions/Fixtures',
+        'tests/Integration/PhpCsFixer/Fixtures',
     ]);
 
 $phpFixer = new Config();

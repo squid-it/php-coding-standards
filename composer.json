@@ -38,9 +38,11 @@
     "fix": [
       "@cs:fix",
       "@analyse",
-      "@test:unit:coverage"
+      "@test:unit:coverage",
+      "@test:integration"
     ],
     "test:unit": "phpunit --testsuite unit",
+    "test:integration": "phpunit --testsuite integration",
     "test:unit:coverage": [
       "@putenv XDEBUG_MODE=coverage",
       "vendor/bin/phpunit --testsuite unit --coverage-cobertura coverage/coverage.xml",

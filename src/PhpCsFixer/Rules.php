@@ -84,6 +84,7 @@ class Rules
                 ],
             ],
             'multiline_comment_opening_closing'      => true,
+            'multiline_promoted_properties'          => true,
             'multiline_whitespace_before_semicolons' => true,
             'native_type_declaration_casing'         => true,
             'no_alias_functions'                     => true,

@@ -11,6 +11,7 @@ parameters:
 	treatPhpDocTypesAsCertain: false
 	tmpDir: var/cache/phpstan
 	excludePaths:
+		- tests/Integration/PhpCsFixer/Fixtures
 		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/SingleClassPerFile
 		- tests/Unit/PHPStan/Rules/Architecture/Fixtures/ReadonlyClassPromotion
 	ignoreErrors:

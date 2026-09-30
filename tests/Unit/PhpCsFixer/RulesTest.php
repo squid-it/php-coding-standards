@@ -27,6 +27,13 @@ final class RulesTest extends TestCase
         );
     }
 
+    public function testGetRulesEnablesMultilinePromotedPropertiesSucceeds(): void
+    {
+        $rules = Rules::getRules();
+
+        self::assertTrue($rules['multiline_promoted_properties']);
+    }
+
     public function testGetRulesWithOverridesReturnsMergedRulesSucceeds(): void
     {
         $rules = Rules::getRules([
