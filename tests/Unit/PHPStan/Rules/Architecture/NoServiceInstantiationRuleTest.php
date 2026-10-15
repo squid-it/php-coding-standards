@@ -8,6 +8,7 @@ use PhpParser\Node\Expr\New_;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Class_ as ParserClass;
 use PHPStan\Analyser\CollectedDataEmitter;
+use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ClassReflection;
@@ -125,9 +126,9 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         $duplicatedObjectType
             ->method('getObjectClassReflections')
             ->willReturn([
-            $this->resolveClassReflection(RuntimeHttpClient::class),
-            $this->resolveClassReflection(RuntimeHttpClient::class),
-        ]);
+                $this->resolveClassReflection(RuntimeHttpClient::class),
+                $this->resolveClassReflection(RuntimeHttpClient::class),
+            ]);
 
         $errorList = $this->noServiceInstantiationRule->processNode(
             $this->createNamedNewNode(31),
@@ -706,10 +707,10 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         ?string $functionName = null,
         bool $isInClass = false,
         string $filePath = __FILE__,
-    ): Scope&NodeCallbackInvoker&CollectedDataEmitter {
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+    ): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker {
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces(
-            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('getClassReflection')->willReturn($classReflection);
         $scope->method('getType')->willReturn($newType);

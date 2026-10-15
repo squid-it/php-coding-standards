@@ -10,6 +10,7 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Stmt\Foreach_;
 use PHPStan\Analyser\CollectedDataEmitter;
+use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\IdentifierRuleError;
@@ -456,9 +457,9 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
      */
     public function testScopeTypeIsResolvedOnceForMismatchMessageFails(): void
     {
-        /** @var CollectedDataEmitter&MockObject&NodeCallbackInvoker&Scope $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&MockObject&NodeCallbackInvoker&Scope $scope */
         $scope = self::createMockForIntersectionOfInterfaces(
-            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope
             ->expects($this->once())
@@ -469,11 +470,11 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
         $this->rule->processNode($foreachNode, $scope);
     }
 
-    private function createScopeStubWithType(Type $type): Scope&NodeCallbackInvoker&CollectedDataEmitter
+    private function createScopeStubWithType(Type $type): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker
     {
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces(
-            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('getType')->willReturn($type);
 
