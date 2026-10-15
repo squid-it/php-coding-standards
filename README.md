@@ -9,6 +9,7 @@ Shared PHP-CS-Fixer rules and PHPStan rules for `squidit/php-coding-standards`.
 - [AI Agent Instructions](#ai-agent-instructions)
 - [PHP-CS-Fixer Rules](#php-cs-fixer-rules)
   - [Usage](#usage)
+  - [Custom Rules](#custom-rules)
   - [Manual Triggering](#manual-triggering)
 - [PHPStan Rules](#phpstan-rules)
   - [Stable Rules](#stable-rules)
@@ -85,6 +86,7 @@ Below you can find an example file named `.php-cs-fixer.dist.php` which should b
 
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
+use SquidIT\PhpCodingStandards\PhpCsFixer\Custom\PhpUnitMockChainLinesFixer;
 use SquidIT\PhpCodingStandards\PhpCsFixer\Rules;
 
 $finder = Finder::create()
@@ -98,8 +100,121 @@ return (new Config())
     ->setFinder($finder)
     ->setCacheFile('.php-cs-fixer.cache')
     ->setRiskyAllowed(true)
+    ->registerCustomFixers([
+        new PhpUnitMockChainLinesFixer(),
+    ])
     ->setRules(Rules::getRules($overrides));
 ```
+
+`Rules::getRules()` enables the package's custom rules by default. Register their fixer instances with
+`registerCustomFixers()` as shown above so PHP-CS-Fixer can resolve their names.
+
+## Custom Rules
+
+### PHPUnit Mock Chain Lines
+
+**Rule name:** `SquidIT/php_unit_mock_chain_lines`
+
+**Fixer:** [`PhpUnitMockChainLinesFixer`](src/PhpCsFixer/Custom/PhpUnitMockChainLinesFixer.php)
+
+Starts each method call in a PHPUnit mock or stub configuration chain on a separate, indented line, including the first
+call after the receiver. The rule changes whitespace only and is non-risky.
+
+**Before:**
+
+```php
+$service = self::createMock(ServiceInterface::class);
+$service->expects(self::once())->method('execute')->with($other->value())->willReturn('done');
+
+$stub = self::createStub(ServiceInterface::class);
+$stub->method('execute')->willReturn('done');
+```
+
+**After:**
+
+```php
+$service = self::createMock(ServiceInterface::class);
+$service
+    ->expects(self::once())
+    ->method('execute')
+    ->with($other->value())
+    ->willReturn('done');
+
+$stub = self::createStub(ServiceInterface::class);
+$stub
+    ->method('execute')
+    ->willReturn('done');
+```
+
+#### Scope and detection
+
+- Only files whose names end in `Test.php` are supported. Your configured Finder must include those files.
+- Detection starts at a variable receiver such as `$service`. A chain containing `expects()` qualifies even when the
+  receiver's type is unknown; the fixer does not resolve PHP types.
+- A chain containing `method()` without `expects()` qualifies only when its variable was assigned directly from
+  `$this->createMock()`, `$this->createStub()`, `self::createMock()`, `self::createStub()`, `static::createMock()`, or
+  `static::createStub()` earlier in the same function or method. Reassigning the variable clears that tracking, and tracking
+  resets at each function or method declaration.
+- Other fluent chains are left unchanged. Property receivers such as `$this->serviceMock` and inline factory receivers
+  such as `self::createMock(ServiceInterface::class)->method(...)` are outside the supported detection.
+- Argument expressions such as `$other->value()` remain intact when formatting the surrounding chain. Operators directly
+  preceded by a comment are left in place to preserve comment placement.
+
+The rule inserts line breaks before the built-in `method_chaining_indentation` fixer runs. That built-in rule is already
+enabled in `Rules::getRules()`.
+
+#### Enable with the shared rules
+
+Use the [configuration above](#usage): import `PhpUnitMockChainLinesFixer`, register an instance with
+`registerCustomFixers()`, and call `setRules(Rules::getRules())`. The shared rules already set
+`PhpUnitMockChainLinesFixer::NAME` to `true`; no additional override is needed. Omitting registration while the rule is
+enabled causes a `Rule "SquidIT/php_unit_mock_chain_lines" does not exist.` error.
+
+#### Enable with your own rule set
+
+If your project does not use `Rules::getRules()`, register the fixer and explicitly enable its name in
+`.php-cs-fixer.dist.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+use SquidIT\PhpCodingStandards\PhpCsFixer\Custom\PhpUnitMockChainLinesFixer;
+
+return (new Config())
+    ->setFinder(Finder::create()->in(__DIR__ . '/tests'))
+    ->registerCustomFixers([
+        new PhpUnitMockChainLinesFixer(),
+    ])
+    ->setRules([
+        PhpUnitMockChainLinesFixer::NAME => true,
+        'method_chaining_indentation'    => true,
+    ]);
+```
+
+#### Disable or customize formatting
+
+To disable the rule while keeping the shared rules, pass an override:
+
+```php
+->setRules(Rules::getRules([
+    PhpUnitMockChainLinesFixer::NAME => false,
+]))
+```
+
+The fixer defaults to four spaces for each additional indentation level and LF (`"\n"`) line endings. For projects using
+tabs or CRLF, pass matching constructor values when registering it:
+
+```php
+->registerCustomFixers([
+    new PhpUnitMockChainLinesFixer(indent: "\t", lineEnding: "\r\n"),
+])
+```
+
+The rule's `setRules()` entry accepts `true` or `false`; formatting options belong in the constructor.
 
 ## Manual Triggering
 

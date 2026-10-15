@@ -122,7 +122,9 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     {
         /** @var Stub&Type $duplicatedObjectType */
         $duplicatedObjectType = self::createStub(Type::class);
-        $duplicatedObjectType->method('getObjectClassReflections')->willReturn([
+        $duplicatedObjectType
+            ->method('getObjectClassReflections')
+            ->willReturn([
             $this->resolveClassReflection(RuntimeHttpClient::class),
             $this->resolveClassReflection(RuntimeHttpClient::class),
         ]);

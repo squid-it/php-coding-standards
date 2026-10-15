@@ -460,7 +460,8 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
         $scope = self::createMockForIntersectionOfInterfaces(
             [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
         );
-        $scope->expects(self::once())
+        $scope
+            ->expects($this->once())
             ->method('getType')
             ->willReturn($this->createChildNodeArrayType());
 
@@ -510,7 +511,8 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
     {
         /** @var Stub&Type $type */
         $type = self::createStub(Type::class);
-        $type->method('getObjectClassNames')
+        $type
+            ->method('getObjectClassNames')
             ->willReturn([\RecursiveIterator::class]);
 
         return $type;
@@ -520,7 +522,8 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
     {
         /** @var Stub&Type $type */
         $type = self::createStub(Type::class);
-        $type->method('getObjectClassNames')
+        $type
+            ->method('getObjectClassNames')
             ->willReturn([\RecursiveIteratorIterator::class]);
 
         return $type;
@@ -536,11 +539,14 @@ final class ForeachValueVariableNamingRuleTest extends TestCase
     ): Type {
         /** @var Stub&Type $iterableType */
         $iterableType = self::createStub(Type::class);
-        $iterableType->method('isIterable')
+        $iterableType
+            ->method('isIterable')
             ->willReturn($isIterable === true ? TrinaryLogic::createYes() : TrinaryLogic::createNo());
-        $iterableType->method('getIterableValueType')
+        $iterableType
+            ->method('getIterableValueType')
             ->willReturn($iterableValueType);
-        $iterableType->method('getObjectClassNames')
+        $iterableType
+            ->method('getObjectClassNames')
             ->willReturn($objectClassNameList);
 
         return $iterableType;
