@@ -304,7 +304,9 @@ final class TypeCandidateResolverTest extends TestCase
     {
         /** @var ReflectionProvider&Stub $reflectionProvider */
         $reflectionProvider = self::createStub(ReflectionProvider::class);
-        $reflectionProvider->method('hasClass')->willReturn(false);
+        $reflectionProvider
+            ->method('hasClass')
+            ->willReturn(false);
 
         // @phpstan-ignore-next-line phpstanApi.method
         ReflectionProviderStaticAccessor::registerInstance($reflectionProvider);

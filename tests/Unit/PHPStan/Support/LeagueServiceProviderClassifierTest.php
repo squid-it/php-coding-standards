@@ -53,7 +53,9 @@ final class LeagueServiceProviderClassifierTest extends PHPStanTestCase
     {
         /** @var InterfaceAvailabilityCheckerInterface&Stub $interfaceAvailabilityChecker */
         $interfaceAvailabilityChecker = self::createStub(InterfaceAvailabilityCheckerInterface::class);
-        $interfaceAvailabilityChecker->method('isInterfaceAvailable')->willReturn(false);
+        $interfaceAvailabilityChecker
+            ->method('isInterfaceAvailable')
+            ->willReturn(false);
 
         $leagueServiceProviderClassifier = new LeagueServiceProviderClassifier($interfaceAvailabilityChecker);
         $classReflection                 = $this->reflectionProvider->getClass(ExampleDiServiceProvider::class);

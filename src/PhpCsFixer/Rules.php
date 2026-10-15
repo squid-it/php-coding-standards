@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SquidIT\PhpCodingStandards\PhpCsFixer;
 
+use SquidIT\PhpCodingStandards\PhpCsFixer\Custom\PhpUnitMockChainLinesFixer;
+
 class Rules
 {
     /**
@@ -128,6 +130,7 @@ class Rules
             'php_unit_method_casing'                 => true,
             'php_unit_test_case_static_method_calls' => [
                 'call_type' => 'self',
+                'target'    => 'newest',
             ],
             'phpdoc_annotation_without_dot' => false,
             'phpdoc_no_alias_tag'           => [
@@ -162,6 +165,9 @@ class Rules
                 'identical'        => false,
                 'less_and_greater' => false,
             ],
+
+            // custom CS Fixer rules
+            PhpUnitMockChainLinesFixer::NAME => true,
         ];
     }
 }

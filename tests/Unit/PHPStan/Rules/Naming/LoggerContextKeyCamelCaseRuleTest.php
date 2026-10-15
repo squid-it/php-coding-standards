@@ -14,6 +14,7 @@ use PhpParser\Node\Scalar\LNumber;
 use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\VariadicPlaceholder;
 use PHPStan\Analyser\CollectedDataEmitter;
+use PHPStan\Analyser\DependencyTracker;
 use PHPStan\Analyser\NodeCallbackInvoker;
 use PHPStan\Analyser\Scope;
 use PHPStan\Reflection\ReflectionProviderStaticAccessor;
@@ -376,11 +377,11 @@ final class LoggerContextKeyCamelCaseRuleTest extends PHPStanTestCase
         );
     }
 
-    private function createScopeStubWithReceiverType(ObjectType $receiverType): Scope&NodeCallbackInvoker&CollectedDataEmitter
+    private function createScopeStubWithReceiverType(ObjectType $receiverType): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker
     {
-        /** @var CollectedDataEmitter&NodeCallbackInvoker&Scope&Stub $scope */
+        /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
         $scope = self::createStubForIntersectionOfInterfaces(
-            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class],
+            [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('getType')->willReturn($receiverType);
 

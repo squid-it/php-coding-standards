@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use PhpCsFixer\Config;
 use PhpCsFixer\Finder;
+use SquidIT\PhpCodingStandards\PhpCsFixer\Custom\PhpUnitMockChainLinesFixer;
 use SquidIT\PhpCodingStandards\PhpCsFixer\Rules;
 
 $finder = Finder::create()
@@ -23,5 +24,8 @@ return $phpFixer
     ->setFinder($finder)
     ->setCacheFile('var/cache/.php-cs-fixer.cache')
     ->setRiskyAllowed(true)
+    ->registerCustomFixers([
+        new PhpUnitMockChainLinesFixer(),
+    ])
     ->setRules(Rules::getRules())
     ->setParallelConfig(PhpCsFixer\Runner\Parallel\ParallelConfigFactory::detect());
