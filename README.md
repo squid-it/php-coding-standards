@@ -65,6 +65,11 @@ continues.
 Do not copy the company-wide instructions into each repository. Referencing the vendor file prevents the copies from
 drifting apart, while `composer.lock` keeps the applied version deterministic for each repository.
 
+Session prompts live in [`resources/ai-agent/prompt/`](resources/ai-agent/prompt/). Start a new module or feature with
+[`00-start-plan.md`](resources/ai-agent/prompt/00-start-plan.md): it sets up a `.development/<feature>/` folder from
+[`resources/ai-agent/template/development/`](resources/ai-agent/template/development/) and writes the plan outline. The
+`start-chunk.md` it creates starts every later planning, implementation, and review session.
+
 ---
 
 # PHP-CS-Fixer Rules

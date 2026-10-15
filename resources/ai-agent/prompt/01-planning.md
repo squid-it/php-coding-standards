@@ -29,6 +29,10 @@ Write the plan to `{{OUTPUT_PATH}}`.
 ## Plan requirements
 
 - **A full directory file tree** of every file created or modified.
+- **A responsibility map** — for every class the plan creates or changes: its responsibility in one sentence
+  without "and", its reason to change, and what it must not do. Follow "Single responsibility" in the
+  company-wide `AGENT.md`. A class that does not fit in one row is two classes; propose the split in the plan,
+  not during implementation.
 - **Interfaces written out completely.** This is how we steer naming before any implementation exists.
 - **Implementation proposals as snippets only.** Do not write the implementation.
 - **Test details** — which tests are added or changed, and what each one proves.

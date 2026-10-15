@@ -24,6 +24,11 @@ simplification is a suggestion; a defect is not.
 - **Correctness** — wrong logic, unhandled failure paths, incorrect assumptions about state or lifetime.
 - **Whether it matches the plan** — silent deviations, and anything specified but not built.
 - **Test quality** — does each test prove what it claims, and would it fail if the code were wrong?
+- **Single responsibility** — read every class the change touches as a whole, not only the diff. Check it
+  against its row in the plan's responsibility map and the warning signs under "Single responsibility" in the
+  company-wide `AGENT.md`. A class that has taken on a second responsibility is a finding even when every
+  changed line is correct. Report it under its own heading, with the responsibility that does not belong and
+  its proposed home, so it is not mistaken for an optional suggestion.
 - **Standards** — naming and architectural rules from the company-wide `AGENT.md` and the enforced PHPStan
   rules.
 - {{OPTIONAL: concurrency, coroutine lifetime, resource ownership, or other domain-specific concerns}}

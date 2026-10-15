@@ -56,6 +56,30 @@ This file provides guidance and instructions for working with PHP code that foll
 - Do not add an interface, factory, builder, instantiator, provider, or other architectural layer merely to demonstrate a
   design principle or bypass an automated rule.
 
+### Single responsibility
+
+Single responsibility is judged on the whole class, not on the change. Each addition can look reasonable on its own
+while the class it lands in slowly takes on a second job. Before adding a method, property, or dependency to an existing
+class, judge the class as it will be after the change.
+
+- State the class's responsibility in one sentence without "and". If the sentence needs "and", the class has two
+  responsibilities.
+- Name the class's reason to change. A class that changes for two unrelated reasons, for example a lifecycle rule and a
+  configuration format, has two responsibilities.
+- Warning signs that a class has taken on a second responsibility:
+  - it decides what should happen and also carries out the mechanics behind that decision;
+  - it validates the contents of another object; validation belongs to the object that carries the data;
+  - a group of its private methods serves a different subject than its public methods;
+  - its decisions can only be tested with real infrastructure (processes, sockets, the file system) because the
+    mechanics cannot be replaced by a stub;
+  - its constructor approaches the parameter limit below.
+- "Keep the design simple" never justifies growing an existing class past its responsibility. One focused collaborator
+  is simpler than one class doing two jobs. The effort of agreeing a new name, folder, and wiring is not a reason to put
+  the code in the class that already holds the state.
+- When a change would give a class a second responsibility, stop and propose the split before writing the code: the new
+  collaborator's name, its single responsibility, and its interface. Do not split silently, and do not grow the class
+  silently.
+
 ### Constructor & Method Parameter Limits
 
 - **Avoid Parameter Bloat:** Having more than 7–8 constructor or method parameters on service, orchestrator, or manager classes is a code smell indicating a violation of the Single Responsibility Principle (SRP).

@@ -26,6 +26,10 @@ Once agreed, follow it and note it in the report.
 
 A plan that turns out to be wrong is useful information. Silently implementing something different is not.
 
+A change that gives a class a responsibility beyond its row in the plan's responsibility map is a deviation,
+even when the plan put the code there. Stop and propose the split: the new collaborator's name, its single
+responsibility, and its interface. Raising this is not widening scope; growing the class silently is.
+
 ## Implementation rules
 
 - **Add validation where it is needed to make the change safe — but do not double validate.** If the plan
