@@ -364,7 +364,23 @@ if ($listenResult->isClosed === true) {
 
 -----
 
-### Swow - Stopping or killing a coroutine
+### Swow - Swow Process APIs
+
+Use `squid-it/swow-custom` if you need to fork processes. 
+Before changing process or signal handling, read the installed [custom fork contract](vendor/swow/swow/documentation/fork-process.md) 
+and the relevant documentation under `vendor/swow/swow/documentation/`. 
+Verify available APIs against the installed vendor stubs and implementation; do not assume upstream Swow behavior applies to this custom build.
+
+Use `Swow\Process\ForkProcess`, `Swow\Process\ProcessExitStatus`, and `Swow\Signal` for forking, waiting, child exit
+status, and signalling. Follow the custom build's callback, waiting, and cleanup rules. Do not introduce `pcntl_*`
+calls in project-owned code, including tests, fixtures, and scripts.
+
+Existing uses of `getmypid()` for PID guards, `proc_open()` / `proc_close()` for extension-free subprocess verification,
+and `posix_geteuid()` for settings-file ownership checks remain valid. Preserve the container's plain-PHP support.
+
+-----
+
+### Swow - Stopping or killing a coroutine - use the installed custom Swow API for forking, waiting, exit status, and signalling.
 
 Stop coroutines in stages:
 
@@ -456,12 +472,14 @@ Properties follow the type, not the domain role:
 ```php
 // Wrong
 private ServerRequestInterface $request;
+
 public function __construct(
     private readonly LoggerInterface $log
 ) {}
 
 // Right
 private ServerRequestInterface $serverRequest;
+
 public function __construct(
     private readonly LoggerInterface $logger
 ) {}
@@ -473,8 +491,8 @@ Non-promoted method parameters are not checked by the rule, but follow the same 
 
 ### PHP Unit Tests
 
-- Prefer PHPUnit 13.*. Follow the consuming repository's local Composer constraint when it uses another supported version.
-- When testing exceptions, use static calls for exception assertions (`self::expectException` and `self::expectExceptionMessage`)
+- Prefer PHPUnit ^13.2. Follow the consuming repository's local Composer constraint when it uses another supported version.
+- When testing exceptions, use static calls for exception assertions (`self::expectException` and `self::expectExceptionMessageIs`)
 - If mocking a PSR7 `ResponseInterface` or `RequestInterface` is not possible, use `nyholm/psr7`
 - The unit test function name needs to contain the expected outcome suffix: `Succeeds`, `Fails`, `ThrowsExceptionOnFailure`, etc.
 - Never use the PHPUnit attribute `CoversClass`
@@ -497,7 +515,8 @@ Non-promoted method parameters are not checked by the rule, but follow the same 
 
 
 `$this->expectException` => `self::expectException`
-`$this->expectExceptionMessage` => `self::expectExceptionMessage`
+`$this->expectExceptionMessageIs` => `self::expectExceptionMessageIs` or
+`$this->expectExceptionMessageIsOrContains` => `self::expectExceptionMessageIsOrContains`
 
 #### PHPUnit: Mocking Consecutive Calls
 
