@@ -6,9 +6,13 @@
 
 ```
 AGENTS.md
-vendor/squidit/php-coding-standards/README.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md
 {{FILES_OR_PLAN_UNDER_REVIEW}}
 ```
+
+Also read every topic instruction file listed in the company-wide `AGENTS.md` whose description matches the files under
+review. Consult `vendor/squidit/php-coding-standards/README.md` only when a check reports an error you do not know how
+to fix, or when a rule's behavior is unclear.
 
 {{OPTIONAL: the plan the implementation was supposed to follow, so the review can check it against intent}}
 
@@ -26,11 +30,11 @@ simplification is a suggestion; a defect is not.
 - **Test quality** — does each test prove what it claims, and would it fail if the code were wrong?
 - **Single responsibility** — read every class the change touches as a whole, not only the diff. Check it
   against its row in the plan's responsibility map and the warning signs under "Single responsibility" in the
-  company-wide `AGENT.md`. A class that has taken on a second responsibility is a finding even when every
+  company-wide `architecture.md`. A class that has taken on a second responsibility is a finding even when every
   changed line is correct. Report it under its own heading, with the responsibility that does not belong and
   its proposed home, so it is not mistaken for an optional suggestion.
-- **Standards** — naming and architectural rules from the company-wide `AGENT.md` and the enforced PHPStan
-  rules.
+- **Standards** — naming rules from the company-wide `AGENTS.md`, architectural rules from `architecture.md`, and
+  the enforced PHPStan rules.
 - {{OPTIONAL: concurrency, coroutine lifetime, resource ownership, or other domain-specific concerns}}
 
 ## How to report

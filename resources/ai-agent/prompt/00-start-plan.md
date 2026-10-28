@@ -10,16 +10,16 @@ reviewing) starts from the `start-chunk.md` that this session creates.
 
 ```
 AGENTS.md
-vendor/squidit/php-coding-standards/README.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md
 vendor/squidit/php-coding-standards/resources/ai-agent/prompt/01-planning.md
 vendor/squidit/php-coding-standards/resources/ai-agent/template/development/   (every file, including subfolders)
 {{ADDITIONAL_CONTEXT_FILES}}
 ```
 
-`AGENTS.md` chains to the company-wide agent instructions. Read "SOLID and simplicity" and "Single responsibility"
-there with care: the responsibility map in the outline is built from them. The plan requirements, module structure,
-and naming rules in `01-planning.md` apply to the outline as well. Inspect the neighbouring code, interfaces, tests,
-and service providers before proposing a design.
+`AGENTS.md` chains to the company-wide agent instructions. Read "SOLID and simplicity" and "Single responsibility" in
+`architecture.md` with care: the responsibility map in the outline is built from them. The plan requirements, module
+structure, and naming rules in `01-planning.md` apply to the outline as well. Inspect the neighbouring code, interfaces,
+tests, and service providers before proposing a design.
 
 ## What we want to develop
 

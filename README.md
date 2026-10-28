@@ -34,23 +34,31 @@ composer require --dev squidit/php-coding-standards
 
 ## AI Agent Instructions
 
-This package includes the company-wide PHP agent instructions in
-[`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md).
+This package includes the company-wide PHP agent instructions:
 
-Every consuming repository must provide an `AGENT.md` or `AGENTS.md` in its root directory. Keep one local file as the
-canonical repository instruction file. When both filenames are needed for agent discovery, the second file should only
-point to the canonical local file so the instructions are not duplicated.
+- [`resources/ai-agent/AGENTS.md`](resources/ai-agent/AGENTS.md) contains the rules that always apply.
+- [`resources/ai-agent/docs/`](resources/ai-agent/docs/) contains topic instructions (architecture, Swow coroutines,
+  Swow processes, PHPUnit, PHPDoc, date and time). `AGENTS.md` lists when each file applies, so agents read a topic
+  file only when the work needs it.
 
-The canonical local file must explicitly instruct agents to read and follow the company-wide instructions from the
+[`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md) is the previous single-file version. It is kept for
+backward compatibility; new repositories reference `AGENTS.md`.
+
+Every consuming repository must provide an `AGENTS.md` in its root directory. Codex and Claude Code (v2.1.277+) read it
+automatically. When a tool needs another filename, for example a `CLAUDE.md` for an older Claude Code version, that file
+should only import or point to `AGENTS.md` (a `CLAUDE.md` containing `@AGENTS.md`) so the instructions are not
+duplicated.
+
+The local `AGENTS.md` must explicitly instruct agents to read and follow the company-wide instructions from the
 installed Composer package before planning, reviewing, or modifying PHP code. It should contain only supplementary,
 repository-specific instructions:
 
 ```markdown
 # Repository Agent Instructions
 
-Before planning, reviewing, or modifying PHP code, read and follow:
+Before planning, reviewing, or modifying PHP code, read and follow the company-wide PHP agent instructions:
 
-[Company-wide PHP agent instructions](vendor/squidit/php-coding-standards/resources/ai-agent/AGENT.md)
+@vendor/squidit/php-coding-standards/resources/ai-agent/AGENTS.md
 
 These company-wide instructions are mandatory. The repository-specific instructions below supplement them and must not
 contradict them.
@@ -62,6 +70,10 @@ continues.
 
 - Add only guidance that applies specifically to this repository.
 ```
+
+The `@` line makes Claude Code load the company-wide file at session start; other agents read it as a path to open.
+Keep it outside backticks and code blocks, or Claude Code treats it as plain text. Do not import the topic files from
+`resources/ai-agent/docs/` with `@`: that loads them in every session and defeats the split.
 
 Do not copy the company-wide instructions into each repository. Referencing the vendor file prevents the copies from
 drifting apart, while `composer.lock` keeps the applied version deterministic for each repository.

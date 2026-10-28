@@ -6,13 +6,15 @@
 
 ```
 AGENTS.md
-vendor/squidit/php-coding-standards/README.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md
 {{ADDITIONAL_CONTEXT_FILES}}
 ```
 
-`AGENTS.md` chains to the company-wide agent instructions. Read the standards README so you understand the
-automated checks the resulting code must pass — a plan that proposes names the analyser rejects is a plan
-that gets rewritten during implementation.
+`AGENTS.md` chains to the company-wide agent instructions. Also read every topic instruction file listed there whose
+description matches the planned work. Check the proposed names against the naming rules and the enforced PHPStan rules
+in the company-wide `AGENTS.md` — a plan that proposes names the analyser rejects is a plan that gets rewritten during
+implementation. Consult `vendor/squidit/php-coding-standards/README.md` only when a check reports an error you do not
+know how to fix, or when a rule's behavior is unclear.
 
 ## Goal
 
@@ -31,7 +33,7 @@ Write the plan to `{{OUTPUT_PATH}}`.
 - **A full directory file tree** of every file created or modified.
 - **A responsibility map** — for every class the plan creates or changes: its responsibility in one sentence
   without "and", its reason to change, and what it must not do. Follow "Single responsibility" in the
-  company-wide `AGENT.md`. A class that does not fit in one row is two classes; propose the split in the plan,
+  company-wide `architecture.md`. A class that does not fit in one row is two classes; propose the split in the plan,
   not during implementation.
 - **Interfaces written out completely.** This is how we steer naming before any implementation exists.
 - **Implementation proposals as snippets only.** Do not write the implementation.
@@ -53,7 +55,7 @@ New modules follow this layout:
 
 ## Naming
 
-All naming follows the style guide in the company-wide `AGENT.md` — descriptive names, no abbreviations.
+All naming follows the style guide in the company-wide `AGENTS.md` — descriptive names, no abbreviations.
 Class-suffix meaning is enforced by static analysis, so a suffix is a claim about behaviour, not decoration.
 
 {{OPTIONAL: repository-specific naming rules or a conventions document to follow}}
