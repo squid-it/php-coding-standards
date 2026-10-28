@@ -48,7 +48,7 @@ class Rules
             ],
             'class_attributes_separation' => [
                 'elements' => [
-                    'method' => 'one',
+                    'method'       => 'one',
                     'trait_import' => 'none',
                 ],
             ],
