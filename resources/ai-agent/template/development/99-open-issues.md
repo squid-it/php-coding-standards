@@ -6,11 +6,11 @@ live in the [general plan](plan.md).
 This register keeps unresolved choices and known limits visible. The [general plan](plan.md) describes the finished
 behaviour; this file explains what can still go wrong and what was decided about it.
 
-How to use it: the first chunk an issue affects raises it before implementation. Explain the failure in plain words,
-give at least two practical options with a recommendation, and record the developer's decision here, in the issue's
-own section. A file reference alone is not an explanation. An issue may be deferred when the chunk still delivers a
-working, safe slice; the deferral states its impact, mitigation, and revisit point. A documented risk is not a passing
-test.
+How to use it: the first chunk an issue affects raises it before implementation. State what is intended and what can
+fail in plain words, give at least two practical options with a recommendation under Resolution, and record the
+developer's decision there, in the issue's own section. A file reference alone is not an explanation. An issue may be
+deferred when the chunk still delivers a working, safe slice; the deferral states its impact, mitigation, and revisit
+point. A documented risk is not a passing test.
 
 | Issue | State | Revisit |
 |---|---|---|
@@ -25,7 +25,11 @@ its decision moves into the general plan and the row says where.
 
 ### {{ISSUE_TITLE}}
 
-{{What can fail, in plain words: the input or state, and the wrong outcome.}}
+**Intended:** {{What should happen: the behaviour the plan or rule requires.}}
+
+**Observed:** {{What can fail, in plain words: the input or state, and the wrong outcome.}}
+
+**Resolution:** {{Open, or the agreed decision.}}
 
 - **Option A:** {{the option and its consequence}}
 - **Option B:** {{the option and its consequence}}

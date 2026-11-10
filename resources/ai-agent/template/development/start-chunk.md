@@ -12,8 +12,7 @@ verification, reports, commits) are in the overview under "How we work".
 
 ## Chunk-plan kickoff: what the agent does first
 
-1. Read `AGENTS.md`, `vendor/squidit/php-coding-standards/resources/ai-agent/AGENT.md`,
-   `vendor/squidit/php-coding-standards/README.md`, and the vendor
+1. Read `AGENTS.md`, `vendor/squidit/php-coding-standards/resources/ai-agent/AGENTS.md`, and the vendor
    [planning prompt](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/01-planning.md). Inspect the
    neighbouring code before designing a change.
 2. Read the [overview](00-overview.md), the [general plan](plan.md), the [open issues](99-open-issues.md), the
@@ -44,8 +43,7 @@ new open issues, and set the chunk's link and status (Ready for implementation) 
 
 ## Implementation kickoff: what the agent does first
 
-1. Read `AGENTS.md`, `vendor/squidit/php-coding-standards/resources/ai-agent/AGENT.md`,
-   `vendor/squidit/php-coding-standards/README.md`, and the vendor
+1. Read `AGENTS.md`, `vendor/squidit/php-coding-standards/resources/ai-agent/AGENTS.md`, and the vendor
    [implementation prompt](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/02-implementation.md).
    Inspect the neighbouring code before designing a change.
 2. Read the [overview](00-overview.md), the [general plan](plan.md), the [open issues](99-open-issues.md), the selected

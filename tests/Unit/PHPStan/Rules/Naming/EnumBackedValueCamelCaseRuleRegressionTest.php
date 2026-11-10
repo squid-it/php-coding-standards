@@ -188,7 +188,7 @@ final class EnumBackedValueCamelCaseRuleRegressionTest extends TestCase
 
     private function createScopeStub(): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker
     {
-        $scope = self::createStubForIntersectionOfInterfaces(
+        $scope = $this->createStubForIntersectionOfInterfaces(
             [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
 

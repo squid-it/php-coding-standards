@@ -6,12 +6,15 @@
 
 ```
 AGENTS.md
-vendor/squidit/php-coding-standards/README.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md
 {{PLAN_FILES_TO_IMPLEMENT}}
 ```
 
-Read the standards README **before** implementing, so you understand the automated review the code must
-survive. Fixing a naming-rule violation after the fact means renaming every variable of that type too.
+Also read every topic instruction file listed in the company-wide `AGENTS.md` whose description matches the work in the
+plan. Know the naming rules and the enforced PHPStan rules in the company-wide `AGENTS.md` **before** implementing:
+fixing a naming-rule violation after the fact means renaming every variable of that type too. Consult
+`vendor/squidit/php-coding-standards/README.md` only when a check reports an error you do not know how to fix, or when a
+rule's behavior is unclear.
 
 ## Task
 
@@ -22,7 +25,8 @@ Implement the plan exactly as documented.
 ## Deviation protocol
 
 If you encounter a needed change or a deviation from the plan, **discuss it before implementing it.**
-Once agreed, follow it and note it in the report.
+Describe each one with Intended (what the plan says), Observed (what you found that the plan does not handle), and
+Resolution (the change you propose). Once agreed, follow it and note it in the report.
 
 A plan that turns out to be wrong is useful information. Silently implementing something different is not.
 

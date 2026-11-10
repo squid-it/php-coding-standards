@@ -1077,7 +1077,7 @@ final class TypeSuffixMismatchRuleTest extends RuleTestCase
         $this->resolvedTypeNameMap = $resolvedTypeNameMap;
 
         /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = self::createStubForIntersectionOfInterfaces(
+        $scope = $this->createStubForIntersectionOfInterfaces(
             [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('resolveName')

@@ -48,7 +48,7 @@ class Rules
             ],
             'class_attributes_separation' => [
                 'elements' => [
-                    'method' => 'one',
+                    'method'       => 'one',
                     'trait_import' => 'none',
                 ],
             ],
@@ -132,6 +132,10 @@ class Rules
             'php_unit_test_case_static_method_calls' => [
                 'call_type' => 'self',
                 'target'    => 'newest',
+                'methods'   => [
+                    'createStub'                            => 'this',
+                    'createStubForIntersectionOfInterfaces' => 'this',
+                ],
             ],
             'phpdoc_annotation_without_dot' => false,
             'phpdoc_no_alias_tag'           => [

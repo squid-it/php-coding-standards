@@ -380,7 +380,7 @@ final class LoggerContextKeyCamelCaseRuleTest extends PHPStanTestCase
     private function createScopeStubWithReceiverType(ObjectType $receiverType): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker
     {
         /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = self::createStubForIntersectionOfInterfaces(
+        $scope = $this->createStubForIntersectionOfInterfaces(
             [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('getType')->willReturn($receiverType);

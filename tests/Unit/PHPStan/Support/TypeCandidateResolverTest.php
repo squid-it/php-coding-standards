@@ -303,7 +303,7 @@ final class TypeCandidateResolverTest extends TestCase
     private function registerNativeFallbackReflectionProvider(): void
     {
         /** @var ReflectionProvider&Stub $reflectionProvider */
-        $reflectionProvider = self::createStub(ReflectionProvider::class);
+        $reflectionProvider = $this->createStub(ReflectionProvider::class);
         $reflectionProvider
             ->method('hasClass')
             ->willReturn(false);

@@ -27,7 +27,8 @@ file links to nothing until its plan exists.
 ## How we work
 
 1. **Read first.** Before planning, implementing, or reviewing PHP, read `AGENTS.md`, the installed company-wide
-   `vendor/squidit/php-coding-standards/resources/ai-agent/AGENT.md`, and the coding standards README. The installed
+   `vendor/squidit/php-coding-standards/resources/ai-agent/AGENTS.md`, and the topic files it lists for the work. The
+   coding standards README is read only when a rule's behavior is unclear. The installed
    [planning](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/01-planning.md),
    [implementation](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/02-implementation.md), and
    [review](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/03-review.md) prompts govern those
