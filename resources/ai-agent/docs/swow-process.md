@@ -17,3 +17,6 @@ implementation; do not assume upstream Swow behavior applies to this custom buil
 Use `Swow\Process\ForkProcess`, `Swow\Process\ProcessExitStatus`, and `Swow\Signal` for forking, waiting, child exit
 status, and signalling. Follow the custom build's callback, waiting, and cleanup rules. Do not introduce `pcntl_*`
 calls in project-owned code, including tests, fixtures, and scripts.
+
+Existing uses of `getmypid()` for PID guards, `proc_open()` / `proc_close()` for extension-free subprocess verification,
+and `posix_geteuid()` for settings-file ownership checks remain valid. Preserve the container's plain-PHP support.

@@ -37,12 +37,13 @@ composer require --dev squidit/php-coding-standards
 This package includes the company-wide PHP agent instructions:
 
 - [`resources/ai-agent/AGENTS.md`](resources/ai-agent/AGENTS.md) contains the rules that always apply.
-- [`resources/ai-agent/docs/`](resources/ai-agent/docs/) contains topic instructions (architecture, Swow coroutines,
-  Swow processes, PHPUnit, PHPDoc, date and time). `AGENTS.md` lists when each file applies, so agents read a topic
-  file only when the work needs it.
+- [`resources/ai-agent/docs/`](resources/ai-agent/docs/) contains topic instructions (architecture, code review,
+  Swow coroutines, Swow processes, PHPUnit, PHPDoc, date and time, exceptions and logging, long-running processes).
+  `AGENTS.md` lists when each file applies, so agents read a topic file only when the work needs it.
 
-[`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md) is the previous single-file version. It is kept for
-backward compatibility; new repositories reference `AGENTS.md`.
+[`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md) is the previous single-file location. It now only points
+to `AGENTS.md`, so repositories that still reference it move over on their next `composer update`; new repositories
+reference `AGENTS.md`.
 
 Every consuming repository must provide an `AGENTS.md` in its root directory. Codex and Claude Code (v2.1.277+) read it
 automatically. When a tool needs another filename, for example a `CLAUDE.md` for an older Claude Code version, that file
@@ -135,24 +136,24 @@ call after the receiver. The rule changes whitespace only and is non-risky.
 **Before:**
 
 ```php
-$service = self::createMock(ServiceInterface::class);
-$service->expects(self::once())->method('execute')->with($other->value())->willReturn('done');
+$service = $this->createMock(ServiceInterface::class);
+$service->expects($this->once())->method('execute')->with($other->value())->willReturn('done');
 
-$stub = self::createStub(ServiceInterface::class);
+$stub = $this->createStub(ServiceInterface::class);
 $stub->method('execute')->willReturn('done');
 ```
 
 **After:**
 
 ```php
-$service = self::createMock(ServiceInterface::class);
+$service = $this->createMock(ServiceInterface::class);
 $service
-    ->expects(self::once())
+    ->expects($this->once())
     ->method('execute')
     ->with($other->value())
     ->willReturn('done');
 
-$stub = self::createStub(ServiceInterface::class);
+$stub = $this->createStub(ServiceInterface::class);
 $stub
     ->method('execute')
     ->willReturn('done');

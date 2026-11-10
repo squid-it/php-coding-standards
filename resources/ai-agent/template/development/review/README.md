@@ -8,7 +8,8 @@ Use the installed `03-review.md` prompt. Record:
 - the reviewed delivery report, and the commit or diff;
 - the environment the review ran in ({{REVIEW_ENVIRONMENT, for example PHP and extension versions, platform}});
 - the exact verification commands ({{REVIEW_VERIFICATION}}) with a Passed, Failed, Skipped, or Pending result for each;
-- findings with `file:line` and a failure path;
+- findings with `file:line`, a short description of that location, and the Intended, Observed, and Resolution parts,
+  with the failure path under Observed;
 - responsibility findings under their own heading: every touched class read as a whole and checked against the
   responsibility map, with the responsibility that does not belong and its proposed home;
 - suggestions, kept separate from findings;

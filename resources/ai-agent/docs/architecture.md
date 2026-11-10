@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: 'Design and architecture rules for SOLID, single responsibility, parameter limits, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI.'
+description: 'Design and architecture rules for SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI.'
 ---
 
 # Design and Architecture Standards
@@ -53,6 +53,20 @@ class, judge the class as it will be after the change.
   3. Evaluate whether the class is taking on too many responsibilities and should be split into smaller, focused
      collaborators.
   4. When in doubt, ask for clarification.
+
+## Module structure
+
+New modules follow this layout:
+
+| Path | Contains |
+|---|---|
+| `ModuleName/Data` | Value objects and DTOs |
+| `ModuleName/Interface` | Interfaces forming the public API |
+| `ModuleName/Enum` | Enums |
+| `ModuleName/Exception` | Exceptions |
+| `ModuleName/Factory` | Factories |
+| `ModuleName/Factory/Interface` | Factory interfaces, kept out of the public API entry directory |
+| `ModuleName/SubModuleName/*` | Repeat the above, or ask for clarification |
 
 ## Dependencies
 

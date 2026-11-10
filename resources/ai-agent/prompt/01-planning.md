@@ -42,16 +42,7 @@ Write the plan to `{{OUTPUT_PATH}}`.
 
 ## Module structure
 
-New modules follow this layout:
-
-| Path | Contains |
-|---|---|
-| `ModuleName/Data` | Value objects and DTOs |
-| `ModuleName/Interface` | Interfaces forming the public API |
-| `ModuleName/Enum` | Enums |
-| `ModuleName/Factory` | Factories |
-| `ModuleName/Factory/Interface` | Factory interfaces, kept out of the public API entry directory |
-| `ModuleName/SubModuleName/*` | Repeat the above, or ask for clarification |
+New modules follow the layout under "Module structure" in the company-wide `architecture.md`.
 
 ## Naming
 

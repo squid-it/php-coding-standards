@@ -8,8 +8,11 @@ description: 'PHPUnit rules for test naming, test namespaces, mocks and stubs, e
 These rules supplement the company-wide `AGENTS.md`.
 
 - Prefer PHPUnit ^13.2. Follow the consuming repository's local Composer constraint when it uses another supported version.
-- When testing exceptions, use static calls for exception assertions: `self::expectException`,
-  `self::expectExceptionMessageIs`, or `self::expectExceptionMessageIsOrContains` instead of their `$this->` forms.
+- When testing exceptions, use `$this->` form calls for exception assertions: `$this->expectException`,
+  `$this->expectExceptionMessageIs`, or `$this->expectExceptionMessageIsOrContains` instead of their `self::` forms.
+- Call `$this->createMock(...)` and `$this->createStub(...)`, and use `$this->` for invocation-count matchers such as
+  `$this->once()` and `$this->exactly(...)`. Assertions and constraint matchers use `self::`: `self::assertSame(...)`,
+  `self::stringStartsWith(...)`. PHP-CS-Fixer enforces all of these except `createMock` and the exception assertions.
 - If mocking a PSR7 `ResponseInterface` or `RequestInterface` is not possible, use `nyholm/psr7`
 - The unit test function name needs to contain the expected outcome suffix: `Succeeds`, `Fails`,
   `ThrowsExceptionOnFailure`, etc.
@@ -17,6 +20,9 @@ These rules supplement the company-wide `AGENTS.md`.
 - Import the `Throwable` class
 - When using data providers in PHPUnit tests, always use attribute syntax
 - Unit tests need to be stored in the `tests/Unit` folder and integration tests in the `tests/Integration` folder
+- A unit test exercises one class and replaces its service dependencies with mocks or stubs. It must not depend on a
+  database, network, running service, or forked process. A test that needs any of those, or that verifies several real
+  services working together, is an integration test.
 - If a class name has a namespace such as `Vendor\Package\Module`, insert the `Tests` prefix after the first namespace
   word and `Unit` or `Integration` after the second word. Example unit test:
   `Vendor\Package\Module` => `Vendor\Tests\Package\Unit\Module`
@@ -46,20 +52,20 @@ These rules supplement the company-wide `AGENTS.md`.
 
 **Implementation Strategy:**
 
-1. Configure the expected invocation count with `expects(self::exactly(...))`.
+1. Configure the expected invocation count with `expects($this->exactly(...))`.
 2. Configure expected arguments with `withParameterSetsInOrder(...)`, `withParameterSetsInAnyOrder(...)`, or
    `withParameterSetsInPartialOrder(...)`.
 3. Configure consecutive return values with `willReturn(...)`.
-4. Call `seal()` after configuration when using sealed mock objects.
+4. Call `seal()` after configuration when using sealed mock objects, do not call `seal()` in `setUp()`.
 
 **Example: Ordered calls with ordered return values**
 
 ```php
 public function testConsecutiveCallsSucceeds(): void
 {
-    $myService = self::createMock(MyService::class);
+    $myService = $this->createMock(MyService::class);
     $myService
-        ->expects(self::exactly(2))
+        ->expects($this->exactly(2))
         ->method('execute')
         ->withParameterSetsInOrder(
             [self::stringStartsWith('first')], // with argument constraint

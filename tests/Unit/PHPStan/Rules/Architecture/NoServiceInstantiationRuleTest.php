@@ -122,7 +122,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
     public function testDuplicateInstantiatedClassReflectionsAreReportedOnceSucceeds(): void
     {
         /** @var Stub&Type $duplicatedObjectType */
-        $duplicatedObjectType = self::createStub(Type::class);
+        $duplicatedObjectType = $this->createStub(Type::class);
         $duplicatedObjectType
             ->method('getObjectClassReflections')
             ->willReturn([
@@ -709,7 +709,7 @@ final class NoServiceInstantiationRuleTest extends PHPStanTestCase
         string $filePath = __FILE__,
     ): Scope&NodeCallbackInvoker&CollectedDataEmitter&DependencyTracker {
         /** @var CollectedDataEmitter&DependencyTracker&NodeCallbackInvoker&Scope&Stub $scope */
-        $scope = self::createStubForIntersectionOfInterfaces(
+        $scope = $this->createStubForIntersectionOfInterfaces(
             [Scope::class, NodeCallbackInvoker::class, CollectedDataEmitter::class, DependencyTracker::class],
         );
         $scope->method('getClassReflection')->willReturn($classReflection);

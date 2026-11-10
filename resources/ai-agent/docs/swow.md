@@ -121,7 +121,10 @@ try {
     }
 
     if (SwowExceptionUtil::isClosed($channelException) === true) {
-        throw ResultChannelClosedException::fromTask($this->taskId, $channelException);
+        throw new ResultChannelClosedException(
+            sprintf('Result channel closed for task %s', $this->taskId),
+            previous: $channelException,
+        );
     }
 
     throw $channelException;
@@ -183,7 +186,7 @@ $coroutineTerminationOutcome = $this->coroutineTerminator->terminate(
     new CoroutineTerminationRequest(
         coroutine: $this->workerCoroutine,
         waitGroup: $this->waitGroup,
-        forcedStopThrowable: ForcedWorkerStopException::fromWorker($this->workerId),
+        forcedStopThrowable: new ForcedWorkerStopException(sprintf('Forced stop of worker %s', $this->workerId)),
         forceStopWaitTimeoutInMs: 500,
         coroutineGracefulStopStage: new CoroutineGracefulStopStage(
             waitTimeoutInMs: 500,
@@ -193,7 +196,7 @@ $coroutineTerminationOutcome = $this->coroutineTerminator->terminate(
 );
 
 if ($coroutineTerminationOutcome->coroutineTerminationResult === CoroutineTerminationResult::Killed) {
-    $this->logger->warning('Worker killed after forced stop timed out', ['workerId' => $this->workerId]);
+    $this->logger->error('Worker killed after forced stop timed out', ['workerId' => $this->workerId]);
 }
 ```
 
@@ -249,7 +252,9 @@ try {
     }
 }
 
-$this->workerCoroutine->throw(ForcedWorkerStopException::fromWorker($this->workerId));
+$this->workerCoroutine->throw(new ForcedWorkerStopException(
+    sprintf('Forced stop of worker %s', $this->workerId)
+));
 
 try {
     $this->waitGroup->wait(500);

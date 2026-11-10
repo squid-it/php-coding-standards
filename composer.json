@@ -13,13 +13,13 @@
     "sort-packages": true
   },
   "require": {
-    "php": "^8.4",
+    "php": "^8.5",
     "friendsofphp/php-cs-fixer": "^v3.95",
-    "phpstan/phpstan": "^2.2"
+    "phpstan/phpstan": "^2.3"
   },
   "require-dev": {
     "league/container": "^5.2",
-    "phpunit/phpunit": "^12.5 | ^13.2"
+    "phpunit/phpunit": "^13.4"
   },
   "autoload": {
     "psr-4": {

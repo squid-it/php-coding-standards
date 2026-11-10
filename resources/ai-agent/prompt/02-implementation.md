@@ -25,7 +25,8 @@ Implement the plan exactly as documented.
 ## Deviation protocol
 
 If you encounter a needed change or a deviation from the plan, **discuss it before implementing it.**
-Once agreed, follow it and note it in the report.
+Describe each one with Intended (what the plan says), Observed (what you found that the plan does not handle), and
+Resolution (the change you propose). Once agreed, follow it and note it in the report.
 
 A plan that turns out to be wrong is useful information. Silently implementing something different is not.
 

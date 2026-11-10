@@ -13,12 +13,15 @@ description applies, read the file.
 
 | Read | Description |
 |---|---|
-| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md` | Design and architecture rules for SOLID, single responsibility, parameter limits, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md` | Design and architecture rules for SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/review.md` | Rules for reviewing code, plans, and delivered work: what to check, how to verify findings, and how to report them. Read when asked for a review, when writing a review document, or when responding to review findings. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/swow.md` | Swow coroutine rules for scheduling, SwowTools interfaces, the wait group lifecycle, exception codes, channel listeners, and stopping coroutines. Read when the work uses `Swow\*` or `SquidIT\SwowTools\*` APIs; starts, synchronizes, or stops coroutines; uses channels, wait groups, selectors, or listeners; or handles Swow exceptions. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/swow-process.md` | Rules for the process APIs of the custom Swow build. Read when the work forks processes, waits on child processes, reads child exit status, or handles signals. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/phpunit.md` | PHPUnit rules for test naming, test namespaces, mocks and stubs, exception assertions, and consecutive calls. Read when writing, changing, or reviewing PHPUnit tests. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/phpdoc.md` | PHPDoc rules for array types, `@return`, and `@throws`. Read when writing or changing PHP method signatures or docblocks. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/date-time.md` | Date, time, and timezone rules, with UTC as the default. Read when the work creates, parses, compares, or serializes dates, times, or timezones. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/exceptions-logging.md` | Rules for creating, translating, and logging exceptions, and for logger calls. Read when the work creates an exception class, throws or catches exceptions, or writes logger calls. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/long-running-processes.md` | Rules for long-running processes that recover from failures without a developer: retries, timeouts, failure isolation, startup, and stopping. Read when the work writes or changes a worker, consumer, scheduler, supervisor, or any loop that runs until it is stopped. |
 | `vendor/squidit/php-coding-standards/README.md` | Valid and invalid examples and configuration options for every PHPStan and PHP-CS-Fixer rule. Read when a check reports an error you do not know how to fix, or when a rule's behavior is unclear. It is not a required read. |
 
 -----
@@ -50,6 +53,24 @@ description applies, read the file.
 - After completing implementation and the required verification, present all changed files together and request review
   of the complete change set. Request reviews per file only when explicitly instructed.
 
+### Documenting and discussing points
+
+Write every point raised in a review, open issue, plan deviation, or discussion so that anyone can pick it up without
+prior context:
+
+- **Intended:** what the code, plan, or rule should do.
+- **Observed:** what actually happens, including the input or state that leads to it.
+- **Resolution:** the fix, or the options and a recommendation. Say whether it is proposed, agreed, or still open.
+
+Status updates and direct answers do not need this structure.
+
+Never refer to something by its reference alone, such as `10`, `T2`, `3.4`, or a file path. Add a short description so
+the reader does not have to open the referenced document: "T2 (retry the failed upload)".
+
+Unless the developer or the repository-specific instructions say otherwise, assume the developer is a senior PHP
+developer who is not familiar with other languages. When discussing or writing about non-PHP code, explain what it does
+in terms a PHP developer recognizes.
+
 -----
 
 ## Boundaries
@@ -76,9 +97,9 @@ messages, even when asked.
 
 ## Design and Architecture Standards
 
-The full rules (SOLID, single responsibility, parameter limits, dependencies, object construction roles, and invokable
-objects) are in `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`. These rules apply to
-every line of code you write:
+The full rules (SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles,
+and invokable objects) are in `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`. These rules
+apply to every line of code you write:
 
 - **Do not instantiate service classes with `new`** outside `Factory`, `Builder`, and `Instantiator` classes, enums,
   tests, and DI service providers. Inject the service, or inject a factory when new instances are needed during

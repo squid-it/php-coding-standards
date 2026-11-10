@@ -53,8 +53,9 @@ name; their namespace follows from the directory layout under "Public API".
 
 ### Directory layout
 
-{{The full file tree of every file created or modified, following the module structure in the planning prompt
-(`Data`, `Interface`, `Enum`, `Factory`, `Factory/Interface`, sub-modules). Include the tests.}}
+{{The full file tree of every file created or modified, following the module structure in the company-wide
+`architecture.md` (`Data`, `Interface`, `Enum`, `Exception`, `Factory`, `Factory/Interface`, sub-modules). Include
+the tests.}}
 
 ### Responsibility map
 
