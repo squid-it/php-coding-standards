@@ -37,8 +37,9 @@ composer require --dev squidit/php-coding-standards
 This package includes the company-wide PHP agent instructions:
 
 - [`resources/ai-agent/AGENTS.md`](resources/ai-agent/AGENTS.md) contains the rules that always apply.
-- [`resources/ai-agent/docs/`](resources/ai-agent/docs/) contains topic instructions (architecture, code review,
-  Swow coroutines, Swow processes, PHPUnit, PHPDoc, date and time, exceptions and logging, long-running processes).
+- [`resources/ai-agent/docs/`](resources/ai-agent/docs/) contains topic instructions (architecture, planning, code
+  review, writing documents, Swow coroutines, Swow processes, PHPUnit, PHPDoc, date and time, exceptions and logging,
+  long-running processes).
   `AGENTS.md` lists when each file applies, so agents read a topic file only when the work needs it.
 
 [`resources/ai-agent/AGENT.md`](resources/ai-agent/AGENT.md) is the previous single-file location. It now only points
@@ -82,7 +83,9 @@ drifting apart, while `composer.lock` keeps the applied version deterministic fo
 Session prompts live in [`resources/ai-agent/prompt/`](resources/ai-agent/prompt/). Start a new module or feature with
 [`00-start-plan.md`](resources/ai-agent/prompt/00-start-plan.md): it sets up a `.development/<feature>/` folder from
 [`resources/ai-agent/template/development/`](resources/ai-agent/template/development/) and writes the plan outline. The
-`start-chunk.md` it creates starts every later planning, implementation, and review session.
+`start-chunk.md` it creates starts every later planning, implementation, and review session. The plan requirements
+themselves live in [`docs/planning.md`](resources/ai-agent/docs/planning.md), so they also apply when a developer asks
+for a plan without these prompts.
 
 ---
 

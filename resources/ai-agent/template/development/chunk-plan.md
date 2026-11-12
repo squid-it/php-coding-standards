@@ -1,12 +1,15 @@
 # Chunk {{NN}}: {{CHUNK_TITLE}}
 
-**Current state ({{DATE}}):** Planned. Depends on {{DEPENDENCIES, or "nothing"}}.
+This chunk plan describes what chunk {{NN}} of {{MODULE_NAME}} builds and proves. The finished design is in the
+[general plan](plan.md).
 
 ## Goal
 
 {{What this chunk delivers and why it comes now. A working, testable slice that leaves the test suite green.}}
 
 General plan sections: {{the sections of plan.md this chunk implements, by name}}.
+
+**Status ({{DATE}}):** Planned. Depends on {{DEPENDENCIES, or "nothing"}}.
 
 ## Responsibilities
 

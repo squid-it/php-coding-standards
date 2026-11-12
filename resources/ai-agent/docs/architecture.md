@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: 'Design and architecture rules for SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI.'
+description: 'Design and architecture rules for SOLID, single responsibility, validation ownership, parameter limits, module layout, dependencies, configuration grouping, object construction roles, and invokable objects. Read for any planning, refactoring, or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI.'
 ---
 
 # Design and Architecture Standards
@@ -20,15 +20,17 @@ These rules supplement the company-wide `AGENTS.md`.
 
 Single responsibility is judged on the whole class, not on the change. Each addition can look reasonable on its own
 while the class it lands in slowly takes on a second job. Before adding a method, property, or dependency to an existing
-class, judge the class as it will be after the change.
+class, judge the class as it will be after the change. After extracting collaborators in a refactor, judge the class
+that remains in the same way: an extraction does not by itself give the remaining class a single responsibility.
 
-- State the class's responsibility in one sentence without "and". If the sentence needs "and", the class has two
-  responsibilities.
+- State the class's responsibility in one sentence and check that sentence against what the class contains: its groups
+  of private methods, its state, and its collaborators. A sentence that needs "and" is a warning sign. A sentence
+  without "and" proves nothing when it is broad: "loads settings" can hide configuration and discovery rules.
 - Name the class's reason to change. A class that changes for two unrelated reasons, for example a lifecycle rule and a
   configuration format, has two responsibilities.
 - Warning signs that a class has taken on a second responsibility:
   - it decides what should happen and also carries out the mechanics behind that decision;
-  - it validates the contents of another object; validation belongs to the object that carries the data;
+  - it validates a rule it does not own (see "Validation ownership");
   - a group of its private methods serves a different subject than its public methods;
   - its decisions can only be tested with real infrastructure (processes, sockets, the file system) because the
     mechanics cannot be replaced by a stub;
@@ -40,6 +42,19 @@ class, judge the class as it will be after the change.
   collaborator's name, its single responsibility, and its interface. Do not split silently, and do not grow the class
   silently.
 
+## Validation ownership
+
+Assign each check to the component that has the information to enforce it:
+
+- A data object validates its own fields.
+- The object that holds a collection validates the relationships within that collection, such as duplicate entries.
+- The component that performs an external operation (file, network, process) checks the state that operation needs,
+  when the operation runs.
+
+An orchestrator that calls a collaborator's check in the required order is not validating: it owns the order and the
+failure behavior, not the rule. A rule about the relationship between several objects does not belong to one of those
+objects merely because it mentions that object's data.
+
 ## Constructor & Method Parameter Limits
 
 - **Avoid Parameter Bloat:** Having more than 8 constructor or method parameters on service, orchestrator, or manager
@@ -48,8 +63,8 @@ class, judge the class as it will be after the change.
   from this limit when representing structured payloads or configuration snapshots.
 - **Remediation Strategy:** When a service constructor exceeds 8 arguments:
   1. Group related scalar/configuration arguments into an immutable Value Object in the `Data` directory.
-  2. Move dependency extraction, pre-flight validation, or assembly logic into a dedicated Factory, Builder, or named
-     static constructor (`from{X}()`, `create()`).
+  2. Move pre-flight validation into the value object that carries the data, or into a named static constructor
+     (`from{X}()`). Move one-time assembly into the DI container registration (see "Object construction roles").
   3. Evaluate whether the class is taking on too many responsibilities and should be split into smaller, focused
      collaborators.
   4. When in doubt, ask for clarification.
@@ -68,19 +83,31 @@ New modules follow this layout:
 | `ModuleName/Factory/Interface` | Factory interfaces, kept out of the public API entry directory |
 | `ModuleName/SubModuleName/*` | Repeat the above, or ask for clarification |
 
+When a refactor touches existing classes that differ from this layout and the request does not settle whether to align
+them, recommend aligning them or leaving them as they are. State the consequences: namespace and public API changes,
+and files moved outside the classes being refactored. Agree on the structural scope before finalizing the plan;
+approval to refactor does not cover a wider reorganization.
+
 ## Dependencies
 
 - Prefer constructor injection for object dependencies and depend on interfaces when a useful interface exists.
 - A promoted constructor dependency may use a default `new` expression when the class has a sensible default
   implementation.
 - State owned exclusively by the object does not need to be injected.
+- Let the repository's DI container assemble services that are created once for the application or a container scope,
+  using its existing registrations.
 - When a class must create multiple dependency instances during execution, inject a factory.
+- Group configuration values that describe one concept into one value object, whatever the parameter count. Keep
+  service dependencies as constructor arguments; never move them into an options object to lower the count.
 
 ## Object construction roles
 
-- A class ending with `Factory` creates fresh instances during normal application execution. Use a factory when new
-  instances must be constructed repeatedly or when construction policy needs to be centralized. Expose a named creation
-  method such as `create()`.
+- A class ending with `Factory` creates fresh instances for a consumer during normal application execution. Use one only
+  when the current use case needs repeated creation; name the consumer and the point where it creates instances. Expose
+  a named creation method such as `create()`.
+- One-time assembly of a service belongs in its DI container registration (a service provider or an `Instantiator`),
+  even when the wiring is complex. Centralizing construction, convenience in tests, and possible future callers are not
+  a creation need. Do not add a builder or other wrapper to hold wiring that the container can own.
 - A class ending with `Builder` is a helper for assembling a complex object or object graph from multiple collaborating
   objects. Use a builder only when that construction would otherwise be difficult to understand. Expose a named method
   such as `build()`.

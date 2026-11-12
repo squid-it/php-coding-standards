@@ -68,7 +68,8 @@ Write a report to `{{REPORT_OUTPUT_PATH}}` containing:
 
 - every file created, modified or deleted, and why;
 - every deviation from the plan, and what was agreed;
-- verification output — state plainly if anything still fails;
+- verification results, recorded as described under "Verification results" in the company-wide
+  `writing-documents.md` — state plainly if anything still fails;
 - anything found along the way that belongs in a follow-up rather than this change.
 
 Then ask me to review the work.

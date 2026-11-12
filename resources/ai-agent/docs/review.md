@@ -6,7 +6,8 @@ description: 'Rules for reviewing code, plans, and delivered work: what to check
 # Reviewing work
 
 These rules supplement the company-wide `AGENTS.md`. Judge design against
-`vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`.
+`vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`. A review written as a document also
+follows `vendor/squidit/php-coding-standards/resources/ai-agent/docs/writing-documents.md`.
 
 ## What to check
 
@@ -17,6 +18,14 @@ These rules supplement the company-wide `AGENTS.md`. Judge design against
   warning signs under "Single responsibility" in `architecture.md` and, when the work has a plan, against its row in
   the plan's responsibility map. A class that has taken on a second responsibility is a finding even when every changed
   line is correct.
+- **Refactors:** compare the ownership the plan claims with the complete resulting classes, especially the original
+  class after collaborators were extracted. Check that the behavior the plan lists as preserved still holds, and that
+  every intentional behavior or API change was agreed.
+- **New abstractions:** for each new interface, factory, builder, or other layer, name the responsibility it separates
+  or the replacement or testing need it serves. A layer without one is a finding.
+- **Plans and other documents:** check them against `writing-documents.md`: the introduction says what the document is
+  about, only settled decisions are recorded, and open items exist only where the developer agreed to them. Check a
+  plan also against the requirements in `planning.md`.
 - **Standards:** naming rules from the company-wide `AGENTS.md`, architecture rules from `architecture.md`, and the
   enforced PHPStan rules.
 

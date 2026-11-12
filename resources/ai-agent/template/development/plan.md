@@ -1,7 +1,6 @@
 # {{MODULE_NAME}}: general plan
 
-**Current state ({{DATE}}):** {{ONE_LINE, for example: Outline; the public API and responsibility map are agreed,
-internal design is open.}} Chunk order and status: [overview](00-overview.md).
+{{INTRODUCTION: two to four sentences: the module and its repository, what the module does, and who this plan is for.}}
 
 This document describes the finished module. The chunk plans describe how it is built; every decision they make is
 written into this plan, in the section it belongs to. For parts that are already built, the code is the specification:
@@ -9,17 +8,6 @@ this plan keeps only what the code does not say (why, and what later chunks stil
 their full design here.
 
 Package: `{{PACKAGE_NAME}}` · Namespace: `{{NAMESPACE}}` · PHP {{PHP_VERSION}} · {{PLATFORM_AND_RUNTIME_REQUIREMENTS}}
-
-### Classes used in this document
-
-Methods are written as `ClassName::method()`, also for instance methods. Module classes are named by their short class
-name; their namespace follows from the directory layout under "Public API".
-
-{{OPTIONAL: a table of short names for external classes this plan mentions often}}
-
-| Short name | Class |
-|---|---|
-| {{SHORT_NAME}} | {{FULLY_QUALIFIED_CLASS_NAME}} |
 
 ---
 
@@ -30,6 +18,20 @@ name; their namespace follows from the directory layout under "Public API".
 ## Goal
 
 {{What is true when the module is finished. A short list of outcomes, each one checkable.}}
+
+**Status ({{DATE}}):** {{ONE_LINE, for example: Outline; the public API and responsibility map are agreed.}} Chunk
+order and status: [overview](00-overview.md).
+
+## Classes used in this document
+
+Methods are written as `ClassName::method()`, also for instance methods. Module classes are named by their short class
+name; their namespace follows from the directory layout under "Public API".
+
+{{OPTIONAL: a table of short names for external classes this plan mentions often}}
+
+| Short name | Class |
+|---|---|
+| {{SHORT_NAME}} | {{FULLY_QUALIFIED_CLASS_NAME}} |
 
 ## Solution in one paragraph
 
@@ -43,7 +45,8 @@ name; their namespace follows from the directory layout under "Public API".
 
 ### Out of scope
 
-{{What it deliberately does not deliver, and where that work goes instead.}}
+{{The non-goals: what could reasonably be expected from this module but is deliberately not delivered, and where that
+work goes instead.}}
 
 ## Preconditions
 
@@ -59,8 +62,10 @@ the tests.}}
 
 ### Responsibility map
 
-One row per class. The responsibility is one sentence without "and". A class that does not fit in one row is two
-classes. Implementation and review are checked against this table; a change to a row is a decision, written here first.
+One row per class, following "Single responsibility" in the company-wide `architecture.md`: one responsibility, checked
+against the class's methods, state, and collaborators, and one reason to change. A class that needs two reasons to
+change is two classes. Implementation and review are checked against this table; a change to a row is a decision,
+written here first.
 
 | Class | Responsibility | Reason to change | Must not |
 |---|---|---|---|
@@ -76,19 +81,26 @@ where naming is steered before any implementation exists.}}
 
 ### Usage
 
-{{How a consumer uses the module: a minimal example first, then the variations.}}
+{{How a consumer uses the module: one representative caller first (the configuration, how the service is obtained,
+and the result), then the variations. For a public API change: the usage before and after, with the compatibility
+changes.}}
 
 ## Internal design
 
-{{The behaviour behind the public API: states, invariants, the main flows, failure handling. In an outline, list each
-open design question here with the chunk that must answer it, instead of guessing.}}
+{{The behaviour behind the public API: states, invariants with their owner and when they are enforced, the main flows,
+failure handling. A design question the developer agreed to leave open is registered in the open issues; name that
+issue here instead of guessing.}}
+
+{{OPTIONAL, for a refactor: the ownership before and after, including what stays in the original class; the behaviour
+that must not change; and the intentional behaviour or API changes.}}
 
 ## Tests
 
 ### Test conventions
 
 {{Repository test rules that matter here: mocks and stubs only in unit tests, real objects in integration tests,
-where scratch files go, platform-dependent skips.}}
+where scratch files go, platform-dependent tests, and the Windows and Linux path cases from the company-wide
+`phpunit.md`.}}
 
 ### Unit tests
 
@@ -104,7 +116,8 @@ where scratch files go, platform-dependent skips.}}
 
 ## Decisions
 
-{{Each decision by name: what was decided, the alternatives, and why. May be empty in an outline.}}
+{{Per decision worth explaining, by name: the alternatives and why they were rejected. The decision itself is written
+into the section it changes. May be empty.}}
 
 ## Risks and follow-ups
 

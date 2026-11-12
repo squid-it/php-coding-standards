@@ -1,6 +1,6 @@
 ---
 name: phpunit
-description: 'PHPUnit rules for test naming, test namespaces, mocks and stubs, exception assertions, and consecutive calls. Read when writing, changing, or reviewing PHPUnit tests.'
+description: 'PHPUnit rules for test naming, test namespaces, mocks and stubs, exception assertions, consecutive calls, and path handling tests. Read when writing, changing, or reviewing PHPUnit tests.'
 ---
 
 # PHP Unit Tests
@@ -37,6 +37,20 @@ These rules supplement the company-wide `AGENTS.md`.
   Do not proactively remove the attribute or refactor existing tests to eliminate it unless explicitly requested.
 - Adding tests to an existing class that carries the attribute does not require removing it. The new tests must use
   appropriate mocks or stubs without relying on the attribute to suppress missing-expectation notices.
+
+## Path handling tests
+
+Code runs on Windows and Linux (see the company-wide `AGENTS.md`), so path handling is tested in both formats on every
+host:
+
+- Unit tests for code that parses, normalizes, compares, or maps paths use a data provider with Unix-style and
+  Windows-style inputs: `/` and `\` separators, absolute and relative paths, trailing separators, the Unix root, a drive
+  root (`C:\`) and a drive-relative path (`C:`), UNC paths (`\\server\share`), and sibling directories that share a
+  name prefix (`Settings` and `SettingsExtra`). Include the cases that apply to the code under test.
+- Keep these unit tests separate from real filesystem operations: a Windows path in a unit test on Linux does not need
+  to exist. Filesystem tests use the host's temporary directory and build paths with the host's separator.
+- Do not hard-code `/` in expected native paths, and do not assume Unix permission behavior on Windows.
+- A test for code that only one platform supports declares that platform with `#[RequiresOperatingSystemFamily]`.
 
 ## PHPUnit: Mocking Consecutive Calls
 

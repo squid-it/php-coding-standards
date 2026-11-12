@@ -13,11 +13,13 @@ description applies, read the file.
 
 | Read | Description |
 |---|---|
-| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md` | Design and architecture rules for SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles, and invokable objects. Read for any planning or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md` | Design and architecture rules for SOLID, single responsibility, validation ownership, parameter limits, module layout, dependencies, configuration grouping, object construction roles, and invokable objects. Read for any planning, refactoring, or review; when creating a class or interface; when adding a method, property, or constructor dependency to an existing class; when constructing objects or choosing a class suffix (`Factory`, `Builder`, `Instantiator`, `Provider`); or when wiring DI. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/planning.md` | Requirements for development plans: file tree, responsibility map, interfaces, caller example, refactor ownership and preserved behavior, tests, and scope. Read when creating or revising a development plan, including a refactor plan, whether or not a planning prompt is used. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/review.md` | Rules for reviewing code, plans, and delivered work: what to check, how to verify findings, and how to report them. Read when asked for a review, when writing a review document, or when responding to review findings. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/writing-documents.md` | Rules for writing and revising Markdown documents: plans, proposals, specifications, reviews, reports, change requests, registers, and READMEs. Covers document order, keeping only the current state, settled content, and recording verification results. Read before writing a document or revising one, including a second round. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/swow.md` | Swow coroutine rules for scheduling, SwowTools interfaces, the wait group lifecycle, exception codes, channel listeners, and stopping coroutines. Read when the work uses `Swow\*` or `SquidIT\SwowTools\*` APIs; starts, synchronizes, or stops coroutines; uses channels, wait groups, selectors, or listeners; or handles Swow exceptions. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/swow-process.md` | Rules for the process APIs of the custom Swow build. Read when the work forks processes, waits on child processes, reads child exit status, or handles signals. |
-| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/phpunit.md` | PHPUnit rules for test naming, test namespaces, mocks and stubs, exception assertions, and consecutive calls. Read when writing, changing, or reviewing PHPUnit tests. |
+| `vendor/squidit/php-coding-standards/resources/ai-agent/docs/phpunit.md` | PHPUnit rules for test naming, test namespaces, mocks and stubs, exception assertions, consecutive calls, and path handling tests. Read when writing, changing, or reviewing PHPUnit tests. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/phpdoc.md` | PHPDoc rules for array types, `@return`, and `@throws`. Read when writing or changing PHP method signatures or docblocks. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/date-time.md` | Date, time, and timezone rules, with UTC as the default. Read when the work creates, parses, compares, or serializes dates, times, or timezones. |
 | `vendor/squidit/php-coding-standards/resources/ai-agent/docs/exceptions-logging.md` | Rules for creating, translating, and logging exceptions, and for logger calls. Read when the work creates an exception class, throws or catches exceptions, or writes logger calls. |
@@ -64,6 +66,18 @@ prior context:
 
 Status updates and direct answers do not need this structure.
 
+Explaining or clarifying a technical proposal is a discussion, not a direct answer, in chat as well as in documents:
+
+- Show a behavior change with a concrete input: what happens today, what happens after the change, and what the caller
+  can or can no longer do.
+- Ask for a decision as a question: the choice, the viable options, and your recommendation with its reason. Ask only
+  about choices that materially change requirements, behavior, public API, architecture, naming, or scope. Agreement on
+  one choice does not settle related choices. Do not ask again about a settled choice without new evidence.
+- Settle choices before writing contracts or documents that depend on them. A request to write a document is not
+  agreement with its content, and silence is not agreement.
+- When the developer says a point is unclear, explain that point again in simpler terms, with a concrete example,
+  before continuing.
+
 Never refer to something by its reference alone, such as `10`, `T2`, `3.4`, or a file path. Add a short description so
 the reader does not have to open the referenced document: "T2 (retry the failed upload)".
 
@@ -97,8 +111,8 @@ messages, even when asked.
 
 ## Design and Architecture Standards
 
-The full rules (SOLID, single responsibility, parameter limits, module layout, dependencies, object construction roles,
-and invokable objects) are in `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`. These rules
+The full rules (SOLID, single responsibility, validation ownership, parameter limits, module layout, dependencies,
+object construction roles, and invokable objects) are in `vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md`. These rules
 apply to every line of code you write:
 
 - **Do not instantiate service classes with `new`** outside `Factory`, `Builder`, and `Instantiator` classes, enums,
@@ -131,6 +145,10 @@ them strictly.
 
 - **PHP 8.4+ minimum** - use a higher version when the consuming repository confirms it locally through `composer.json`
   or repository-specific instructions.
+- **Code and tests must work on Windows and Linux.** Do not assume the operating system you run on: development usually
+  happens on Windows, while CI may run on another system. Code that only one platform supports, such as Swow process
+  forking or POSIX functions, states its platform, and its tests declare it with `#[RequiresOperatingSystemFamily]`.
+  Running the checks on both systems is not required.
 - Strict typing is mandatory. Use promoted properties, readonly classes, and union types where appropriate. Deviate only
   when the requirement cannot be implemented correctly with those features.
 - **No `microtime()`** - **always use `hrtime(true)`** for time measurements.
@@ -269,8 +287,8 @@ carries the identifier below. When the fix is unclear, look up the rule in the s
 ### Definition of done
 
 - Work is done only when every applicable verification command has run on the final code and passed.
-- Report the commands you ran and their results. If a command failed or could not run, say so and show the output.
-  Never report a check as passing when you did not run it.
+- Report the commands you ran, their results, and the operating system they ran on. If a command failed or could not
+  run, say so and show the output. Never report a check as passing when you did not run it.
 
 -----
 

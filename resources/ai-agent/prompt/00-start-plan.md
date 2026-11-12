@@ -11,15 +11,16 @@ reviewing) starts from the `start-chunk.md` that this session creates.
 ```
 AGENTS.md
 vendor/squidit/php-coding-standards/resources/ai-agent/docs/architecture.md
-vendor/squidit/php-coding-standards/resources/ai-agent/prompt/01-planning.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/planning.md
+vendor/squidit/php-coding-standards/resources/ai-agent/docs/writing-documents.md
 vendor/squidit/php-coding-standards/resources/ai-agent/template/development/   (every file, including subfolders)
 {{ADDITIONAL_CONTEXT_FILES}}
 ```
 
-`AGENTS.md` chains to the company-wide agent instructions. Read "SOLID and simplicity" and "Single responsibility" in
-`architecture.md` with care: the responsibility map in the outline is built from them. The plan requirements, module
-structure, and naming rules in `01-planning.md` apply to the outline as well. Inspect the neighbouring code, interfaces,
-tests, and service providers before proposing a design.
+`AGENTS.md` chains to the company-wide agent instructions. Read "SOLID and simplicity", "Single responsibility", and
+"Validation ownership" in `architecture.md` with care: the responsibility map in the outline is built from them. The
+plan requirements and naming rules in `planning.md` apply to the outline as well. Inspect the neighbouring code,
+interfaces, tests, and service providers before proposing a design.
 
 ## What we want to develop
 
@@ -63,12 +64,12 @@ Chunk numbering:
 
 ## Rules for the documents
 
-- Every plan, overview, register, and report starts with one current-state line. It says where the document stands
-  now, not how it got there. History belongs in the delivery and review reports.
-- A chunk's status lives only in the overview table. `README.md` and `start-chunk.md` have no current-state line;
-  they link to the overview.
-- Decisions are written into the section they change, not added as amendments at the top.
-- Refer to sections, issues, and decisions by name, never by number. Write methods as `ClassName::method()`.
+Write every document following the company-wide `writing-documents.md`. In this folder:
+
+- `plan.md` and the chunk plans are specifications. `00-overview.md` and `99-open-issues.md` are registers. The
+  delivery and review reports are tracking documents; history belongs there.
+- A chunk's status lives only in the overview table. `README.md` and `start-chunk.md` have no status line; they link
+  to the overview.
 
 ## Single responsibility comes first
 
@@ -77,13 +78,14 @@ session sees mainly its own diff. Every rule that makes a new class costly (agre
 rules, DI wiring) makes the class that already holds the state the cheapest place for new code. Without a map agreed
 up front, that class collects every new behaviour and a later chunk has to split it.
 
-- Every class in the outline gets one row in the map: its responsibility in one sentence without "and", its reason
-  to change, and what it must not do.
+- Every class in the outline gets one row in the map: its responsibility, its reason to change, and what it must not
+  do, following "Single responsibility" in `architecture.md`.
 - Separate deciding from doing. The class that decides what happens does not also carry out the mechanics; the
   mechanics sit behind interfaces, so the decisions can be unit tested with stubs.
 - Name exclusive ownership explicitly: "`X` is the only class that names `Y`", "only `X` logs".
-- Validation sits in the object that carries the data.
-- A class that does not fit in one row is two classes. Propose the split in the outline, not during implementation.
+- Each check sits with its owner, following "Validation ownership" in `architecture.md`.
+- A class that needs two reasons to change is two classes. Propose the split in the outline, not during
+  implementation.
 
 ## What this session produces
 
@@ -92,15 +94,16 @@ The focus is the plan outline. Chunk plans may follow in a second session.
 1. **`plan.md` as an outline**, from the template:
    - Problem, Goal, and Solution in one paragraph;
    - Scope (in and out), and Preconditions;
-   - Public API: the directory layout following the module structure in `01-planning.md`, the responsibility map,
-     and the interfaces written out completely;
+   - Public API: the directory layout following "Module structure" in `architecture.md`, the responsibility map,
+     the interfaces written out completely, and the usage;
    - Tests: which suites prove what;
    - Acceptance criteria.
 
-   A section that needs more design lists the questions it must answer instead of guesses. Decisions and Risks may
-   stay empty.
+   A question this session does not decide goes to `99-open-issues.md`, and the section names that issue instead of
+   guessing. Decisions and Risks may stay empty.
 2. **`00-overview.md`** with the proposed chunks, each one Planned, and "How we work" filled in.
-3. **`99-open-issues.md`** with every question from the outline that this session does not decide.
+3. **`99-open-issues.md`** with every question from the outline that the developer agreed to leave open in this
+   session.
 4. **`README.md`, `start-chunk.md`, `delivery/README.md`, and `review/README.md`** from the templates, with every
    placeholder filled in.
 5. **Chunk plans, only when agreed in this session**, from `chunk-plan.md`. Otherwise the next session uses

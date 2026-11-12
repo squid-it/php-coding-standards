@@ -1,16 +1,18 @@
 # {{MODULE_NAME}} open issues
 
-**Current state ({{DATE}}):** {{ONE_LINE, for example: three issues are open; none is decided yet.}} Settled decisions
-live in the [general plan](plan.md).
+This register keeps the unresolved choices and known limits of {{MODULE_NAME}} visible. The
+[general plan](plan.md) describes the finished behaviour; this file explains what can still go wrong and what was
+decided about it.
 
-This register keeps unresolved choices and known limits visible. The [general plan](plan.md) describes the finished
-behaviour; this file explains what can still go wrong and what was decided about it.
+**Status ({{DATE}}):** {{ONE_LINE, for example: three issues are open; none is decided yet.}} Settled decisions live
+in the [general plan](plan.md).
 
-How to use it: the first chunk an issue affects raises it before implementation. State what is intended and what can
-fail in plain words, give at least two practical options with a recommendation under Resolution, and record the
-developer's decision there, in the issue's own section. A file reference alone is not an explanation. An issue may be
-deferred when the chunk still delivers a working, safe slice; the deferral states its impact, mitigation, and revisit
-point. A documented risk is not a passing test.
+How to use it: an issue is registered here only when the developer agreed to leave it open. The first chunk an issue
+affects raises it before implementation. State what is intended and what can fail in plain words, give at least two
+practical options with a recommendation under Resolution, and record the developer's decision there, in the issue's
+own section. A file reference alone is not an explanation. An issue may be deferred, with the developer's explicit
+agreement, when the chunk still delivers a working, safe slice; the deferral states its impact, mitigation, and
+revisit point. A documented risk is not a passing test.
 
 | Issue | State | Revisit |
 |---|---|---|

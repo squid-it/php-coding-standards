@@ -1,9 +1,10 @@
 # {{MODULE_NAME}} implementation overview
 
-**Current state ({{DATE}}):** {{ONE_LINE: where the work stands now, not how it got there}}
-
-The folder structure and how to start a session are in the [README](README.md). The design is in the
+This overview tracks the implementation of `{{MODULE_PATH}}`: the chunk order, each chunk's status, and the rules we
+work by. The folder structure and how to start a session are in the [README](README.md). The design is in the
 [general plan](plan.md).
+
+**Status ({{DATE}}):** {{ONE_LINE: where the work stands, not how it got there}}
 
 ## Next step
 
@@ -45,17 +46,19 @@ file links to nothing until its plan exists.
 5. **Placeholders fail loudly.** An unimplemented public method throws a `BadMethodCallException` naming the method
    and the chunk that delivers it. It never returns as if the work was done.
 6. **Verification.** The implementation session runs {{AGENT_VERIFICATION}}. The developer runs
-   {{DEVELOPER_VERIFICATION}}. Record each command and whether it passed, failed, was skipped, or is pending, with the
-   failure reason; no test or assertion counts. Results from one platform never stand in for another.
+   {{DEVELOPER_VERIFICATION}}. Record the results as described under "Verification results" in the installed
+   [document rules](../../vendor/squidit/php-coding-standards/resources/ai-agent/docs/writing-documents.md). Results
+   from one platform never stand in for another.
 7. **Reports.** The implementation session writes `delivery/<chunk plan filename>` (see the
    [delivery guide](delivery/README.md)); the review session writes `review/<chunk plan filename>` (see the
    [review guide](review/README.md)). Link each from the progress table.
 8. **Commits.** The agent never creates a Git commit; read-only Git commands are fine. After the developer approves
    the review, mark the chunk Awaiting manual commit and remind the developer to commit. Mark it Complete when the
    developer confirms. Do not begin the next chunk automatically.
-9. **Writing docs.** Every document starts with a one-line current state. Decisions are written into the section they
-   change, not added as amendments at the top. Refer to sections, issues, and decisions by name, never by number, and
-   to methods as `ClassName::method()`.
+9. **Writing docs.** Every document follows the installed
+   [document rules](../../vendor/squidit/php-coding-standards/resources/ai-agent/docs/writing-documents.md): the
+   introduction first, the status after the goal, only the current state in plans and registers, and a new section
+   that records only what changed in delivery and review reports.
 
 ## Review focus per chunk
 
