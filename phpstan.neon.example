@@ -56,6 +56,11 @@ rules:
 	# __invoke() instead. Identifier: squidit.restrictions.disallowAnonymousFunction
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
 
+	# Disallows built-in count() calls in the second expression of a for loop;
+	# calculate the count in the initializer instead.
+	# Identifier: squidit.restrictions.disallowCountInForCondition
+	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowCountInForConditionRule
+
 	# Disallows the logical NOT operator (!); use explicit comparisons instead
 	# (=== false, !== null). Identifier: squidit.restrictions.disallowLogicalNot
 	- SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
