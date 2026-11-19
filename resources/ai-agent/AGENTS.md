@@ -178,6 +178,8 @@ All code runs inside a coroutine, including code that never touches Swow APIs di
 - **Never use logical NOT (`!`)** - use **explicit comparisons** (`=== true`, `=== false`, `!== null`).
 - **Never use arrow functions or anonymous functions** - use an invokable class instead.
 - **Never use `array_map`** - it is banned; use `foreach` instead.
+- **Do not call `count()` in the second expression of a `for` loop** - calculate the count in the initializer or before
+  the loop when the size stays fixed. If the loop must observe size changes, check the size in the loop body.
 - **Use `use` statements** to import classes - **do not import global functions** (for example, `use function bcdiff;`
   is forbidden).
 - **Prefer backed enums** (`string` or `int`) for closed sets of domain values instead of repeating domain string literals.
@@ -275,6 +277,7 @@ carries the identifier below. When the fix is unclear, look up the rule in the s
 |---|---|---|---|
 | `SingleClassPerFileRule` | Stable | `squidit.architecture.singleClassPerFile` | One class, interface, trait, or enum per file |
 | `DisallowAnonymousFunctionRule` | Stable | `squidit.restrictions.disallowAnonymousFunction` | No closures or arrow functions; use an invokable class |
+| `DisallowCountInForConditionRule` | Stable | `squidit.restrictions.disallowCountInForCondition` | No built-in `count()` calls in a `for` condition; calculate the count in the initializer |
 | `DisallowLogicalNotRule` | Stable | `squidit.restrictions.disallowLogicalNot` | No `!` operator; use explicit comparisons (`=== false`, `!== null`) |
 | `TypeSuffixMismatchRule` | Experimental | `squidit.naming.typeSuffixMismatch`, `squidit.naming.interfaceSuffix`, `squidit.naming.interfaceBareName` | Variable and property names reflect their type; strip the `Interface` suffix, keep `Factory` and `Collection` |
 | `IterablePluralNamingRule` | Experimental | `squidit.naming.iterablePluralMismatch`, `squidit.naming.mapForbidden` | Iterables of typed objects use the `*List` suffix and never contain `Map` |

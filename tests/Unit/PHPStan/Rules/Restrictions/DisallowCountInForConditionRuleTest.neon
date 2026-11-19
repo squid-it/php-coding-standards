@@ -1,0 +1,9 @@
+parameters:
+	scanFiles:
+		- Fixtures/DisallowCountInForCondition/Valid/NamespacedCount.php
+		- Fixtures/DisallowCountInForCondition/Valid/CountMethods.php
+
+services:
+	betterReflectionSourceLocator:
+		factory: @PHPStan\Reflection\BetterReflection\BetterReflectionSourceLocatorFactory::create()
+		autowired: false

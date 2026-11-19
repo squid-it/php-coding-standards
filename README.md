@@ -259,6 +259,7 @@ Copy [`phpstan.neon.example`](phpstan.neon.example) into your project as `phpsta
 rules:
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Architecture\SingleClassPerFileRule
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowAnonymousFunctionRule
+    - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowCountInForConditionRule
     - SquidIT\PhpCodingStandards\PHPStan\Rules\Restrictions\DisallowLogicalNotRule
 ```
 
@@ -268,6 +269,7 @@ rules:
 | --- | --- | --- |
 | `SingleClassPerFileRule` | `squidit.architecture.singleClassPerFile` | Enforces that each PHP file contains only one class-like declaration (class, interface, trait, or enum). Anonymous classes are allowed. |
 | `DisallowAnonymousFunctionRule` | `squidit.restrictions.disallowAnonymousFunction` | Disallows anonymous functions (closures) and arrow functions. Use an invokable class with an `__invoke()` method instead. |
+| `DisallowCountInForConditionRule` | `squidit.restrictions.disallowCountInForCondition` | Disallows built-in `count()` calls in the second expression of a `for` loop. Calculate the count in the initializer instead. |
 | `DisallowLogicalNotRule` | `squidit.restrictions.disallowLogicalNot` | Disallows the logical NOT operator (`!`). Use explicit comparisons instead (`=== true`, `=== false`, `!== null`). |
 
 #### `SingleClassPerFileRule`
@@ -333,6 +335,49 @@ Swow\Coroutine::run(function () use ($taskId) {
 $mapper = fn($item) => $item->id; // squidit.restrictions.disallowAnonymousFunction
 
 ```
+
+#### `DisallowCountInForConditionRule`
+
+The second expression of a `for` loop is evaluated before every iteration. This rule reports each built-in `count()`
+call in that condition, including calls nested in comparisons, arguments, or comma-separated expressions. Calculate the
+count once in the first expression (the initializer), or before the loop, to avoid repeated function calls. See the
+[PHP manual's explanation of `for` expressions](https://www.php.net/manual/en/control-structures.for.php).
+
+**Valid:**
+
+```php
+for ($index = 0, $itemCount = count($items); $index < $itemCount; ++$index) {
+    processItem($items[$index]);
+}
+
+$itemCount = count($items);
+for ($index = 0; $index < $itemCount; ++$index) {
+    processItem($items[$index]);
+}
+```
+
+**Invalid:**
+
+```php
+for ($index = 0; $index < count($items); ++$index) {
+    // squidit.restrictions.disallowCountInForCondition
+    processItem($items[$index]);
+}
+
+for ($index = 0; $index < max(1, \count($items)); ++$index) {
+    // squidit.restrictions.disallowCountInForCondition
+    processItem($items[$index]);
+}
+```
+
+Detection resolves function names, so `count()`, `\count()`, case variants, and imported aliases of the built-in function
+are covered. It applies to both arrays and `Countable` objects. User-defined namespaced functions, methods named `count`,
+dynamic function calls, first-class callable creation, and calls inside nested function or class bodies are outside its
+scope. Calls in the initializer, update expression, loop body, `while`, or `do ... while` are allowed.
+
+Caching the count preserves behavior only when the size stays fixed during the loop and evaluating the counted
+expression once is appropriate. The rule does not prove those conditions or apply an automatic fix. If the loop must
+observe size changes, restructure it so that the size check happens in the body.
 
 #### `DisallowLogicalNotRule`
 
