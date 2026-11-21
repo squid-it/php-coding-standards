@@ -62,5 +62,7 @@ claim about behavior, not decoration.
   leave that item open (see "Settled content" in `writing-documents.md`).
 - A direct plan request does not require the development folder that `00-start-plan.md` sets up. Do not invent chunk
   plans, reports, or other planning documents that do not exist.
-- Planning does not authorize code changes. Writing the plan file follows the file-change approval rules in the
-  company-wide `AGENTS.md`.
+- Planning does not authorize implementation. Implementation is every change the plan lists as its result, code or
+  documentation. Writing the plan file follows the file-change approval rules in the company-wide `AGENTS.md`.
+- A planning session writes no delivery or review report. A delivery report records finished implementation work and
+  is written by the session that implements it, after verification.

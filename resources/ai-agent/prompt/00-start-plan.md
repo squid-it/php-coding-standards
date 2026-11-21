@@ -111,7 +111,9 @@ The focus is the plan outline. Chunk plans may follow in a second session.
 
 Rules for splitting into chunks:
 
-- Each chunk delivers a working, testable slice and leaves the test suite green.
+- Each chunk delivers a working, testable slice that leaves the test suite green, or, for a documentation-only chunk
+  (research, a specification), the documents it lists. Either kind gets separate planning and implementation sessions.
+  Only code chunks get delivery and review reports.
 - The order follows the dependencies: foundation (interfaces, value objects, enums) first, documentation and final
   verification last.
 - A chunk is small enough to review in one session. When a chunk needs both a refactor and new behaviour, the

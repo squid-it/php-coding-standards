@@ -8,7 +8,8 @@ verification, reports, commits) are in the overview under "How we work".
 
 > Read `.development/{{FEATURE_FOLDER}}/start-chunk.md` and follow its chunk-plan kickoff for chunk 01. Discuss the
 > scope, the responsibilities, and the open issues first. Do not write the plan file until I explicitly approve. Do not
-> change PHP files. Do not create a Git commit.
+> change PHP files, do not write the documents this chunk produces, and do not write a delivery report. Do not create a
+> Git commit.
 
 ## Chunk-plan kickoff: what the agent does first
 
@@ -33,7 +34,8 @@ Vendor prompt placeholders:
 | Optional naming rules | The general plan's responsibility map and "Type specifications" |
 
 After approval: write the chunk plan, add a decision that changes the finished design to the general plan, register
-new open issues, and set the chunk's link and status (Ready for implementation) in the overview.
+new open issues, and set the chunk's link and status (Ready for implementation) in the overview. Do not write a delivery
+report; the implementation session writes it.
 
 ## Start an implementation session
 
@@ -62,17 +64,20 @@ Vendor prompt placeholders:
 | Optional stage restriction | The selected chunk only. Do not implement a later chunk to close a temporary gap without agreement |
 | Optional test or coverage expectations | The chunk plan's proof requirements, plus the repository testing rules |
 | `{{VERIFICATION_COMMAND}}` | {{AGENT_VERIFICATION}}; {{DEVELOPER_VERIFICATION}}, recorded as pending until the developer supplies the results |
-| `{{REPORT_OUTPUT_PATH}}` | `.development/{{FEATURE_FOLDER}}/delivery/<chunk plan filename>` |
+| `{{REPORT_OUTPUT_PATH}}` | `.development/{{FEATURE_FOLDER}}/delivery/<chunk plan filename>`. For a documentation-only chunk, drop the prompt's Report section; there is no delivery report |
 
 After approval: implement only the agreed chunk, discuss any necessary material change before making it (including a
-class that would take on a second responsibility), run the available verification, write the delivery report, and set
-the chunk's status and link in the overview.
+class that would take on a second responsibility), run the available verification, write the delivery report (code
+chunks only), and set the chunk's status and link in the overview. For a documentation-only chunk, ask the developer to
+review the documents instead.
 
 ## Start a review session
 
 > Read `.development/{{FEATURE_FOLDER}}/start-chunk.md` and follow its review instructions for chunk 01: its plan,
 > delivery report, code changes, and verification. Write the review report. Do not change implementation files unless I
 > explicitly ask. Do not create a Git commit.
+
+A documentation-only chunk has no review session: the developer reviews its documents directly.
 
 The reviewer reads the same files as the implementation kickoff and applies the vendor
 [review prompt](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/03-review.md) to the chunk plan,
@@ -95,4 +100,5 @@ requested, fix the chunk, update its delivery report, and repeat verification an
 
 Use the vendor [planning prompt](../../vendor/squidit/php-coding-standards/resources/ai-agent/prompt/01-planning.md)
 with the general plan, the chunk plan, the open issues, and the accepted dependency reports. Discuss the change first
-and get explicit approval before editing the plan file. Planning approval does not authorise PHP implementation.
+and get explicit approval before editing the plan file. Planning approval does not authorise implementation, code or
+documentation, and a plan revision writes no delivery or review report.

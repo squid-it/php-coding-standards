@@ -1,7 +1,8 @@
 # Delivery report guide
 
-Create a separate report for each implemented chunk, named after its chunk plan file (`NN-<slug>.md`). Link the report
-from the overview only after it exists.
+The implementation session creates a separate report for each implemented code chunk, after the implementation and its
+verification, named after its chunk plan file (`NN-<slug>.md`). A planning session never creates, prefills, or lists
+this report, and a documentation-only chunk has none. Link the report from the overview only after it exists.
 
 Include:
 

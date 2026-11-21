@@ -51,9 +51,11 @@ The repository-wide rules come first: `AGENTS.md` and the company-wide standards
    number filled in.
 3. The session discusses the chunk's open issues and scope first, and changes no files until you explicitly approve.
 4. After implementation the session runs {{AGENT_VERIFICATION}}. You run {{DEVELOPER_VERIFICATION}}. The session
-   writes `delivery/<chunk plan filename>` and updates the overview.
+   writes `delivery/<chunk plan filename>` (code chunks only) and updates the overview.
 
 ## Start a review
+
+A documentation-only chunk skips this: you review its documents, then commit.
 
 1. Open a new session and paste the review starter from [`start-chunk.md`](start-chunk.md), with the chunk number
    filled in.

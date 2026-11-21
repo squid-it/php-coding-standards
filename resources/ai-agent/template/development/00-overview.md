@@ -51,7 +51,9 @@ file links to nothing until its plan exists.
    from one platform never stand in for another.
 7. **Reports.** The implementation session writes `delivery/<chunk plan filename>` (see the
    [delivery guide](delivery/README.md)); the review session writes `review/<chunk plan filename>` (see the
-   [review guide](review/README.md)). Link each from the progress table.
+   [review guide](review/README.md)). Link each from the progress table. A planning session writes neither report. A
+   documentation-only chunk has neither: its Delivery and Review cells stay "—", and after the developer approves its
+   documents it moves to Awaiting manual commit.
 8. **Commits.** The agent never creates a Git commit; read-only Git commands are fine. After the developer approves
    the review, mark the chunk Awaiting manual commit and remind the developer to commit. Mark it Complete when the
    developer confirms. Do not begin the next chunk automatically.

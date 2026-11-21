@@ -35,3 +35,6 @@ Write the plan to `{{OUTPUT_PATH}}`.
 ## Rules of engagement
 
 - Do not modify code in this session. This is a planning session.
+- Write only the plan at `{{OUTPUT_PATH}}`, and in a development folder the general plan, open-issue, and overview
+  updates the plan requires. Do not create a delivery or review report, and do not create or change any file the plan
+  lists as a result of implementation, including documentation files.

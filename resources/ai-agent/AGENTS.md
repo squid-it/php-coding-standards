@@ -298,5 +298,5 @@ carries the identifier below. When the fix is unclear, look up the rule in the s
 ## Vocabulary
 
 - Never use the word "seam" when you mean interface or factory hook
-- Except in this rule definition, never use the words "facade" and "prose" anywhere, including code, identifiers,
+- Except in this rule definition, never use the words "facade" and "prose" or "corpus" anywhere, including code, identifiers,
   comments, documentation, commit messages, or agent communication

@@ -5,9 +5,13 @@ This chunk plan describes what chunk {{NN}} of {{MODULE_NAME}} builds and proves
 
 ## Goal
 
-{{What this chunk delivers and why it comes now. A working, testable slice that leaves the test suite green.}}
+{{What this chunk delivers and why it comes now: a working, testable slice that leaves the test suite green, or the
+documents a documentation-only chunk produces.}}
 
 General plan sections: {{the sections of plan.md this chunk implements, by name}}.
+
+Chunk type: {{Code, or Documentation only}}. A documentation-only chunk has no delivery or review report; the developer
+reviews its documents directly.
 
 **Status ({{DATE}}):** Planned. Depends on {{DEPENDENCIES, or "nothing"}}.
 
@@ -42,7 +46,9 @@ in the section it belongs to.}}
 
 ### Documentation
 
-{{Every documentation file changed, including this folder.}}
+{{Every documentation file the implementation of this chunk creates or changes. Do not list this chunk plan or its
+delivery or review report: the implementation session writes the delivery report, the review session writes the review
+report, and a documentation-only chunk has neither.}}
 
 ## Public API changes
 

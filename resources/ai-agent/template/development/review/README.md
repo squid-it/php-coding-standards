@@ -1,7 +1,8 @@
 # Review report guide
 
-Create a separate report when a chunk is reviewed, named after its chunk plan file (`NN-<slug>.md`). Link it from the
-overview after it exists.
+Create a separate report when a code chunk is reviewed, named after its chunk plan file (`NN-<slug>.md`). A
+documentation-only chunk has no review report: the developer reviews its documents directly. Link it from the overview
+after it exists.
 
 Use the installed `03-review.md` prompt. Record:
 
